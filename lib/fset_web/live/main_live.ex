@@ -9,7 +9,7 @@ defmodule FsetWeb.MainLive do
   @impl true
   def render(assigns) do
     ~L"""
-      Main
+      <p class="text-gray-900">Main</p>
     """
   end
 end
