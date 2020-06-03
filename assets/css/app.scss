@@ -89,3 +89,40 @@
 .alert:empty {
   display: none;
 }
+
+.stripe-gray {
+  /* gray-800, gray-900 */
+  --bg-opacity: 1;
+  background: linear-gradient(
+    to bottom,
+    rgba(45, 55, 72, var(--bg-opacity)),
+    rgba(45, 55, 72, var(--bg-opacity)) 50%,
+    rgba(26, 32, 44, var(--bg-opacity)) 50%,
+    rgba(26, 32, 44, var(--bg-opacity))
+  ),
+  linear-gradient(to right, gray 0%, white 100%);
+  background-blend-mode: multiply;
+  background-size: 100% 4rem;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+details > summary {
+  outline: none;
+
+  .close-marker {
+     display: block;
+   }
+  .open-marker {
+    display: none;
+  }
+}
+details[open] > summary {
+  .close-marker {
+     display: none;
+   }
+  .open-marker {
+    display: block;
+  }
+}
