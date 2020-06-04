@@ -8,21 +8,23 @@ defmodule FsetWeb.TreeListComponent do
         <%= if @sch.properties[key].type in [:object, :array] do %>
           <li>
             <details phx-hook="detailsTag" open>
-              <summary
-                class="flex py-1 px-1 h-8 borlder-l <%= if @ui.current_path == input_name(@f, key), do: 'bg-indigo-700 text-white' %>"
-                style="padding-left: <%= @ui.current_level * 1.25 %>rem">
-
-                <span class="w-4 px-1 mr-1 close-marker cursor-pointer font-mono text-sm select-none">+</span>
-                <span class="w-4 px-1 mr-1 open-marker cursor-pointer font-mono text-sm select-none">-</span>
+              <summary class="flex">
                 <div
-                  phx-click="select_sch"
-                  phx-value-path="<%= input_name(@f, key) %>"
-                  class="flex items-center w-full"
-                  onclick="event.preventDefault()">
+                  class="flex w-full py-1 px-1 h-8 borlder-l <%= if @ui.current_path == input_name(@f, key), do: 'bg-indigo-700 text-white' %>"
+                  style="padding-left: <%= @ui.current_level * 1.25 %>rem">
 
-                  <span class="mr-2 px-1 bg-indigo-500 rounded text-xs"><%= if @sch.properties[key].type == :object, do: "{ }", else: "[ ]" %></span>
-                  <p class="text-sm"><%= key %></p>
-                  <%= render_type_options(assigns, key) %>
+                  <span class="w-4 px-1 mr-1 close-marker cursor-pointer font-mono text-sm select-none">+</span>
+                  <span class="w-4 px-1 mr-1 open-marker cursor-pointer font-mono text-sm select-none">-</span>
+                  <div
+                    phx-click="select_sch"
+                    phx-value-path="<%= input_name(@f, key) %>"
+                    class="flex items-center w-full"
+                    onclick="event.preventDefault()">
+
+                    <span class="mr-2 px-1 bg-indigo-500 rounded text-xs"><%= if @sch.properties[key].type == :object, do: "{ }", else: "[ ]" %></span>
+                    <p class="text-sm"><%= key %></p>
+                    <%= render_type_options(assigns, key) %>
+                  </div>
                 </div>
               </summary>
 
