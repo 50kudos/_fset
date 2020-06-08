@@ -105,6 +105,11 @@
   background-size: 100% 4rem;
 }
 
+.sortable-ghost {
+  > * { @apply hidden }
+  @apply h-0 py-0 border-b border-green-600 border-dashed
+}
+
 details > summary::-webkit-details-marker {
   display: none;
 }

@@ -23,16 +23,27 @@ defmodule FsetWeb.MainLive do
   @impl true
   def render(assigns) do
     ~L"""
-      <p>path : <%= @ui.current_path %></p>
       <%= f = form_for :root, "#", [class: "w-full lg:w-1/3"] %>
-        <header class="flex items-center my-4">
+        <header class="flex items-center">
           <span class="flex-1"></span>
-          <span phx-click="add_prop" class="text-lg cursor-pointer">+</span>
         </header>
-        <nav class="border min-h-screen stripe-gray text-gray-300">
-          <ol>
+        <nav class="min-h-screen stripe-gray text-gray-300">
+          <details class="" phx-hook="expandableSortable" data-path="<%= f.name %>" open>
+            <summary class="flex filter" onclick="event.preventDefault()">
+              <div
+                phx-capture-click="select_sch"
+                phx-value-path="<%= f.name %>"
+                class="dragover-hl flex items-center justify-center h-8 px-1 w-full overflow-scroll"
+                data-indent="<%= @ui.current_level * 1.25 %>rem" >
+
+                <p class="flex-1 text-center text-xs text-gray-500"><%= @ui.current_path %></p>
+                <%= if @ui.current_path == f.name do %>
+                  <span phx-click="add_prop" class="px-2 bg-indigo-500 rounded text-xs cursor-pointer">+</span>
+                <% end %>
+              </div>
+            </summary>
             <%= live_component @socket, TreeListComponent, id: f.name, sch: get_in(@data, Sch.access_path("root")), ui: @ui, f: f %>
-          </ol>
+          </details>
         </nav>
       </form>
     """
@@ -53,8 +64,24 @@ defmodule FsetWeb.MainLive do
     {:noreply, update(socket, :ui, fn ui -> Map.put(ui, :current_path, sch_path) end)}
   end
 
+  @impl true
+  def handle_event("edit_sch", %{"path" => sch_path}, socket) do
+    {:noreply, update(socket, :ui, fn ui -> Map.put(ui, :current_path, sch_path) end)}
+  end
+
+  @impl true
   def handle_event("escape", _, socket) do
     {:noreply, update(socket, :ui, fn ui -> Map.put(ui, :current_path, "root") end)}
+  end
+
+  @impl true
+  def handle_event("move", payload, socket) do
+    %{"from" => src, "oldIndices" => src_indices, "to" => dst, "newIndices" => dst_indices} =
+      payload
+
+    socket = update(socket, :data, &Sch.move(&1, src, dst, src_indices, dst_indices))
+
+    {:noreply, socket}
   end
 
   defp types_options() do

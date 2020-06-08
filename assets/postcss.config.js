@@ -4,6 +4,7 @@ const purgecss = require('@fullhuman/postcss-purgecss')({
   content: [
     '../lib/fset_web/live/*.ex',
     '../**/*.leex',
+    './js/phx-hooks.js'
   ],
 
   // This is the function used to extract class names from your templates
