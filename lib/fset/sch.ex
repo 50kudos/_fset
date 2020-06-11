@@ -41,12 +41,19 @@ defmodule Fset.Sch do
     end
   end
 
+  def get_paths(map, dst, dst_indices)
+      when is_list(dst_indices) and is_binary(dst) and is_map(map) do
+    dst_schs = get_in(map, access_path(dst))
+
+    Enum.map(dst_indices, fn i -> dst <> "[" <> Enum.at(dst_schs.order, max(i - 1, -1)) <> "]" end)
+  end
+
   defp zip_key_index(map, path, old_indices, new_indices) do
     keys = get_in(map, access_path(path) ++ [order()])
     old_new_indices = Enum.zip(old_indices, new_indices)
 
     Enum.map(old_new_indices, fn {old_index, new_index} ->
-      {Enum.at(keys, old_index - 1), new_index - 1}
+      {Enum.at(keys, max(old_index - 1, -1)), max(new_index - 1, -1)}
     end)
   end
 

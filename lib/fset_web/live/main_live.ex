@@ -1,6 +1,7 @@
 defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
   alias FsetWeb.TreeListComponent
+  alias FsetWeb.SchComponent
   alias Fset.Sch
 
   @impl true
@@ -23,12 +24,12 @@ defmodule FsetWeb.MainLive do
   @impl true
   def render(assigns) do
     ~L"""
-      <%= f = form_for :root, "#", [class: "w-full lg:w-1/3"] %>
+      <%= f = form_for :root, "#", [class: "flex flex-wrap w-full"] %>
         <header class="flex items-center">
           <span class="flex-1"></span>
         </header>
-        <nav class="min-h-screen stripe-gray text-gray-300">
-          <details class="" phx-hook="expandableSortable" data-path="<%= f.name %>" open>
+        <nav class="w-full lg:w-1/3 min-h-screen stripe-gray text-gray-400 overflow-auto">
+          <details class="h-full" phx-hook="expandableSortable" data-path="<%= f.name %>" open>
             <summary class="flex filter" onclick="event.preventDefault()">
               <div
                 phx-capture-click="select_sch"
@@ -36,8 +37,8 @@ defmodule FsetWeb.MainLive do
                 class="dragover-hl flex items-center justify-center h-8 px-1 w-full overflow-scroll"
                 data-indent="<%= @ui.current_level * 1.25 %>rem" >
 
-                <p class="flex-1 text-center text-xs text-gray-500"><%= @ui.current_path %></p>
-                <%= if @ui.current_path == f.name do %>
+                <p class="flex-1 text-center text-xs text-gray-500"><%= if !is_list(@ui.current_path), do: @ui.current_path %></p>
+                <%= if @ui.current_path == f.name && !is_list(@ui.current_path) do %>
                   <span phx-click="add_prop" class="px-2 bg-indigo-500 rounded text-xs cursor-pointer">+</span>
                 <% end %>
               </div>
@@ -45,6 +46,11 @@ defmodule FsetWeb.MainLive do
             <%= live_component @socket, TreeListComponent, id: f.name, sch: get_in(@data, Sch.access_path("root")), ui: @ui, f: f %>
           </details>
         </nav>
+        <section class="w-full lg:w-1/3 p-4 bg-gray-900 text-gray-400 text-sm">
+          <%= if @ui.current_path != "root" && !is_list(@ui.current_path) do %>
+            <%= live_component @socket, SchComponent, id: @ui.current_path, sch: get_in(@data, Sch.access_path(@ui.current_path)), ui: @ui %>
+          <% end %>
+        </section>
       </form>
     """
   end
@@ -61,6 +67,13 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def handle_event("select_sch", %{"path" => sch_path}, socket) do
+    sch_path =
+      case sch_path do
+        [] -> "root"
+        [a] -> a
+        a -> a
+      end
+
     {:noreply, update(socket, :ui, fn ui -> Map.put(ui, :current_path, sch_path) end)}
   end
 
@@ -76,10 +89,30 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def handle_event("move", payload, socket) do
-    %{"from" => src, "oldIndices" => src_indices, "to" => dst, "newIndices" => dst_indices} =
-      payload
+    %{"oldIndices" => src_indices, "to" => dst, "newIndices" => dst_indices} = payload
 
-    socket = update(socket, :data, &Sch.move(&1, src, dst, src_indices, dst_indices))
+    map_src = fn %{"from" => src} -> src end
+    map_index = fn %{"index" => index} -> index end
+
+    src_indices = Enum.map(src_indices, map_index)
+    dst_indices_by_sources = Enum.group_by(dst_indices, map_src, map_index)
+
+    socket =
+      update(socket, :data, fn data ->
+        for {src, dst_indices} <- dst_indices_by_sources, reduce: data do
+          acc -> Sch.move(acc, src, dst, src_indices, dst_indices)
+        end
+      end)
+
+    socket =
+      update(socket, :ui, fn ui ->
+        current_paths =
+          for {_, dst_indices} <- dst_indices_by_sources, reduce: [] do
+            acc -> Sch.get_paths(socket.assigns.data, dst, dst_indices) ++ acc
+          end
+
+        Map.put(ui, :current_path, current_paths)
+      end)
 
     {:noreply, socket}
   end

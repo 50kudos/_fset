@@ -3,71 +3,87 @@ import Sortable, { MultiDrag } from "sortablejs"
 let Hooks = {}
 
 Hooks.expandableSortable = {
-  resetHighLight() {
-    document.querySelectorAll(".dragover-hl").forEach(a => a.classList.remove("bg-indigo-700", "bg-opacity-75"))
-  },
-  setupSortable() {
-    const findOrCreateSortable = (el, opts = {}) => {
-      let sortableEl = Sortable.get(el)
-      let sortableOpts = Object.assign({
-        group: "nested",
-        fallbackOnBody: true,
-        swapThreshold: 0.35,
-        multiDrag: true,
-        multiDragKey: "Shift",
-        dragoverBubble: true,
-        filter: ".filtered",
-        handle: ".sort-handle",
-        draggable: ".sort-handle",
-        emptyInsertThreshold: 16,
-        direction: "vertical"
-      }, opts)
-
-      sortableEl || (new Sortable(el, sortableOpts))
-    }
-    const pushItem = (drop) => {
-      return {
-        to: drop.to.dataset.path,
-        newIndices: drop.newIndicies.length == 0 ? [drop.newIndex] : drop.newIndicies.map(a => a.index),
-        from: drop.from.dataset.path,
-        oldIndices: drop.oldIndicies.length == 0 ? [drop.oldIndex] : drop.oldIndicies.map(a => a.index)
-      }
-    }
-
-    findOrCreateSortable(this.el, {
-      onEnd: (droppedItem) => {
-        this.pushEvent("move", pushItem(droppedItem))
-        this.resetHighLight()
-      },
-      onMove: (evt) => {
-        let boxHeader = evt.to.querySelector(".dragover-hl")
-        let boxIdent = boxHeader.dataset.indent
-        let draggedHeader = evt.dragged.querySelector(".dragover-hl") || evt.dragged
-
-        this.resetHighLight()
-        boxHeader.classList.add("bg-indigo-700", "bg-opacity-75")
-        draggedHeader.classList.add("bg-indigo-700")
-        draggedHeader.style.paddingLeft = boxIdent
-      }
-    })
-  },
   mounted() {
-    let el = this.el
-    el.expand = this.el.open
-
-    this.el.addEventListener("toggle", event => {
-      el.expand = event.target.open
-    })
-
+    this.el.expand = this.el.open
+    this.el.addEventListener("toggle", event => this.el.expand = event.target.open)
     this.setupSortable()
   },
   updated() {
-    let el = this.el
-    el.open = el.expand
-
+    this.el.open = this.el.expand
     this.setupSortable()
+  },
+  // User defined functions and properties
+  itemClass: ".sort-handle",
+  highlightClass: ".dragover-hl",
+  heighlightStyle: ["bg-indigo-700", "bg-opacity-75"],
+  indentClass: ".indent",
+
+  resetHighLight() {
+    document.querySelectorAll(this.highlightClass).forEach(a => a.classList.remove(...this.heighlightStyle))
+  },
+  highlightBoxHeader(box) {
+    let boxHeader = box.querySelector(this.highlightClass)
+    boxHeader.classList.add(...this.heighlightStyle)
+  },
+  setItemIndent(item, box) {
+    let indentEl = item.querySelector(this.indentClass) || item
+    let boxHeader = box.querySelector(this.indentClass)
+
+    indentEl.style.paddingLeft = boxHeader.dataset.indent
+  },
+  itemPath(item) {
+    return item.dataset.path || item.querySelector("details").dataset.path
+  },
+  movedItems(drop) {
+    let newIndexItem = [{ from: this.itemPath(drop.from), index: drop.newIndex }]
+    let oldIndexItem = [{ from: this.itemPath(drop.from), index: drop.oldIndex }]
+
+    let oldIndexItems = drop.oldIndicies.map(a => { return { from: this.itemPath(a.multiDragElement.from), index: a.index } })
+    let newIndexItems = drop.newIndicies.map(a => { return { from: this.itemPath(a.multiDragElement.from), index: a.index } })
+
+    return {
+      to: drop.to.dataset.path,
+      oldIndices: drop.oldIndicies.length == 0 ? oldIndexItem : oldIndexItems,
+      newIndices: drop.newIndicies.length == 0 ? newIndexItem : newIndexItems
+    }
+  },
+  setupSortable() {
+    let sortableEl = Sortable.get(this.el)
+    let sortableOpts = {
+      group: "nested",
+      fallbackOnBody: true,
+      swapThreshold: 0.35,
+      multiDrag: true,
+      multiDragKey: "Meta",
+      dragoverBubble: true,
+      filter: ".filtered",
+      handle: this.itemClass,
+      draggable: this.itemClass,
+      direction: "vertical",
+      revertOnSpill: true,
+
+      onEnd: (evt) => {
+        this.pushEvent("move", this.movedItems(evt))
+        evt.items.forEach(item => this.setItemIndent(item, evt.to))
+        this.resetHighLight()
+      },
+      onMove: (evt) => {
+        this.resetHighLight()
+        this.highlightBoxHeader(evt.to)
+        this.setItemIndent(evt.dragged, evt.to)
+      },
+      onSelect: (evt) => {
+        // workaround for multi-select items from multiple lists
+        evt.item.from = evt.from
+        this.pushEvent("select_sch", { path: evt.items.map(this.itemPath) })
+      },
+      onDeselect: (evt) => { console.log("deselect") }
+    }
+
+    sortableEl || (new Sortable(this.el, sortableOpts))
   }
 }
 
 Sortable.mount(new MultiDrag())
+
 export default Hooks

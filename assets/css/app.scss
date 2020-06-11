@@ -100,7 +100,7 @@
     rgba(26, 32, 44, var(--bg-opacity)) 50%,
     rgba(26, 32, 44, var(--bg-opacity))
   ),
-  linear-gradient(to right, gray 0%, white 100%);
+  linear-gradient(to left, gray 0%, white 150%);
   background-blend-mode: multiply;
   background-size: 100% 4rem;
 }
