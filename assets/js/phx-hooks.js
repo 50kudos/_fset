@@ -2,6 +2,32 @@ import Sortable, { MultiDrag } from "sortablejs"
 
 let Hooks = {}
 
+Hooks.autoFocus = {
+  focus() {
+    let field = this.el
+    field.focus()
+    field.selectionStart = field.selectionEnd = field.value.length
+    field.select()
+  },
+  autoHeight() {
+    let setHeight = () => {
+      this.el.scrollTop = this.el.scrollHeight
+      this.el.style.height = Math.min(this.el.scrollHeight, 300) + "px"
+    }
+
+    setHeight()
+    this.el.oninput = setHeight
+  },
+  mounted() {
+    this.focus()
+    this.autoHeight()
+  },
+  updated() {
+    this.focus()
+    this.autoHeight()
+  }
+}
+
 Hooks.expandableSortable = {
   mounted() {
     this.el.expand = this.el.open
@@ -57,6 +83,7 @@ Hooks.expandableSortable = {
       multiDragKey: "Meta",
       dragoverBubble: true,
       filter: ".filtered",
+      preventOnFilter: false,
       handle: this.itemClass,
       draggable: this.itemClass,
       direction: "vertical",
@@ -76,8 +103,7 @@ Hooks.expandableSortable = {
         // workaround for multi-select items from multiple lists
         evt.item.from = evt.from
         this.pushEvent("select_sch", { path: evt.items.map(this.itemPath) })
-      },
-      onDeselect: (evt) => { console.log("deselect") }
+      }
     }
 
     sortableEl || (new Sortable(this.el, sortableOpts))

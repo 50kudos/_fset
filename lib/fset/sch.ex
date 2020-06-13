@@ -32,12 +32,12 @@ defmodule Fset.Sch do
   def move(map, src_path, dst_path, src_indices, dst_indices)
       when is_map(map) and is_binary(src_path) and is_binary(dst_path) and
              is_list(src_indices) and is_list(dst_indices) do
-    src_keys_dst_indices = zip_key_index(map, src_path, src_indices, dst_indices)
+    keys_indices = zip_key_index(map, src_path, src_indices, dst_indices)
 
-    for {src_key, dst_index} <- src_keys_dst_indices, reduce: map do
+    for {src_key, dst_key, dst_index} <- keys_indices, reduce: map do
       acc ->
         {src_sch, map_} = pop_prop(acc, src_path, src_key)
-        put_prop(map_, dst_path, dst_index, src_key, src_sch)
+        put_prop(map_, dst_path, dst_index, dst_key, src_sch)
     end
   end
 
@@ -52,8 +52,15 @@ defmodule Fset.Sch do
     keys = get_in(map, access_path(path) ++ [order()])
     old_new_indices = Enum.zip(old_indices, new_indices)
 
-    Enum.map(old_new_indices, fn {old_index, new_index} ->
-      {Enum.at(keys, max(old_index - 1, -1)), max(new_index - 1, -1)}
+    Enum.map(old_new_indices, fn
+      {old_index, {new_key, new_index}}
+      when is_integer(old_index) and is_integer(new_index) and is_binary(new_key) ->
+        old_key = Enum.at(keys, max(old_index - 1, -1))
+        {old_key, new_key, max(new_index - 1, -1)}
+
+      {old_index, new_index} when is_integer(old_index) and is_integer(new_index) ->
+        old_key = new_key = Enum.at(keys, max(old_index - 1, -1))
+        {old_key, new_key, max(new_index - 1, -1)}
     end)
   end
 
@@ -88,6 +95,7 @@ defmodule Fset.Sch do
 
   def access_path(path) when is_binary(path) do
     path
+    |> URI.encode_www_form()
     |> Plug.Conn.Query.decode()
     |> access_path()
     |> Enum.reverse()

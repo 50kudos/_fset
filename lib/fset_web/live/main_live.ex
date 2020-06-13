@@ -16,6 +16,7 @@ defmodule FsetWeb.MainLive do
      })
      |> assign(:ui, %{
        current_path: "root",
+       current_edit: nil,
        current_level: 1,
        type_options: types_options()
      })}
@@ -74,17 +75,56 @@ defmodule FsetWeb.MainLive do
         a -> a
       end
 
-    {:noreply, update(socket, :ui, fn ui -> Map.put(ui, :current_path, sch_path) end)}
+    {:noreply,
+     update(socket, :ui, fn ui ->
+       ui
+       |> Map.put(:current_path, sch_path)
+       |> Map.put(:current_edit, nil)
+     end)}
   end
 
   @impl true
   def handle_event("edit_sch", %{"path" => sch_path}, socket) do
-    {:noreply, update(socket, :ui, fn ui -> Map.put(ui, :current_path, sch_path) end)}
+    {:noreply,
+     update(socket, :ui, fn ui ->
+       ui
+       |> Map.put(:current_path, sch_path)
+       |> Map.put(:current_edit, sch_path)
+     end)}
+  end
+
+  @impl true
+  def handle_event("update_sch", params, socket) do
+    %{"parent_path" => parent_path, "old_key" => old_key, "value" => new_key} = params
+    new_key = if new_key == "", do: old_key, else: new_key
+
+    socket =
+      update(socket, :data, fn data ->
+        src_path = dst_path = parent_path
+        sch = get_in(data, Sch.access_path(parent_path))
+        index = Enum.find_index(sch.order, &(&1 == old_key))
+
+        Sch.move(data, src_path, dst_path, [index + 1], [{new_key, index + 1}])
+      end)
+
+    socket =
+      update(socket, :ui, fn ui ->
+        ui
+        |> Map.put(:current_path, input_name(parent_path, new_key))
+        |> Map.put(:current_edit, nil)
+      end)
+
+    {:noreply, socket}
   end
 
   @impl true
   def handle_event("escape", _, socket) do
-    {:noreply, update(socket, :ui, fn ui -> Map.put(ui, :current_path, "root") end)}
+    {:noreply,
+     update(socket, :ui, fn ui ->
+       ui
+       |> Map.put(:current_path, "root")
+       |> Map.put(:current_edit, nil)
+     end)}
   end
 
   @impl true
