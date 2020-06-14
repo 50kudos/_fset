@@ -5,8 +5,16 @@ defmodule Fset.Sch do
   def order(), do: Access.key(:order, [])
   def type(), do: Access.key(:type, %{})
 
+  def new(root_key) do
+    %{type: :object, properties: %{root_key => %{type: :object, order: []}}, order: [root_key]}
+  end
+
   def put_string(map, path, key) when is_binary(key) and is_binary(path) and is_map(map) do
     put_prop(map, path, -1, key, %{type: :string})
+  end
+
+  def put_object(map, path, key) when is_binary(key) and is_binary(path) and is_map(map) do
+    put_prop(map, path, -1, key, %{type: :object})
   end
 
   def change_type(map, path, "object") do
@@ -21,7 +29,7 @@ defmodule Fset.Sch do
     update_in(map, access_path(path), fn sch ->
       sch
       |> Map.put(:type, :array)
-      |> Map.put_new(:order, [])
+      |> Map.put_new(:items, %{})
     end)
   end
 
@@ -45,7 +53,7 @@ defmodule Fset.Sch do
       when is_list(dst_indices) and is_binary(dst) and is_map(map) do
     dst_schs = get_in(map, access_path(dst))
 
-    Enum.map(dst_indices, fn i -> dst <> "[" <> Enum.at(dst_schs.order, max(i - 1, -1)) <> "]" end)
+    Enum.map(dst_indices, fn i -> dst <> "[" <> Enum.at(dst_schs.order, i) <> "]" end)
   end
 
   defp zip_key_index(map, path, old_indices, new_indices) do
@@ -55,12 +63,12 @@ defmodule Fset.Sch do
     Enum.map(old_new_indices, fn
       {old_index, {new_key, new_index}}
       when is_integer(old_index) and is_integer(new_index) and is_binary(new_key) ->
-        old_key = Enum.at(keys, max(old_index - 1, -1))
-        {old_key, new_key, max(new_index - 1, -1)}
+        old_key = Enum.at(keys, old_index)
+        {old_key, new_key, new_index}
 
       {old_index, new_index} when is_integer(old_index) and is_integer(new_index) ->
-        old_key = new_key = Enum.at(keys, max(old_index - 1, -1))
-        {old_key, new_key, max(new_index - 1, -1)}
+        old_key = new_key = Enum.at(keys, old_index)
+        {old_key, new_key, new_index}
     end)
   end
 
@@ -90,7 +98,6 @@ defmodule Fset.Sch do
     {sch, map}
   end
 
-  def access_path([]), do: []
   def access_path(path) when is_nil(path), do: []
 
   def access_path(path) when is_binary(path) do

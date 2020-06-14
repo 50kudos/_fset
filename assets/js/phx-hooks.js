@@ -52,20 +52,21 @@ Hooks.expandableSortable = {
     boxHeader.classList.add(...this.heighlightStyle)
   },
   setItemIndent(item, box) {
-    let indentEl = item.querySelector(this.indentClass) || item
-    let boxHeader = box.querySelector(this.indentClass)
-
-    indentEl.style.paddingLeft = boxHeader.dataset.indent
+    let indentEl = item.querySelector(this.indentClass)
+    indentEl.style.paddingLeft = box.dataset.indent
   },
   itemPath(item) {
-    return item.dataset.path || item.querySelector("details").dataset.path
+    return item.dataset.path
   },
   movedItems(drop) {
-    let newIndexItem = [{ from: this.itemPath(drop.from), index: drop.newIndex }]
-    let oldIndexItem = [{ from: this.itemPath(drop.from), index: drop.oldIndex }]
+    // Frontend needs to use 1 based index due to technical limitation that we use <summary>
+    // tag as first child so that draghover can insert right after it, otherwise we could not
+    // drag it right after a list header as a first child (visually).
+    let newIndexItem = [{ from: this.itemPath(drop.from), index: drop.newIndex - 1 }]
+    let oldIndexItem = [{ from: this.itemPath(drop.from), index: drop.oldIndex - 1 }]
 
-    let oldIndexItems = drop.oldIndicies.map(a => { return { from: this.itemPath(a.multiDragElement.from), index: a.index } })
-    let newIndexItems = drop.newIndicies.map(a => { return { from: this.itemPath(a.multiDragElement.from), index: a.index } })
+    let oldIndexItems = drop.oldIndicies.map(a => { return { from: this.itemPath(a.multiDragElement.from), index: a.index - 1 } })
+    let newIndexItems = drop.newIndicies.map(a => { return { from: this.itemPath(a.multiDragElement.from), index: a.index - 1 } })
 
     return {
       to: drop.to.dataset.path,
@@ -74,9 +75,9 @@ Hooks.expandableSortable = {
     }
   },
   setupSortable() {
-    let sortableEl = Sortable.get(this.el)
+    let sortableEl = this.el
     let sortableOpts = {
-      group: "nested",
+      group: this.el.dataset.group || "nested",
       fallbackOnBody: true,
       swapThreshold: 0.35,
       multiDrag: true,
@@ -102,11 +103,19 @@ Hooks.expandableSortable = {
       onSelect: (evt) => {
         // workaround for multi-select items from multiple lists
         evt.item.from = evt.from
+
+        // Deselect all ancestors; do not allow selecting items that follow the same path.
+        let ancestors = evt.items.filter(item => {
+          return item != evt.item && (item.contains(evt.item) || evt.item.contains(item))
+        })
+        ancestors.forEach(selectableEl => Sortable.utils.deselect(selectableEl))
+        evt.items = evt.items.filter(item => !ancestors.includes(item))
+
         this.pushEvent("select_sch", { path: evt.items.map(this.itemPath) })
       }
     }
 
-    sortableEl || (new Sortable(this.el, sortableOpts))
+    Sortable.get(sortableEl) || (new Sortable(sortableEl, sortableOpts))
   }
 }
 

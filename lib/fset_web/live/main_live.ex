@@ -10,15 +10,10 @@ defmodule FsetWeb.MainLive do
 
     {:ok,
      socket
-     |> assign(:data, %{
-       properties: %{"root" => data()},
-       order: ["root"]
-     })
+     |> assign(:schema, schema(Sch.new("root")))
      |> assign(:ui, %{
        current_path: "root",
-       current_edit: nil,
-       current_level: 1,
-       type_options: types_options()
+       current_edit: nil
      })}
   end
 
@@ -30,26 +25,11 @@ defmodule FsetWeb.MainLive do
           <span class="flex-1"></span>
         </header>
         <nav class="w-full lg:w-1/3 min-h-screen stripe-gray text-gray-400 overflow-auto">
-          <details class="h-full" phx-hook="expandableSortable" data-path="<%= f.name %>" open>
-            <summary class="flex filter" onclick="event.preventDefault()">
-              <div
-                phx-capture-click="select_sch"
-                phx-value-path="<%= f.name %>"
-                class="dragover-hl flex items-center justify-center h-8 px-1 w-full overflow-scroll"
-                data-indent="<%= @ui.current_level * 1.25 %>rem" >
-
-                <p class="flex-1 text-center text-xs text-gray-500"><%= if !is_list(@ui.current_path), do: @ui.current_path %></p>
-                <%= if @ui.current_path == f.name && !is_list(@ui.current_path) do %>
-                  <span phx-click="add_prop" class="px-2 bg-indigo-500 rounded text-xs cursor-pointer">+</span>
-                <% end %>
-              </div>
-            </summary>
-            <%= live_component @socket, TreeListComponent, id: f.name, sch: get_in(@data, Sch.access_path("root")), ui: @ui, f: f %>
-          </details>
+          <%= live_component @socket, TreeListComponent, id: f.name, key: "root", sch: get_in(@schema, Sch.access_path("root")), ui: @ui, f: f %>
         </nav>
         <section class="w-full lg:w-1/3 p-4 bg-gray-900 text-gray-400 text-sm">
           <%= if @ui.current_path != "root" && !is_list(@ui.current_path) do %>
-            <%= live_component @socket, SchComponent, id: @ui.current_path, sch: get_in(@data, Sch.access_path(@ui.current_path)), ui: @ui %>
+            <%= live_component @socket, SchComponent, id: @ui.current_path, sch: get_in(@schema, Sch.access_path(@ui.current_path)), ui: @ui %>
           <% end %>
         </section>
       </form>
@@ -58,12 +38,12 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def handle_event("add_prop", _val, %{assigns: %{ui: ui}} = socket) do
-    {:noreply, update(socket, :data, &Sch.put_string(&1, ui.current_path, Sch.gen_key()))}
+    {:noreply, update(socket, :schema, &Sch.put_string(&1, ui.current_path, Sch.gen_key()))}
   end
 
   @impl true
   def handle_event("select_type", %{"type" => type, "path" => sch_path}, socket) do
-    {:noreply, update(socket, :data, &Sch.change_type(&1, sch_path, type))}
+    {:noreply, update(socket, :schema, &Sch.change_type(&1, sch_path, type))}
   end
 
   @impl true
@@ -96,15 +76,16 @@ defmodule FsetWeb.MainLive do
   @impl true
   def handle_event("update_sch", params, socket) do
     %{"parent_path" => parent_path, "old_key" => old_key, "value" => new_key} = params
+
     new_key = if new_key == "", do: old_key, else: new_key
 
     socket =
-      update(socket, :data, fn data ->
+      update(socket, :schema, fn schema ->
         src_path = dst_path = parent_path
-        sch = get_in(data, Sch.access_path(parent_path))
+        sch = get_in(schema, Sch.access_path(parent_path))
         index = Enum.find_index(sch.order, &(&1 == old_key))
 
-        Sch.move(data, src_path, dst_path, [index + 1], [{new_key, index + 1}])
+        Sch.move(schema, src_path, dst_path, [index], [{new_key, index}])
       end)
 
     socket =
@@ -138,8 +119,8 @@ defmodule FsetWeb.MainLive do
     dst_indices_by_sources = Enum.group_by(dst_indices, map_src, map_index)
 
     socket =
-      update(socket, :data, fn data ->
-        for {src, dst_indices} <- dst_indices_by_sources, reduce: data do
+      update(socket, :schema, fn schema ->
+        for {src, dst_indices} <- dst_indices_by_sources, reduce: schema do
           acc -> Sch.move(acc, src, dst, src_indices, dst_indices)
         end
       end)
@@ -148,7 +129,7 @@ defmodule FsetWeb.MainLive do
       update(socket, :ui, fn ui ->
         current_paths =
           for {_, dst_indices} <- dst_indices_by_sources, reduce: [] do
-            acc -> Sch.get_paths(socket.assigns.data, dst, dst_indices) ++ acc
+            acc -> Sch.get_paths(socket.assigns.schema, dst, dst_indices) ++ acc
           end
 
         Map.put(ui, :current_path, current_paths)
@@ -157,28 +138,9 @@ defmodule FsetWeb.MainLive do
     {:noreply, socket}
   end
 
-  defp types_options() do
-    [
-      string: "str",
-      number: "num",
-      boolean: "bool",
-      object: "obj",
-      array: "arr",
-      null: "null"
-    ]
-  end
-
-  defp data do
-    %{
-      type: :object,
-      properties: %{
-        "a" => %{
-          type: :object,
-          properties: %{"b" => %{type: :string}},
-          order: ["b"]
-        }
-      },
-      order: ["a"]
-    }
+  defp schema(schema) do
+    schema
+    |> Sch.put_object("root", "a")
+    |> Sch.put_string("root[a]", "b")
   end
 end
