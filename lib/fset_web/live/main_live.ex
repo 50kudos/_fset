@@ -112,16 +112,17 @@ defmodule FsetWeb.MainLive do
   def handle_event("move", payload, socket) do
     %{"oldIndices" => src_indices, "to" => dst, "newIndices" => dst_indices} = payload
 
+    # Prepare for one-src / one-dst approach for moving items
     map_src = fn %{"from" => src} -> src end
     map_index = fn %{"index" => index} -> index end
 
-    src_indices = Enum.map(src_indices, map_index)
     dst_indices_by_sources = Enum.group_by(dst_indices, map_src, map_index)
+    src_indices_by_sources = Enum.group_by(src_indices, map_src, map_index)
 
     socket =
       update(socket, :schema, fn schema ->
         for {src, dst_indices} <- dst_indices_by_sources, reduce: schema do
-          acc -> Sch.move(acc, src, dst, src_indices, dst_indices)
+          acc -> Sch.move(acc, src, dst, src_indices_by_sources[src], dst_indices)
         end
       end)
 

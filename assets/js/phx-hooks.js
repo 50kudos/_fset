@@ -111,8 +111,21 @@ Hooks.expandableSortable = {
         ancestors.forEach(selectableEl => Sortable.utils.deselect(selectableEl))
         evt.items = evt.items.filter(item => !ancestors.includes(item))
 
+        // Do not multi-select across lists when multiDragKey is not pressed.
+        if (!evt.item.multiDragKeyDown) {
+          let fromDiffList = evt.items.filter(item => {
+            return item != evt.item && item.from != evt.from
+          })
+          fromDiffList.forEach(diffListItem => diffListItem.parentNode && Sortable.utils.deselect(diffListItem))
+          evt.items = evt.items.filter(item => !fromDiffList.includes(item))
+        }
+
         this.pushEvent("select_sch", { path: evt.items.map(this.itemPath) })
-      }
+      },
+      onChoose: function (evt) {
+        evt.item.multiDragKeyDown = evt.originalEvent.metaKey
+      },
+
     }
 
     Sortable.get(sortableEl) || (new Sortable(sortableEl, sortableOpts))

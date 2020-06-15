@@ -58,6 +58,10 @@ defmodule Fset.Sch do
 
   defp zip_key_index(map, path, old_indices, new_indices) do
     keys = get_in(map, access_path(path) ++ [order()])
+
+    # Only care about first index of multidrag, the rest new index will follow.
+    [first_index | rest_indices] = new_indices
+    new_indices = [first_index | Enum.map(rest_indices, fn _ -> first_index + 1 end)]
     old_new_indices = Enum.zip(old_indices, new_indices)
 
     Enum.map(old_new_indices, fn
