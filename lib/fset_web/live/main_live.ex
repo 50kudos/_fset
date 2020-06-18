@@ -41,12 +41,14 @@ defmodule FsetWeb.MainLive do
     {:noreply, update(socket, :schema, &Sch.put_string(&1, ui.current_path, Sch.gen_key()))}
   end
 
-  @impl true
+  def handle_event("add_item", _val, %{assigns: %{ui: ui}} = socket) do
+    {:noreply, update(socket, :schema, &Sch.put_string(&1, ui.current_path))}
+  end
+
   def handle_event("select_type", %{"type" => type, "path" => sch_path}, socket) do
     {:noreply, update(socket, :schema, &Sch.change_type(&1, sch_path, type))}
   end
 
-  @impl true
   def handle_event("select_sch", %{"path" => sch_path}, socket) do
     sch_path =
       case sch_path do
@@ -63,7 +65,6 @@ defmodule FsetWeb.MainLive do
      end)}
   end
 
-  @impl true
   def handle_event("edit_sch", %{"path" => sch_path}, socket) do
     {:noreply,
      update(socket, :ui, fn ui ->
@@ -73,7 +74,6 @@ defmodule FsetWeb.MainLive do
      end)}
   end
 
-  @impl true
   def handle_event("update_sch", params, socket) do
     %{"parent_path" => parent_path, "old_key" => old_key, "value" => new_key} = params
 
@@ -98,7 +98,6 @@ defmodule FsetWeb.MainLive do
     {:noreply, socket}
   end
 
-  @impl true
   def handle_event("escape", _, socket) do
     {:noreply,
      update(socket, :ui, fn ui ->
@@ -108,7 +107,6 @@ defmodule FsetWeb.MainLive do
      end)}
   end
 
-  @impl true
   def handle_event("move", payload, socket) do
     %{"oldIndices" => src_indices, "to" => dst, "newIndices" => dst_indices} = payload
 

@@ -7,7 +7,29 @@ defmodule FsetWeb.TreeListComponent do
   end
 
   @impl true
-  def render(%{sch: %{type: :object}, ui: %{level: _}} = assigns) do
+  def render(assigns) do
+    case assigns do
+      %{sch: %{type: :object}, ui: %{level: _}} ->
+        render_folder(assigns)
+
+      %{sch: %{type: :object}} ->
+        render_root(assigns)
+
+      %{sch: %{type: :array, items: items}} when is_list(items) ->
+        render_folder(assigns)
+
+      %{sch: %{type: :array, items: item}} when map_size(item) == 1 ->
+        render_file(assigns)
+
+      %{sch: %{type: :array, items: item}} when is_map(item) ->
+        render_folder(assigns)
+
+      %{sch: %{type: _}} ->
+        render_file(assigns)
+    end
+  end
+
+  defp render_folder(assigns) do
     ~L"""
     <nav class="sort-handle" data-path="<%= @f.name %>">
       <details data-path="<%= @f.name %>" phx-hook="expandableSortable" data-indent="<%= (@ui.level + 1) * 1.25 %>rem" class="<%= if @ui.level == 0, do: 'min-h-screen' %>" open>
@@ -26,34 +48,59 @@ defmodule FsetWeb.TreeListComponent do
           </div>
         </summary>
 
-        <%= for key <- @sch.order do %>
-          <%= for f0 <- inputs_for(@f, key) do %>
-            <%= live_component(@socket, __MODULE__, id: input_name(@f, key),
-              key: key,
-              sch: @sch.properties[key],
-              ui: %{@ui | level: @ui.level + 1, parent_path: @f.name },
-              f: f0) %>
-          <% end %>
-        <% end %>
+        <%= render_itself(assigns) %>
       </details>
     </nav>
     """
   end
 
-  def render(%{sch: %{type: :object}} = assigns) do
+  defp render_itself(%{sch: %{type: :object}} = assigns) do
+    ~L"""
+    <%= for key <- @sch.order do %>
+      <%= for f0 <- inputs_for(@f, key) do %>
+        <%= live_component(@socket, __MODULE__,
+          id: f0.name,
+          key: key,
+          sch: @sch.properties[key],
+          ui: %{@ui | level: @ui.level + 1, parent_path: @f.name},
+          f: f0
+        ) %>
+      <% end %>
+    <% end %>
+    """
+  end
+
+  defp render_itself(%{sch: %{type: :array, items: item}} = assigns) when item == %{}, do: ~L""
+
+  defp render_itself(%{sch: %{type: :array}} = assigns) do
+    ~L"""
+    <%= for f0 <- inputs_for(@f, nil, default: @sch.items) do %>
+      <%= live_component(@socket, __MODULE__,
+        id: f0.name,
+        key: f0.index,
+        sch: f0.data,
+        ui: %{@ui | level: @ui.level + 1, parent_path: @f.name},
+        f: f0
+      ) %>
+    <% end %>
+    """
+  end
+
+  defp render_root(assigns) do
     ~L"""
     <nav>
       <div phx-hook="expandableSortable" data-group="root" data-path="<%= @f.name %>">
-        <%= render(put_in_root(assigns)) %>
+        <%= render(
+          assigns
+          |> put_in([:ui, :level], 0)
+          |> put_in([:ui, :parent_path], @f.name)
+        ) %>
       </div>
     </nav>
     """
   end
 
-  def render(%{sch: %{type: :array}} = assigns),
-    do: render(put_in(assigns, [:sch, :type], :object))
-
-  def render(%{sch: %{type: _}} = assigns) do
+  defp render_file(assigns) do
     ~L"""
     <nav class="sort-handle" data-path="<%= @f.name %>">
       <%= render_key_type_pair(assigns) %>
@@ -61,15 +108,7 @@ defmodule FsetWeb.TreeListComponent do
     """
   end
 
-  def render(assigns), do: ~L""
-
-  def put_in_root(assigns) do
-    assigns
-    |> put_in([:ui, :level], 0)
-    |> put_in([:ui, :parent_path], assigns.f.name)
-  end
-
-  def render_key_type_pair(assigns) do
+  defp render_key_type_pair(assigns) do
     ~L"""
     <div class="flex items-center w-full h-8 <%= if @f.name in List.flatten([@ui.current_path]), do: 'bg-indigo-700 text-gray-100' %>">
       <div
@@ -78,12 +117,12 @@ defmodule FsetWeb.TreeListComponent do
         onclick="event.preventDefault()">
       </div>
 
-      <%= if @ui.current_edit == @f.name do %>
+      <%= if @ui.current_edit == @f.name && is_binary(@key) do %>
         <%= render_textarea(assigns) %>
       <% else %>
         <%= render_key(assigns) %>
         <%= render_type(assigns) %>
-        </p>
+
         <div
           class="flex-1 flex items-center h-full"
           onclick="event.preventDefault()">
@@ -94,7 +133,7 @@ defmodule FsetWeb.TreeListComponent do
     """
   end
 
-  def render_type_options(assigns) do
+  defp render_type_options(assigns) do
     ~L"""
     <%= if @ui.current_path == @f.name && !is_list(@ui.current_path) do %>
       <span class="flex-1"></span>
@@ -104,14 +143,26 @@ defmodule FsetWeb.TreeListComponent do
         <% end %>
       </div>
 
-      <%= if @sch.type in [:object, :array] do %>
-        <span phx-click="add_prop" class="mx-2 px-2 bg-indigo-500 rounded text-xs cursor-pointer">+</span>
-      <% end %>
+      <%= render_add_button(assigns, @sch.type) %>
     <% end %>
     """
   end
 
-  def render_textarea(assigns) do
+  defp render_add_button(assigns, :object) do
+    ~L"""
+    <span phx-click="add_prop" class="mx-2 px-2 bg-indigo-500 rounded text-xs cursor-pointer">+</span>
+    """
+  end
+
+  defp render_add_button(assigns, :array) do
+    ~L"""
+    <span phx-click="add_item" class="mx-2 px-2 bg-indigo-500 rounded text-xs cursor-pointer">+</span>
+    """
+  end
+
+  defp render_add_button(assigns, _), do: ~L""
+
+  defp render_textarea(assigns) do
     ~L"""
     <textarea type="text" class="filtered p-2 w-full h-full self-start text-xs bg-indigo-800 bg-opacity-50 shadow-inner text-white"
       phx-hook="autoFocus"
@@ -124,7 +175,7 @@ defmodule FsetWeb.TreeListComponent do
     """
   end
 
-  def render_key(assigns) do
+  defp render_key(assigns) do
     ~L"""
     <%= if @ui.current_path == @f.name do %>
       <p class="flex items-center text-sm h-full overflow-hidden"
@@ -144,19 +195,37 @@ defmodule FsetWeb.TreeListComponent do
     """
   end
 
-  def render_type(%{sch: %{type: type}} = assigns) when type in [:object, :array] do
+  defp render_type(%{sch: %{type: :object}} = assigns) do
     ~L"""
     <p class="text-xs flex-shrink-0">
-    <span class="close-marker self-center cursor-pointer text-sm select-none text-blue-500">
-      <%= if @sch.type == :object, do: "{...}", else: "[...] " %>
-    </span>
-    <span class="open-marker self-center cursor-pointer text-sm select-none text-blue-500">
-      <%= if @sch.type == :object, do: " {  }", else: "[  ] " %>
-    </span>
+      <span class="close-marker self-center cursor-pointer text-sm select-none text-blue-500">{...}</span>
+      <span class="open-marker self-center cursor-pointer text-sm select-none text-blue-500">{  }</span>
+    </p>
     """
   end
 
-  def render_type(assigns) do
+  defp render_type(%{sch: %{type: :array, items: item}} = assigns) when item == %{} do
+    ~L"""
+    <span class="text-sm text-blue-500">[ ]</span>
+    """
+  end
+
+  defp render_type(%{sch: %{type: :array, items: item}} = assigns) when is_map(item) do
+    ~L"""
+    <span class="text-sm text-blue-500">[<%=  type_options()[@sch.items.type] %>]</span>
+    """
+  end
+
+  defp render_type(%{sch: %{type: :array, items: items}} = assigns) when is_list(items) do
+    ~L"""
+    <p class="text-xs flex-shrink-0">
+      <span class="close-marker self-center cursor-pointer text-sm select-none text-blue-500">[...]</span>
+      <span class="open-marker self-center cursor-pointer text-sm select-none text-blue-500">[  ]</span>
+    </p>
+    """
+  end
+
+  defp render_type(assigns) do
     ~L"""
     <span class="text-sm text-blue-500"><%=  type_options()[@sch.type] %></span>
     """

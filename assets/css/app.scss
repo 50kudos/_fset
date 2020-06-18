@@ -117,7 +117,7 @@ details > summary {
   outline: none;
 
   .close-marker {
-     display: block;
+    display: block;
    }
   .open-marker {
     display: none;
@@ -125,7 +125,7 @@ details > summary {
 }
 details[open] > summary {
   .close-marker {
-     display: none;
+    display: none;
    }
   .open-marker {
     display: block;
