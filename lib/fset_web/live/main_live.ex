@@ -25,11 +25,11 @@ defmodule FsetWeb.MainLive do
           <span class="flex-1"></span>
         </header>
         <nav class="w-full lg:w-1/3 min-h-screen stripe-gray text-gray-400 overflow-auto">
-          <%= live_component @socket, TreeListComponent, id: f.name, key: "root", sch: get_in(@schema, Sch.access_path("root")), ui: @ui, f: f %>
+          <%= live_component @socket, TreeListComponent, id: f.name, key: "root", sch: Sch.get(@schema, "root"), ui: @ui, f: f %>
         </nav>
         <section class="w-full lg:w-1/3 p-4 bg-gray-900 text-gray-400 text-sm">
           <%= if @ui.current_path != "root" && !is_list(@ui.current_path) do %>
-            <%= live_component @socket, SchComponent, id: @ui.current_path, sch: get_in(@schema, Sch.access_path(@ui.current_path)), ui: @ui %>
+            <%= live_component @socket, SchComponent, id: @ui.current_path, sch: Sch.get(@schema, @ui.current_path), ui: @ui %>
           <% end %>
         </section>
       </form>
@@ -82,7 +82,7 @@ defmodule FsetWeb.MainLive do
     socket =
       update(socket, :schema, fn schema ->
         src_path = dst_path = parent_path
-        sch = get_in(schema, Sch.access_path(parent_path))
+        sch = Sch.get(schema, parent_path)
         index = Enum.find_index(sch.order, &(&1 == old_key))
 
         Sch.move(schema, src_path, dst_path, [index], [{new_key, index}])

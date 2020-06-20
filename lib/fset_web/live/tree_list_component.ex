@@ -15,13 +15,7 @@ defmodule FsetWeb.TreeListComponent do
       %{sch: %{type: :object}} ->
         render_root(assigns)
 
-      %{sch: %{type: :array, items: items}} when is_list(items) ->
-        render_folder(assigns)
-
-      %{sch: %{type: :array, items: item}} when map_size(item) == 1 ->
-        render_file(assigns)
-
-      %{sch: %{type: :array, items: item}} when is_map(item) ->
+      %{sch: %{type: :array, items: _}} ->
         render_folder(assigns)
 
       %{sch: %{type: _}} ->
@@ -70,11 +64,14 @@ defmodule FsetWeb.TreeListComponent do
     """
   end
 
-  defp render_itself(%{sch: %{type: :array, items: item}} = assigns) when item == %{}, do: ~L""
+  defp render_itself(%{sch: %{type: :array, items: item}} = assigns) when item == %{} do
+    ~L"""
+    """
+  end
 
   defp render_itself(%{sch: %{type: :array}} = assigns) do
     ~L"""
-    <%= for f0 <- inputs_for(@f, nil, default: @sch.items) do %>
+    <%= for f0 <- inputs_for(@f, nil, default: List.wrap(@sch.items)) do %>
       <%= live_component(@socket, __MODULE__,
         id: f0.name,
         key: f0.index,
@@ -212,7 +209,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_type(%{sch: %{type: :array, items: item}} = assigns) when is_map(item) do
     ~L"""
-    <span class="text-sm text-blue-500">[<%=  type_options()[@sch.items.type] %>]</span>
+    <span class="text-sm text-blue-500 cursor-pointer">[<%=  type_options()[@sch.items.type] %>]</span>
     """
   end
 

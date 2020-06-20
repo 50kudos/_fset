@@ -2,28 +2,31 @@ defmodule Fset.Sch do
   @types ~w(string number boolean object array null)
 
   def props(), do: Access.key(:properties, %{})
-  def mono_items(), do: Access.key(:items, %{})
-  def hetero_items(), do: Access.key(:items, [])
+  def items(), do: Access.key(:items, %{})
   def order(), do: Access.key(:order, [])
 
   def new(root_key) do
     %{type: :object, properties: %{root_key => %{type: :object, order: []}}, order: [root_key]}
   end
 
-  def put_string(map, path, key) when is_binary(key) and is_binary(path) and is_map(map) do
+  def get(map, path) when is_map(map) and is_binary(path) do
+    get_in(map, access_path(path))
+  end
+
+  def put_string(map, path, key \\ nil) do
     put_sch(map, path, -1, key, %{type: :string})
   end
 
-  def put_string(map, path) when is_binary(path) and is_map(map) do
-    put_sch(map, path, -1, nil, %{type: :string})
+  def put_object(map, path, key \\ nil) do
+    put_sch(map, path, -1, key, %{type: :object, order: []})
   end
 
-  def put_object(map, path, key) when is_binary(key) and is_binary(path) and is_map(map) do
-    put_sch(map, path, -1, key, %{type: :object})
+  def put_array(map, path, key \\ nil) do
+    put_sch(map, path, -1, key, %{type: :array, items: %{}})
   end
 
   def change_type(map, path, "object") do
-    update_in(map, access_path(path), fn sch ->
+    update_in(map, access_path(path), fn %{type: _} = sch ->
       sch
       |> Map.put(:type, :object)
       |> Map.put_new(:order, [])
@@ -31,7 +34,7 @@ defmodule Fset.Sch do
   end
 
   def change_type(map, path, "array") do
-    update_in(map, access_path(path), fn sch ->
+    update_in(map, access_path(path), fn %{type: _} = sch ->
       sch
       |> Map.put(:type, :array)
       |> Map.put_new(:items, %{})
@@ -39,7 +42,9 @@ defmodule Fset.Sch do
   end
 
   def change_type(map, path, type) when type in @types do
-    update_in(map, access_path(path) ++ [:type], fn _ -> String.to_atom(type) end)
+    update_in(map, access_path(path), fn %{type: _} = sch ->
+      Map.put(sch, :type, String.to_atom(type))
+    end)
   end
 
   def move(map, src_path, dst_path, src_indices, dst_indices)
@@ -56,10 +61,18 @@ defmodule Fset.Sch do
       |> Enum.reverse()
 
     map =
-      for {src_key, _, _} <- keys_indices, reduce: map do
-        acc ->
-          {_, map_} = pop_sch(acc, src_path, src_key)
-          map_
+      case get_in(map, access_path(src_path)) do
+        %{items: items} = sch when is_list(items) ->
+          update_in(map, access_path(src_path), fn _ ->
+            %{sch | items: items -- Enum.map(schs, fn {sch, _, _} -> sch end)}
+          end)
+
+        _ ->
+          for {src_key, _, _} <- keys_indices, reduce: map do
+            acc ->
+              {_, map_} = pop_sch(acc, src_path, src_key)
+              map_
+          end
       end
 
     for {src_sch, dst_key, dst_index} <- schs, reduce: map do
@@ -84,8 +97,8 @@ defmodule Fset.Sch do
     map = get_in(map, access_path(path))
 
     # Only care about first index of multidrag, the rest new index will follow.
-    [first_index | rest_indices] = new_indices
-    new_indices = [first_index | Enum.map(rest_indices, fn _ -> first_index + 1 end)]
+    [first_index | _] = new_indices
+    new_indices = Enum.with_index(new_indices, first_index) |> Enum.map(fn {_, i} -> i end)
     old_new_indices = Enum.zip(old_indices, new_indices)
 
     Enum.map(old_new_indices, fn
@@ -158,13 +171,30 @@ defmodule Fset.Sch do
           pop_in(parent, [:items])
 
         %{type: :array, items: items} = parent when is_list(items) ->
-          pop_in(parent, [:items, Access.at(key)])
+          {sch, map_} = pop_in(parent, [:items, Access.at(key)])
+
+          {sch,
+           Map.update!(map_, :items, fn
+             [] -> %{}
+             [item] -> item
+             items -> items
+           end)}
 
         _ ->
           {nil, map}
       end
 
     {sch, update_in(map, parent_path, fn _ -> map_ end)}
+  end
+
+  defp homo_or_hetero(index) do
+    fn
+      _ops, data, next when is_map(data) ->
+        next.(data)
+
+      ops, data, next when is_list(data) ->
+        Access.at(String.to_integer(index)).(ops, data, next)
+    end
   end
 
   def access_path(path) when is_binary(path) do
@@ -184,7 +214,7 @@ defmodule Fset.Sch do
 
       %{} = map, acc ->
         [{index, v}] = Map.to_list(map)
-        access_path(v) ++ [Access.at(String.to_integer(index)) | [hetero_items() | acc]]
+        access_path(v) ++ [homo_or_hetero(index) | [items() | acc]]
     end)
   end
 
@@ -198,9 +228,11 @@ defmodule Fset.Sch do
 
   def inspect_path(path) do
     Enum.map(path, fn
-      a when is_function(a) -> Function.info(a)[:env]
+      a when is_function(a) -> Function.info(a)[:env] |> Enum.at(0)
       a -> a
     end)
     |> IO.inspect()
+
+    path
   end
 end
