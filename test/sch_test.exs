@@ -89,4 +89,12 @@ defmodule SchTest do
     assert parent.items == %{type: :string}
     assert sch == %{type: :string}
   end
+
+  test "#rename_key", root do
+    root = Sch.put_string(root, "root", "a")
+    root = Sch.rename_key(root, "root", "a", "b")
+
+    assert Sch.get(root, "root[a]") == nil
+    assert Sch.get(root, "root[b]") == %{type: :string}
+  end
 end

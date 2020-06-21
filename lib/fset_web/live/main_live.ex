@@ -74,22 +74,18 @@ defmodule FsetWeb.MainLive do
      end)}
   end
 
-  def handle_event("update_sch", params, socket) do
+  def handle_event("rename_key", params, socket) do
     %{"parent_path" => parent_path, "old_key" => old_key, "value" => new_key} = params
-
-    new_key = if new_key == "", do: old_key, else: new_key
 
     socket =
       update(socket, :schema, fn schema ->
-        src_path = dst_path = parent_path
-        sch = Sch.get(schema, parent_path)
-        index = Enum.find_index(sch.order, &(&1 == old_key))
-
-        Sch.move(schema, src_path, dst_path, [index], [{new_key, index}])
+        Sch.rename_key(schema, parent_path, old_key, new_key)
       end)
 
     socket =
       update(socket, :ui, fn ui ->
+        new_key = if new_key == "", do: old_key, else: new_key
+
         ui
         |> Map.put(:current_path, input_name(parent_path, new_key))
         |> Map.put(:current_edit, nil)

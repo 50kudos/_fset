@@ -80,6 +80,16 @@ defmodule Fset.Sch do
     end
   end
 
+  def rename_key(map, parent_path, old_key, new_key) do
+    new_key = if new_key == "", do: old_key, else: new_key
+
+    src_path = dst_path = parent_path
+    sch = get(map, parent_path)
+    index = Enum.find_index(sch.order, &(&1 == old_key))
+
+    move(map, src_path, dst_path, [index], [{new_key, index}])
+  end
+
   def get_paths(map, dst, dst_indices)
       when is_list(dst_indices) and is_binary(dst) and is_map(map) do
     dst_schs = get_in(map, access_path(dst))
@@ -97,8 +107,19 @@ defmodule Fset.Sch do
     map = get_in(map, access_path(path))
 
     # Only care about first index of multidrag, the rest new index will follow.
-    [first_index | _] = new_indices
-    new_indices = Enum.with_index(new_indices, first_index) |> Enum.map(fn {_, i} -> i end)
+    new_indices =
+      case new_indices do
+        [{_, first_index} | _] ->
+          new_indices
+          |> Enum.with_index(first_index)
+          |> Enum.map(fn {{a, _}, i} -> {a, i} end)
+
+        [first_index | _] ->
+          new_indices
+          |> Enum.with_index(first_index)
+          |> Enum.map(fn {_, i} -> i end)
+      end
+
     old_new_indices = Enum.zip(old_indices, new_indices)
 
     Enum.map(old_new_indices, fn
