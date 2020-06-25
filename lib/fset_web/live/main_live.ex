@@ -104,29 +104,13 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("move", payload, socket) do
-    %{"oldIndices" => src_indices, "to" => dst, "newIndices" => dst_indices} = payload
+    %{"oldIndices" => src_indices, "newIndices" => dst_indices} = payload
 
-    # Prepare for one-src / one-dst approach for moving items
-    map_src = fn %{"from" => src} -> src end
-    map_index = fn %{"index" => index} -> index end
-
-    dst_indices_by_sources = Enum.group_by(dst_indices, map_src, map_index)
-    src_indices_by_sources = Enum.group_by(src_indices, map_src, map_index)
-
-    socket =
-      update(socket, :schema, fn schema ->
-        for {src, dst_indices} <- dst_indices_by_sources, reduce: schema do
-          acc -> Sch.move(acc, src, dst, src_indices_by_sources[src], dst_indices)
-        end
-      end)
+    socket = update(socket, :schema, fn schema -> Sch.move(schema, src_indices, dst_indices) end)
 
     socket =
       update(socket, :ui, fn ui ->
-        current_paths =
-          for {_, dst_indices} <- dst_indices_by_sources, reduce: [] do
-            acc -> Sch.get_paths(socket.assigns.schema, dst, dst_indices) ++ acc
-          end
-
+        current_paths = Sch.get_paths(socket.assigns.schema, dst_indices)
         Map.put(ui, :current_path, current_paths)
       end)
 
@@ -135,7 +119,7 @@ defmodule FsetWeb.MainLive do
 
   defp schema(schema) do
     schema
-    |> Sch.put_object("root", "a")
-    |> Sch.put_string("root[a]", "b")
+    # |> Sch.put_object("root", "a")
+    # |> Sch.put_string("root[a]", "b")
   end
 end

@@ -37,6 +37,7 @@ Hooks.expandableSortable = {
   updated() {
     this.el.open = this.el.expand
     this.setupSortable()
+    this.selectCurrentItems()
   },
   // User defined functions and properties
   itemClass: ".sort-handle",
@@ -58,18 +59,31 @@ Hooks.expandableSortable = {
   itemPath(item) {
     return item.dataset.path
   },
+  selectCurrentItems() {
+    const root = document.querySelector("[data-group='root']")
+    const currentPaths = root.dataset.currentPaths
+
+    if (currentPaths) {
+      JSON.parse(currentPaths).forEach(currentPath => {
+        let item = root.querySelector("[data-path='" + currentPath + "']")
+        let itemBox = Sortable.utils.closest(item, "[phx-hook='expandableSortable']")
+
+        item.from = itemBox
+        Sortable.utils.select(item)
+      })
+    }
+  },
   movedItems(drop) {
     // Frontend needs to use 1 based index due to technical limitation that we use <summary>
     // tag as first child so that draghover can insert right after it, otherwise we could not
     // drag it right after a list header as a first child (visually).
-    let newIndexItem = [{ from: this.itemPath(drop.from), index: drop.newIndex - 1 }]
+    let newIndexItem = [{ to: this.itemPath(drop.to), index: drop.newIndex - 1 }]
     let oldIndexItem = [{ from: this.itemPath(drop.from), index: drop.oldIndex - 1 }]
 
     let oldIndexItems = drop.oldIndicies.map(a => { return { from: this.itemPath(a.multiDragElement.from), index: a.index - 1 } })
-    let newIndexItems = drop.newIndicies.map(a => { return { from: this.itemPath(a.multiDragElement.from), index: a.index - 1 } })
+    let newIndexItems = drop.newIndicies.map(a => { return { to: this.itemPath(drop.to), index: a.index - 1 } })
 
     return {
-      to: drop.to.dataset.path,
       oldIndices: drop.oldIndicies.length == 0 ? oldIndexItem : oldIndexItems,
       newIndices: drop.newIndicies.length == 0 ? newIndexItem : newIndexItems
     }
@@ -128,7 +142,10 @@ Hooks.expandableSortable = {
 
     }
 
-    Sortable.get(sortableEl) || (new Sortable(sortableEl, sortableOpts))
+    let sortableInstance = Sortable.get(sortableEl)
+    if (sortableInstance) { sortableInstance.destroy() }
+
+    new Sortable(sortableEl, sortableOpts)
   }
 }
 

@@ -86,7 +86,7 @@ defmodule FsetWeb.TreeListComponent do
   defp render_root(assigns) do
     ~L"""
     <nav>
-      <div phx-hook="expandableSortable" data-group="root" data-path="<%= @f.name %>">
+      <div phx-hook="expandableSortable" data-group="root" data-path="<%= @f.name %>" data-current-paths="<%= Jason.encode!(List.wrap(@ui.current_path)) %>">
         <%= render(
           assigns
           |> put_in([:ui, :level], 0)

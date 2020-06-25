@@ -14,15 +14,23 @@ defmodule Fset.Sch do
   end
 
   def put_string(map, path, key \\ nil) do
-    put_sch(map, path, -1, key, %{type: :string})
+    put_schs(map, path, [%{key: key, sch: %{type: :string}, index: -1}])
+  end
+
+  def put_boolean(map, path, key \\ nil) do
+    put_schs(map, path, [%{key: key, sch: %{type: :boolean}, index: -1}])
+  end
+
+  def put_number(map, path, key \\ nil) do
+    put_schs(map, path, [%{key: key, sch: %{type: :number}, index: -1}])
   end
 
   def put_object(map, path, key \\ nil) do
-    put_sch(map, path, -1, key, %{type: :object, order: []})
+    put_schs(map, path, [%{key: key, sch: %{type: :object, order: []}, index: -1}])
   end
 
   def put_array(map, path, key \\ nil) do
-    put_sch(map, path, -1, key, %{type: :array, items: %{}})
+    put_schs(map, path, [%{key: key, sch: %{type: :array, items: %{}}, index: -1}])
   end
 
   def change_type(map, path, "object") do
@@ -47,37 +55,52 @@ defmodule Fset.Sch do
     end)
   end
 
-  def move(map, src_path, dst_path, src_indices, dst_indices)
-      when is_map(map) and is_binary(src_path) and is_binary(dst_path) and
-             is_list(src_indices) and is_list(dst_indices) do
-    keys_indices = zip_key_index(map, src_path, src_indices, dst_indices)
+  def move(map, src_indices, dst_indices)
+      when is_list(src_indices) and is_list(dst_indices) and is_map(map) do
+    zipped_indices = Enum.zip(src_indices, dst_indices)
 
-    schs =
-      for {src_key, dst_key, dst_index} <- keys_indices, reduce: [] do
-        acc ->
-          {src_sch, _} = pop_sch(map, src_path, src_key)
-          [{src_sch, dst_key, dst_index} | acc]
-      end
-      |> Enum.reverse()
+    {popped_zips, remained} =
+      zipped_indices
+      |> Enum.group_by(fn {%{"from" => src}, _} -> src end)
+      |> Enum.map_reduce(map, fn {src, indices_zip}, acc ->
+        src_indices = Enum.map(indices_zip, fn {%{"index" => index}, _} -> index end)
+        {popped, remained} = pop_schs(acc, src, src_indices)
 
-    map =
-      case get_in(map, access_path(src_path)) do
-        %{items: items} = sch when is_list(items) ->
-          update_in(map, access_path(src_path), fn _ ->
-            %{sch | items: items -- Enum.map(schs, fn {sch, _, _} -> sch end)}
-          end)
+        put_schs_zip = zip_popped_with_dst(map, src, popped, indices_zip)
+        {put_schs_zip, remained}
+      end)
 
-        _ ->
-          for {src_key, _, _} <- keys_indices, reduce: map do
-            acc ->
-              {_, map_} = pop_sch(acc, src_path, src_key)
-              map_
-          end
-      end
+    put_payloads = unzip_popped_with_dst(popped_zips)
 
-    for {src_sch, dst_key, dst_index} <- schs, reduce: map do
-      acc -> put_sch(acc, dst_path, dst_index, dst_key, src_sch)
-    end
+    Enum.reduce(put_payloads, remained, fn {dst, raw_schs}, acc ->
+      put_schs(acc, dst, raw_schs)
+    end)
+  end
+
+  defp zip_popped_with_dst(map, src, popped, indices_zip) do
+    popped =
+      Enum.sort_by(popped, fn
+        {k, _sch} when is_binary(k) ->
+          Enum.find_index(get(map, src).order, fn key -> key === k end)
+
+        {i, _sch} when is_integer(i) ->
+          i
+      end)
+
+    indices_zip = Enum.sort_by(indices_zip, fn {%{"index" => index}, _} -> index end)
+    Enum.zip(popped, indices_zip)
+  end
+
+  defp unzip_popped_with_dst(popped_zips) do
+    popped_zips
+    |> List.flatten()
+    |> Enum.reduce(%{}, fn {{k, sch}, {_, dst_map}}, acc ->
+      put_payload = %{key: dst_map["rename"] || "#{k}", sch: sch, index: dst_map["index"]}
+
+      Map.update(acc, dst_map["to"], [put_payload], fn puts ->
+        [put_payload | puts]
+      end)
+    end)
   end
 
   def rename_key(map, parent_path, old_key, new_key) do
@@ -87,126 +110,171 @@ defmodule Fset.Sch do
     sch = get(map, parent_path)
     index = Enum.find_index(sch.order, &(&1 == old_key))
 
-    move(map, src_path, dst_path, [index], [{new_key, index}])
+    src_indices = [%{"from" => src_path, "index" => index}]
+    dst_indices = [%{"to" => dst_path, "index" => index, "rename" => new_key}]
+    move(map, src_indices, dst_indices)
   end
 
-  def get_paths(map, dst, dst_indices)
-      when is_list(dst_indices) and is_binary(dst) and is_map(map) do
-    dst_schs = get_in(map, access_path(dst))
+  def get_paths(map, dst_indices) when is_list(dst_indices) and is_map(map) do
+    group_fn = fn %{"to" => dst} -> dst end
+    map_fn = fn %{"index" => index} -> index end
+    dst_indices = Enum.group_by(dst_indices, group_fn, map_fn)
 
-    case dst_schs do
-      %{type: :object} ->
-        Enum.map(dst_indices, fn i -> dst <> "[" <> Enum.at(dst_schs.order, i) <> "]" end)
+    for {dst, dst_indices} <- dst_indices, reduce: [] do
+      acc ->
+        dst_paths =
+          case get(map, dst) do
+            %{type: :object, order: order} ->
+              Enum.map(dst_indices, fn i -> dst <> "[" <> Enum.at(order, i) <> "]" end)
 
-      %{type: :array} ->
-        Enum.map(dst_indices, fn i -> dst <> "[][" <> "#{i}" <> "]" end)
+            %{type: :array} ->
+              Enum.map(dst_indices, fn i -> dst <> "[][" <> "#{i}" <> "]" end)
+          end
+
+        dst_paths ++ acc
     end
   end
 
-  defp zip_key_index(map, path, old_indices, new_indices) do
-    map = get_in(map, access_path(path))
+  def follow_lead(dst_indices) when is_list(dst_indices) do
+    [lead | _] = Enum.sort_by(dst_indices, fn %{"index" => index} -> index end)
 
-    # Only care about first index of multidrag, the rest new index will follow.
-    new_indices =
-      case new_indices do
-        [{_, first_index} | _] ->
-          new_indices
-          |> Enum.with_index(first_index)
-          |> Enum.map(fn {{a, _}, i} -> {a, i} end)
+    dst_indices
+    |> Enum.with_index(lead["index"])
+    |> Enum.map(fn {a, i} -> Map.update!(a, "index", i) end)
+  end
 
-        [first_index | _] ->
-          new_indices
-          |> Enum.with_index(first_index)
-          |> Enum.map(fn {_, i} -> i end)
-      end
+  def put_schs(map, _path, []), do: map
 
-    old_new_indices = Enum.zip(old_indices, new_indices)
+  def put_schs(map, path, raw_schs)
+      when is_map(map) and is_binary(path) and is_list(raw_schs) do
+    parent_path = access_path(path)
 
-    Enum.map(old_new_indices, fn
-      {old_index, {new_key, new_index}}
-      when is_integer(old_index) and is_integer(new_index) and is_binary(new_key) ->
-        case map do
-          %{type: :object, order: keys} ->
-            old_key = Enum.at(keys, old_index)
-            {old_key, new_key, new_index}
+    update_in(map, parent_path, fn parent -> put_schs(parent, raw_schs) end)
+  end
 
-          %{type: :array, items: _items} ->
-            old_key = new_key = old_index
-            {old_key, "#{new_key}", new_index}
-        end
+  defp put_schs(%{type: :object} = parent, raw_schs) do
+    props = Map.new(raw_schs, fn raw_sch -> {raw_sch[:key], raw_sch[:sch]} end)
 
-      {old_index, new_index} when is_integer(old_index) and is_integer(new_index) ->
-        case map do
-          %{type: :object, order: keys} ->
-            old_key = new_key = Enum.at(keys, old_index)
-            {old_key, new_key, new_index}
-
-          %{type: :array, items: _items} ->
-            old_key = new_key = old_index
-            {old_key, "#{new_key}", new_index}
-        end
+    parent
+    |> Map.update(:properties, props, fn p -> Map.merge(p, props) end)
+    |> Map.update!(:order, fn order ->
+      reindex(raw_schs, order)
+      |> Enum.map(fn
+        %{key: k} -> k
+        {k, _i} -> k
+      end)
+      |> Enum.uniq()
     end)
   end
 
-  defp put_sch(map, path, index, key, sch)
-       when is_map(map) and
-              is_binary(path) and
-              (is_binary(key) or is_nil(key)) and
-              is_map(sch) do
-    parent_path = access_path(path)
+  defp put_schs(%{type: :array, items: item} = parent, raw_schs) do
+    schs = Enum.map(raw_schs, fn sch -> sch[:sch] end)
 
-    update_in(map, parent_path, fn
-      %{type: :object} = parent ->
-        parent
-        |> put_in([props(), key], sch)
-        |> update_in([order()], fn order ->
-          List.insert_at(order, index, key) |> Enum.uniq()
+    case {schs, item} do
+      {[sch], item} when item == %{} ->
+        Map.put(parent, :items, sch)
+
+      {_schs, items} when is_map(items) or is_list(items) ->
+        items = List.wrap(items) |> Enum.filter(fn a -> map_size(a) != 0 end)
+
+        Map.update!(parent, :items, fn _ ->
+          reindex(raw_schs, items)
+          |> Enum.map(fn
+            %{sch: sch} -> sch
+            {sch, _i} -> sch
+          end)
         end)
+    end
+  end
 
-      %{type: :array, items: item} = parent when item == %{} ->
-        put_in(parent, [:items], sch)
+  defp reindex(raw_schs, list) do
+    whole_length = Enum.count(raw_schs ++ list)
 
-      %{type: :array, items: item} = parent when is_map(item) ->
-        update_in(parent, [:items], fn item -> [item, sch] end)
+    {raw_schs, coming_indices} =
+      Enum.map_reduce(raw_schs, [], fn
+        %{index: i} = raw_sch, acc when i < 0 ->
+          {%{raw_sch | index: whole_length + i}, [whole_length + i | acc]}
 
-      %{type: :array, items: items} = parent when is_list(items) ->
-        update_in(parent, [:items], fn items -> List.insert_at(items, index, sch) end)
+        %{index: i} = raw_sch, acc ->
+          {raw_sch, [i | acc]}
+      end)
 
-      parent ->
-        parent
+    list_indices = Enum.to_list(0..whole_length) -- coming_indices
+    list = Enum.zip(list, list_indices)
+
+    Enum.sort_by(raw_schs ++ list, fn
+      %{index: i} -> i
+      {_k, i} -> i
     end)
   end
 
-  defp pop_sch(map, path, key)
-       when is_map(map) and is_binary(path) and
-              (is_binary(key) or is_integer(key)) do
+  def pop_schs(map, path, keys)
+      when is_map(map) and is_binary(path) and is_list(keys) do
     parent_path = access_path(path)
 
-    {sch, map_} =
-      case get_in(map, parent_path) do
-        %{type: :object} = parent ->
-          {sch, map_} = pop_in(parent, [props(), key])
-          {sch, update_in(map_, [order()], &List.delete(&1, key))}
-
-        %{type: :array, items: item} = parent when is_map(item) ->
-          pop_in(parent, [:items])
-
-        %{type: :array, items: items} = parent when is_list(items) ->
-          {sch, map_} = pop_in(parent, [:items, Access.at(key)])
-
-          {sch,
-           Map.update!(map_, :items, fn
-             [] -> %{}
-             [item] -> item
-             items -> items
-           end)}
-
-        _ ->
-          {nil, map}
-      end
-
-    {sch, update_in(map, parent_path, fn _ -> map_ end)}
+    map
+    |> get(path)
+    |> pop_schs(keys)
+    |> case do
+      nil -> {nil, map}
+      {schs, map_} -> {schs, update_in(map, parent_path, fn _ -> map_ end)}
+    end
   end
+
+  defp pop_schs(%{type: :object} = parent, keys) do
+    keys =
+      Enum.map(keys, fn
+        k when is_binary(k) -> k
+        i when is_integer(i) -> Enum.at(parent.order, i)
+      end)
+
+    {popped, remained} =
+      parent
+      |> Map.get(:properties)
+      |> Enum.split_with(fn {prop, _} -> prop in keys end)
+
+    map_ =
+      parent
+      |> Map.put(:properties, Map.new(remained))
+      |> Map.put(:order, Keyword.keys(remained))
+
+    {popped, map_}
+  end
+
+  defp pop_schs(%{type: :array, items: item} = _parent, _indices) when item == %{} do
+    raise "cannot pop an empty schema"
+  end
+
+  defp pop_schs(%{type: :array, items: item} = parent, _indices) when is_map(item) do
+    {popped, _remained} = Map.pop!(parent, :items)
+    map_ = Map.put(parent, :items, %{})
+    popped = [{0, popped}]
+
+    {popped, map_}
+  end
+
+  defp pop_schs(%{type: :array, items: items} = parent, indices) when is_list(items) do
+    {popped, remained} =
+      parent
+      |> Map.get(:items)
+      |> Enum.with_index()
+      |> Enum.split_with(fn {_, i} -> i in indices end)
+
+    map_ =
+      parent
+      |> Map.update!(:items, fn _ -> Keyword.keys(remained) end)
+      |> Map.update!(:items, fn
+        [] -> %{}
+        [item] -> item
+        items -> items
+      end)
+
+    popped = Enum.map(popped, fn {sch, i} -> {i, sch} end)
+
+    {popped, map_}
+  end
+
+  defp pop_schs(_, _), do: nil
 
   defp homo_or_hetero(index) do
     fn
