@@ -203,7 +203,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_type(%{sch: %{type: :array, items: item}} = assigns) when item == %{} do
     ~L"""
-    <span class="text-sm text-blue-500">[ ]</span>
+    <span class="text-sm text-blue-500">[any]</span>
     """
   end
 

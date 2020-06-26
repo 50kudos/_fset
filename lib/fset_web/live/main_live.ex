@@ -74,6 +74,13 @@ defmodule FsetWeb.MainLive do
      end)}
   end
 
+  def handle_event("update_sch", params, socket) do
+    %{"key" => key, "value" => value} = params
+    sch_path = socket.assigns.ui.current_path
+
+    {:noreply, update(socket, :schema, &Sch.update(&1, sch_path, key, value))}
+  end
+
   def handle_event("rename_key", params, socket) do
     %{"parent_path" => parent_path, "old_key" => old_key, "value" => new_key} = params
 

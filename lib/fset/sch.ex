@@ -276,6 +276,74 @@ defmodule Fset.Sch do
 
   defp pop_schs(_, _), do: nil
 
+  def update(map, path, key, val) when is_binary(key) do
+    cond do
+      key in ~w(title description) and is_binary(val) ->
+        update_in(map, access_path(path), fn %{type: _} = parent ->
+          Map.put(parent, String.to_atom(key), val)
+        end)
+
+      is_binary(key) ->
+        update_in(map, access_path(path), fn parent -> update(parent, key, val) end)
+    end
+  end
+
+  defp update(%{type: :object} = parent, key, val) do
+    val = positive_int(val)
+
+    cond do
+      key in ~w(maxProperties minProperties) && val ->
+        Map.put(parent, String.to_atom(key), val)
+
+      true ->
+        parent
+    end
+  end
+
+  defp update(%{type: :array} = parent, key, val) do
+    val = positive_int(val)
+
+    cond do
+      key in ~w(maxItems minItems) && val ->
+        Map.put(parent, String.to_atom(key), val)
+
+      true ->
+        parent
+    end
+  end
+
+  defp update(%{type: :string} = parent, key, val) do
+    val = positive_int(val)
+
+    cond do
+      key in ~w(maxLength minLength) && val ->
+        Map.put(parent, String.to_atom(key), val)
+
+      true ->
+        parent
+    end
+  end
+
+  defp update(%{type: :number} = parent, key, val) do
+    val = positive_int(val)
+
+    cond do
+      key in ~w(maximum minimum multipleOf) && val ->
+        Map.put(parent, String.to_atom(key), val)
+
+      true ->
+        parent
+    end
+  end
+
+  defp update(%{type: _} = parent, _key, _val), do: parent
+
+  defp positive_int(val) when is_binary(val) do
+    if String.match?(val, ~r/\d+/), do: max(0, String.to_integer(val))
+  end
+
+  defp positive_int(val), do: val
+
   defp homo_or_hetero(index) do
     fn
       _ops, data, next when is_map(data) ->

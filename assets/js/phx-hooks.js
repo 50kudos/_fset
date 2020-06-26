@@ -28,6 +28,18 @@ Hooks.autoFocus = {
   }
 }
 
+Hooks.updateSch = {
+  updateSch() {
+    return (event) => this.pushEvent("update_sch", {
+      key: this.el.getAttribute("phx-value-key"),
+      value: event.target.value
+    })
+  },
+  mounted() {
+    this.el.addEventListener("change", this.updateSch(), true)
+  }
+}
+
 Hooks.expandableSortable = {
   mounted() {
     this.el.expand = this.el.open
