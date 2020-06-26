@@ -49,7 +49,7 @@ defmodule FsetWeb.MainLive do
     {:noreply, update(socket, :schema, &Sch.change_type(&1, sch_path, type))}
   end
 
-  def handle_event("select_sch", %{"path" => sch_path}, socket) do
+  def handle_event("select_sch", %{"paths" => sch_path}, socket) do
     sch_path =
       case sch_path do
         [] -> "root"

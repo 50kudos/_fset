@@ -3,6 +3,14 @@ import Sortable, { MultiDrag } from "sortablejs"
 let Hooks = {}
 
 Hooks.autoFocus = {
+  mounted() {
+    this.focus()
+    this.autoHeight()
+  },
+  updated() {
+    this.focus()
+    this.autoHeight()
+  },
   focus() {
     let field = this.el
     field.focus()
@@ -17,14 +25,6 @@ Hooks.autoFocus = {
 
     setHeight()
     this.el.oninput = setHeight
-  },
-  mounted() {
-    this.focus()
-    this.autoHeight()
-  },
-  updated() {
-    this.focus()
-    this.autoHeight()
   }
 }
 
@@ -51,6 +51,9 @@ Hooks.expandableSortable = {
     this.setupSortable()
     this.selectCurrentItems()
   },
+  destroyed() {
+    Sortable.get(this.el).destroy()
+  },
   // User defined functions and properties
   itemClass: ".sort-handle",
   highlightClass: ".dragover-hl",
@@ -76,6 +79,8 @@ Hooks.expandableSortable = {
     const currentPaths = root.dataset.currentPaths
 
     if (currentPaths) {
+      Sortable.get(this.el).multiDrag._deselectMultiDrag()
+
       JSON.parse(currentPaths).forEach(currentPath => {
         let item = root.querySelector("[data-path='" + currentPath + "']")
         let itemBox = Sortable.utils.closest(item, "[phx-hook='expandableSortable']")
@@ -104,6 +109,7 @@ Hooks.expandableSortable = {
     let sortableEl = this.el
     let sortableOpts = {
       group: this.el.dataset.group || "nested",
+      disabled: !!this.el.dataset.group,
       fallbackOnBody: true,
       swapThreshold: 0.35,
       multiDrag: true,
@@ -137,6 +143,7 @@ Hooks.expandableSortable = {
         ancestors.forEach(selectableEl => Sortable.utils.deselect(selectableEl))
         evt.items = evt.items.filter(item => !ancestors.includes(item))
 
+
         // Do not multi-select across lists when multiDragKey is not pressed.
         if (!evt.item.multiDragKeyDown) {
           let fromDiffList = evt.items.filter(item => {
@@ -146,12 +153,15 @@ Hooks.expandableSortable = {
           evt.items = evt.items.filter(item => !fromDiffList.includes(item))
         }
 
+
+        // PushEvent only when necessary
         const ShiftSelect = evt.items.length == this.el.shiftSelect
         const isMetaSelect = evt.item.multiDragKeyDown
 
         if (ShiftSelect || isMetaSelect || evt.items.length == 1) {
-          this.pushEvent("select_sch", { path: evt.items.map(this.itemPath) })
+          this.pushEvent("select_sch", { paths: evt.items.map(this.itemPath) })
         }
+
       },
       onChoose: function (evt) {
         evt.item.multiDragKeyDown = evt.originalEvent.metaKey
@@ -168,10 +178,7 @@ Hooks.expandableSortable = {
       },
     }
 
-    let sortableInstance = Sortable.get(sortableEl)
-    if (sortableInstance) { sortableInstance.destroy() }
-
-    new Sortable(sortableEl, sortableOpts)
+    Sortable.get(sortableEl) || new Sortable(sortableEl, sortableOpts)
   }
 }
 

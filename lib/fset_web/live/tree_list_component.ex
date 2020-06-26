@@ -26,7 +26,7 @@ defmodule FsetWeb.TreeListComponent do
   defp render_folder(assigns) do
     ~L"""
     <nav class="sort-handle" data-path="<%= @f.name %>">
-      <details data-path="<%= @f.name %>" phx-hook="expandableSortable" data-indent="<%= (@ui.level + 1) * 1.25 %>rem" class="<%= if @ui.level == 0, do: 'min-h-screen' %>" open>
+      <details data-path="<%= @f.name %>" phx-hook="expandableSortable" data-indent="<%= (@ui.level + 1) * 1.25 %>rem" open>
         <summary class="flex w-full">
           <div class="dragover-hl flex items-center w-full h-8 <%= if @f.name in List.flatten([@ui.current_path]), do: 'bg-indigo-700 text-gray-100' %>">
             <%= if @ui.level > 0 do %>
@@ -86,7 +86,10 @@ defmodule FsetWeb.TreeListComponent do
   defp render_root(assigns) do
     ~L"""
     <nav>
-      <div phx-hook="expandableSortable" data-group="root" data-path="<%= @f.name %>" data-current-paths="<%= Jason.encode!(List.wrap(@ui.current_path)) %>">
+      <div phx-hook="expandableSortable" data-group="root" data-path="<%= @f.name %>"
+        data-current-paths="<%= Jason.encode!(List.wrap(@ui.current_path)) %>"
+        phx-capture-click="select_sch" phx-value-paths="root" class="h-full">
+
         <%= render(
           assigns
           |> put_in([:ui, :level], 0)
