@@ -189,10 +189,17 @@ defmodule SchTest do
 
   test "#rename_key", root do
     root = put_string(root, "root", "a")
-    root = rename_key(root, "root", "a", "b")
+    root = put_string(root, "root", "y")
+    root = put_string(root, "root", "b")
+    assert get(root, "root").order == ["a", "y", "b"]
 
-    assert get(root, "root[a]") == nil
-    assert get(root, "root[b]") == %{type: :string}
+    root = rename_key(root, "root", "b", "x")
+    root = rename_key(root, "root", "a", "a")
+    assert get(root, "root[a]") == %{type: :string}
+    assert get(root, "root[y]") == %{type: :string}
+    assert get(root, "root[x]") == %{type: :string}
+    assert get(root, "root[b]") == nil
+    assert get(root, "root").order == ["a", "y", "x"]
   end
 
   test "#move multi-items up and down", root do

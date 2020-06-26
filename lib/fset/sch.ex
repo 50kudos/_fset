@@ -199,7 +199,7 @@ defmodule Fset.Sch do
           {raw_sch, [i | acc]}
       end)
 
-    list_indices = Enum.to_list(0..whole_length) -- coming_indices
+    list_indices = Enum.to_list(0..(whole_length - 1)) -- coming_indices
     list = Enum.zip(list, list_indices)
 
     Enum.sort_by(raw_schs ++ list, fn
@@ -236,7 +236,7 @@ defmodule Fset.Sch do
     map_ =
       parent
       |> Map.put(:properties, Map.new(remained))
-      |> Map.put(:order, Keyword.keys(remained))
+      |> Map.update!(:order, fn order -> order -- Keyword.keys(popped) end)
 
     {popped, map_}
   end
