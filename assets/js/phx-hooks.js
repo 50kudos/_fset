@@ -134,12 +134,26 @@ Hooks.expandableSortable = {
           evt.items = evt.items.filter(item => !fromDiffList.includes(item))
         }
 
-        this.pushEvent("select_sch", { path: evt.items.map(this.itemPath) })
+        const ShiftSelect = evt.items.length == this.el.shiftSelect
+        const isMetaSelect = evt.item.multiDragKeyDown
+
+        if (ShiftSelect || isMetaSelect || evt.items.length == 1) {
+          this.pushEvent("select_sch", { path: evt.items.map(this.itemPath) })
+        }
       },
       onChoose: function (evt) {
         evt.item.multiDragKeyDown = evt.originalEvent.metaKey
-      },
 
+        // Prepare for onSelect to pick up shiftSelect to prevent select_sch from firing EVERY time.
+        // This makes pushEvent only firing when all items are shift-selected.
+        if (evt.originalEvent.shiftKey) {
+          let minIndex = Math.min(this.el.lastChoosed, evt.oldIndex)
+          let maxIndex = Math.max(this.el.lastChoosed, evt.oldIndex)
+          this.el.shiftSelect = maxIndex - minIndex + 1
+        } else {
+          this.el.lastChoosed = evt.oldIndex
+        }
+      },
     }
 
     let sortableInstance = Sortable.get(sortableEl)
