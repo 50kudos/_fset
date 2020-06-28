@@ -37,7 +37,8 @@ defmodule Fset.MixProject do
       {:phoenix_ecto, "~> 4.1"},
       {:ecto_sql, "~> 3.4"},
       {:postgrex, ">= 0.0.0"},
-      {:phoenix_live_view, "~> 0.13.0"},
+      {:phoenix_live_view, "~> 0.13.0",
+       github: "phoenixframework/phoenix_live_view", override: true},
       {:floki, ">= 0.0.0", only: :test},
       {:phoenix_html, "~> 2.11", github: "phoenixframework/phoenix_html", override: true},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
@@ -46,7 +47,8 @@ defmodule Fset.MixProject do
       {:telemetry_poller, "~> 0.4"},
       {:gettext, "~> 0.11"},
       {:jason, "~> 1.0"},
-      {:plug_cowboy, "~> 2.0"}
+      {:plug_cowboy, "~> 2.0"},
+      {:cloak_ecto, "~> 1.0.1"}
     ]
   end
 

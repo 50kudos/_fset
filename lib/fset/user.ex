@@ -5,7 +5,7 @@ defmodule Fset.User do
   schema "users" do
     field :avatar_url, :string
     field :email, :string
-
+    has_one :github_token, {"github_tokens", Fset.Token}, foreign_key: :user_id
     timestamps()
   end
 

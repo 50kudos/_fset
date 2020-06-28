@@ -20,17 +20,19 @@ defmodule FsetWeb.MainLive do
   @impl true
   def render(assigns) do
     ~L"""
-      <%= f = form_for :root, "#", [class: "flex flex-wrap w-full"] %>
-        <header class="flex items-center">
-          <span class="flex-1"></span>
-        </header>
-        <nav class="w-full lg:w-1/3 min-h-screen stripe-gray text-gray-400 overflow-auto">
-          <%= live_component @socket, TreeListComponent, id: f.name, key: "root", sch: Sch.get(@schema, "root"), ui: @ui, f: f %>
-        </nav>
-        <section class="w-full lg:w-1/3 p-4 bg-gray-900 text-gray-400 text-sm">
-          <%= if @ui.current_path != "root" && !is_list(@ui.current_path) do %>
-            <%= live_component @socket, SchComponent, id: @ui.current_path, sch: Sch.get(@schema, @ui.current_path), ui: @ui %>
-          <% end %>
+      <%= f = form_for :root, "#", [class: "w-full"] %>
+        <section class="grid grid-cols-3 bg-gray-900 text-gray-400">
+          <header class="col-span-3 flex flex-col p-1 text-sm shadow">
+            <a href="#" class="px-2 py-1 border border-gray-700 rounded self-end text-gray-500 hover:text-gray-400">Login with github</a>
+          </header>
+          <nav class="min-h-screen stripe-gray overflow-auto">
+            <%= live_component @socket, TreeListComponent, id: f.name, key: "root", sch: Sch.get(@schema, "root"), ui: @ui, f: f %>
+          </nav>
+          <div class="p-4 text-sm">
+            <%= if @ui.current_path != "root" && !is_list(@ui.current_path) do %>
+              <%= live_component @socket, SchComponent, id: @ui.current_path, sch: Sch.get(@schema, @ui.current_path), ui: @ui %>
+            <% end %>
+          </div>
         </section>
       </form>
     """
@@ -126,7 +128,7 @@ defmodule FsetWeb.MainLive do
 
   defp schema(schema) do
     schema
-    # |> Sch.put_object("root", "a")
-    # |> Sch.put_string("root[a]", "b")
+    |> Sch.put_object("root", "a")
+    |> Sch.put_string("root[a]", "b")
   end
 end
