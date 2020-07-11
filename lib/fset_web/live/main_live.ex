@@ -21,18 +21,45 @@ defmodule FsetWeb.MainLive do
   def render(assigns) do
     ~L"""
       <%= f = form_for :root, "#", [class: "w-full"] %>
-        <section class="grid grid-cols-3 bg-gray-900 text-gray-400">
-          <header class="col-span-3 flex flex-col p-1 text-sm shadow">
-            <a href="#" class="px-2 py-1 border border-gray-700 rounded self-end text-gray-500 hover:text-gray-400">Login with github</a>
+        <section class="flex flex-col">
+          <header class="flex flex-col h-8 p-1 text-sm">
+
           </header>
-          <nav class="min-h-screen stripe-gray overflow-auto">
-            <%= live_component @socket, TreeListComponent, id: f.name, key: "root", sch: Sch.get(@schema, "root"), ui: @ui, f: f %>
-          </nav>
-          <div class="p-4 text-sm">
-            <%= if @ui.current_path != "root" && !is_list(@ui.current_path) do %>
-              <%= live_component @socket, SchComponent, id: @ui.current_path, sch: Sch.get(@schema, @ui.current_path), ui: @ui %>
-            <% end %>
+          <div class="grid grid-cols-3" style="height: calc(100vh - 4rem)">
+            <nav class="overflow-scroll shadow">
+              <div class="stripe-gray min-h-full">
+                <%= live_component @socket, TreeListComponent, id: f.name, key: "root", sch: Sch.get(@schema, "root"), ui: @ui, f: f %>
+              </div>
+            </nav>
+            <aside class="p-4 text-sm shadow">
+              <%= if !is_list(@ui.current_path) do %>
+                <%= live_component @socket, SchComponent, id: @ui.current_path, sch: Sch.get(@schema, @ui.current_path), ui: @ui %>
+              <% end %>
+            </aside>
+            <aside class="p-4 text-gray-500 shadow">
+              <h5 class="text-lg">Storage</h4>
+              <div class="my-4">
+                <label for="disk" class="block my-4">
+                  <p class="text-sm">Internal (of 500 KB quota):</p>
+                  <progress id="disk" max="100" value="<%= percent(Fset.Storage.term_size(@schema), :per_mb, 0.5) %>" class="h-1 w-full"></progress>
+                  <p>
+                    <span class="text-xs"><%= Fset.Storage.term_size(@schema) %> bytes</span>
+                    <span>·</span>
+                    <span class="text-xs"><%= percent(Fset.Storage.term_size(@schema), :per_mb, 0.5) %>%</span>
+                  </p>
+                </label>
+              </div>
+              <hr class="border-gray-800 border-opacity-50">
+              <div class="my-4">
+                <p class="text-sm">External:</p>
+                <a href="/auth/github" class="inline-block my-2 px-2 py-1 border border-gray-700 rounded self-end text-sm text-gray-500 hover:text-gray-400">Connect Github</a>
+              </div>
+            </aside>
           </div>
+
+          <footer class="flex flex-col justify-center h-8 text-sm">
+            <p class="text-center text-xs text-gray-500"><%= if !is_list(@ui.current_path), do: @ui.current_path %></p>
+          </footer>
         </section>
       </form>
     """
@@ -130,5 +157,10 @@ defmodule FsetWeb.MainLive do
     schema
     |> Sch.put_object("root", "a")
     |> Sch.put_string("root[a]", "b")
+  end
+
+  defp percent(byte_size, :per_mb, quota) do
+    quota_byte = quota * (1024 * 1024)
+    Float.floor(byte_size / quota_byte * 100, 2)
   end
 end

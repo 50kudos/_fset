@@ -32,8 +32,7 @@ defmodule FsetWeb.TreeListComponent do
             <%= if @ui.level > 0 do %>
               <%= render_key_type_pair(assigns) %>
             <% else %>
-              <div class="flex items-center w-full h-full justify-center" onclick="event.preventDefault()">
-                <p class="flex-1 text-center text-xs text-gray-500"><%= if !is_list(@ui.current_path), do: @ui.current_path %></p>
+              <div class="flex justify-end items-center w-full h-full" onclick="event.preventDefault()">
                 <%= if @ui.current_path == @key do %>
                   <span phx-click="add_prop" class="mx-2 px-2 bg-indigo-500 rounded text-xs cursor-pointer">+</span>
                 <% end %>

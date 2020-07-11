@@ -101,4 +101,28 @@ defmodule Fset.Storage do
   def change_oauth_token(%OauthToken{} = oauth_token, attrs \\ %{}) do
     OauthToken.changeset(oauth_token, attrs)
   end
+
+  @doc """
+  Returns a size of term
+
+  ## Examples
+
+      iex> term_size(%{a: 1, b: 2, c: 3})
+      10
+  """
+  def term_size(term) do
+    :erts_debug.size(term)
+  end
+
+  @doc """
+  Returns a size of json
+
+  ## Examples
+
+      iex> json_size(%{a: 1, b: 2, c: 3})
+      19
+  """
+  def json_size(term) do
+    :erlang.byte_size(Jason.encode!(term))
+  end
 end
