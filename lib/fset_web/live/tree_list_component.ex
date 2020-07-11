@@ -163,7 +163,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_textarea(assigns) do
     ~L"""
-    <textarea type="text" class="filtered p-2 w-full h-full self-start text-xs bg-indigo-800 bg-opacity-50 shadow-inner text-white"
+    <textarea type="text" class="filtered p-2 w-full h-full self-start text-xs bg-indigo-800 z-10 shadow-inner text-white"
       phx-hook="autoFocus"
       phx-blur="rename_key"
       phx-keydown="rename_key"
