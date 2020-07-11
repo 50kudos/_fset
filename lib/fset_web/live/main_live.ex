@@ -113,6 +113,9 @@ defmodule FsetWeb.MainLive do
   def handle_event("rename_key", params, socket) do
     %{"parent_path" => parent_path, "old_key" => old_key, "value" => new_key} = params
 
+    old_key = String.slice(old_key, 0, min(255, String.length(old_key)))
+    new_key = String.slice(new_key, 0, min(255, String.length(new_key)))
+
     socket =
       update(socket, :schema, fn schema ->
         Sch.rename_key(schema, parent_path, old_key, new_key)
