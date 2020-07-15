@@ -37,11 +37,11 @@
         <div class="my-4">
           <label for="disk" class="block my-4">
             <p class="text-sm">Internal (of 500 KB quota):</p>
-            <progress id="disk" max="100" value="<%= percent(Fset.Storage.term_size(@schema), :per_mb, 0.5) %>" class="h-1 w-full"></progress>
+            <progress id="disk" max="100" value="<%= percent(Fset.Persistence.term_size(@schema), :per_mb, 0.5) %>" class="h-1 w-full"></progress>
             <p>
-              <span class="text-xs"><%= Fset.Storage.term_size(@schema) %> bytes</span>
+              <span class="text-xs"><%= Fset.Persistence.term_size(@schema) %> bytes</span>
               <span>·</span>
-              <span class="text-xs"><%= percent(Fset.Storage.term_size(@schema), :per_mb, 0.5) %>%</span>
+              <span class="text-xs"><%= percent(Fset.Persistence.term_size(@schema), :per_mb, 0.5) %>%</span>
             </p>
           </label>
         </div>

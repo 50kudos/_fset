@@ -1,12 +1,12 @@
-defmodule Fset.Storage do
+defmodule Fset.Persistence do
   @moduledoc """
-  The Storage context.
+  The Persistence context.
   """
 
   import Ecto.Query, warn: false
   alias Fset.Repo
 
-  alias Fset.Storage.OauthToken
+  alias Fset.Persistence.{UserFile, File, OauthToken}
 
   @doc """
   Returns the list of oauth_tokens.
@@ -124,5 +124,63 @@ defmodule Fset.Storage do
   """
   def json_size(term) do
     :erlang.byte_size(Jason.encode!(term))
+  end
+
+  @doc """
+  Get a user file by id
+
+  ## Examples
+
+      iex> get_user_file(user, file_id)
+      %UserFile{}
+  """
+  def get_user_file(file_id, user) do
+    UserFile
+    |> Repo.get_by!(file_id: file_id, user_id: user.id)
+    |> Repo.preload(:file)
+  end
+
+  @doc """
+  Get all user files
+
+  ## Examples
+
+      iex> get_user_files(user)
+      [%UserFile{}]
+  """
+  def get_user_files(user) do
+    UserFile
+    |> Repo.get_by!(user_id: user.id)
+    |> Repo.preload(:file)
+  end
+
+  @doc """
+  Create a schema file of a user
+
+  ## Examples
+
+      iex> create_user_file(user)
+      {:ok, %UserFile{user_id: 1, file_id: 1}}
+  """
+  def create_user_file(user, sch) do
+    Repo.transaction(fn ->
+      file = Repo.insert!(File.changeset(%File{}, %{schema: sch}))
+      Repo.insert!(UserFile.changeset(%UserFile{}, %{user_id: user.id, file_id: file.id}))
+    end)
+  end
+
+  @doc """
+  Replace the whole schema of a file
+
+  ## Examples
+
+      iex> update_file(schema)
+      %File{}
+  """
+  def update_file(file_id, schema) do
+    File
+    |> Repo.get!(file_id)
+    |> File.changeset(%{schema: schema})
+    |> Repo.update!()
   end
 end

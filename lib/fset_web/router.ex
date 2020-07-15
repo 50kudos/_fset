@@ -18,9 +18,10 @@ defmodule FsetWeb.Router do
   end
 
   scope "/", FsetWeb do
-    pipe_through :browser
+    pipe_through [:browser, :require_authenticated_user]
 
-    live "/", MainLive, :index
+    get "/", StaticPageController, :landing
+    live "/:file_id", MainLive, :index
   end
 
   # Other scopes may use custom stacks.

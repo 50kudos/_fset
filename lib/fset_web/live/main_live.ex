@@ -1,18 +1,20 @@
 defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
   alias FsetWeb.{TreeListComponent, SchComponent}
-  alias Fset.{Accounts, Sch}
+  alias Fset.{Accounts, Sch, Persistence}
 
   @impl true
-  def mount(_params, session, socket) do
+  def mount(params, session, socket) do
     if connected?(socket), do: Phoenix.PubSub.subscribe(Fset.PubSub, "sch_update")
+
+    current_user = session["current_user_id"] && Accounts.get_user!(session["current_user_id"])
+    user_file = params["file_id"] && Persistence.get_user_file(params["file_id"], current_user)
 
     {:ok,
      socket
-     |> assign_new(:current_user, fn ->
-       session["current_user_id"] && Accounts.get_user!(session["current_user_id"])
-     end)
-     |> assign(:schema, schema(Sch.new("root")))
+     |> assign_new(:current_user, fn -> current_user end)
+     |> assign(:file_id, user_file.file.id)
+     |> assign(:schema, user_file.file.schema)
      |> assign(:ui, %{
        current_path: "root",
        current_edit: nil
@@ -21,15 +23,19 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def handle_event("add_prop", _val, %{assigns: %{ui: ui}} = socket) do
+    Process.send_after(self(), :update_schema, 1000)
+
     {:noreply,
      update(socket, :schema, &Sch.put(&1, ui.current_path, gen_key(), Sch.new_string()))}
   end
 
   def handle_event("add_item", _val, %{assigns: %{ui: ui}} = socket) do
+    Process.send_after(self(), :update_schema, 1000)
     {:noreply, update(socket, :schema, &Sch.put(&1, ui.current_path, Sch.new_string()))}
   end
 
   def handle_event("select_type", %{"type" => type, "path" => sch_path}, socket) do
+    Process.send_after(self(), :update_schema, 1000)
     {:noreply, update(socket, :schema, &Sch.change_type(&1, sch_path, type))}
   end
 
@@ -62,6 +68,7 @@ defmodule FsetWeb.MainLive do
     %{"key" => key, "value" => value} = params
     sch_path = socket.assigns.ui.current_path
 
+    Process.send_after(self(), :update_schema, 1000)
     {:noreply, update(socket, :schema, &Sch.update(&1, sch_path, key, value))}
   end
 
@@ -85,6 +92,7 @@ defmodule FsetWeb.MainLive do
         |> Map.put(:current_edit, nil)
       end)
 
+    Process.send_after(self(), :update_schema, 1000)
     {:noreply, socket}
   end
 
@@ -108,6 +116,13 @@ defmodule FsetWeb.MainLive do
         Map.put(ui, :current_path, current_paths)
       end)
 
+    Process.send_after(self(), :update_schema, 1000)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info(:update_schema, socket) do
+    Persistence.update_file(socket.assigns.file_id, socket.assigns.schema)
     {:noreply, socket}
   end
 
