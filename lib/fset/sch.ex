@@ -1,57 +1,92 @@
 defmodule Fset.Sch do
-  @types ~w(string number boolean object array null)
+  @object "object"
+  @array "array"
+  @string "string"
+  @boolean "boolean"
+  @number "number"
+  @null "null"
 
-  def props(), do: Access.key(:properties, %{})
-  def items(), do: Access.key(:items, %{})
-  def order(), do: Access.key(:order, [])
+  @type_ "type"
+  @types [@string, @number, @boolean, @object, @array, @null]
+  @properties "properties"
+  @items "items"
+
+  @order "order"
+
+  def type(sch) when is_map(sch), do: Map.get(sch, @type_)
+  def order(sch) when is_map(sch), do: Map.get(sch, @order)
+  def prop_sch(sch, key) when is_map(sch), do: Map.get(Map.get(sch, @properties), key)
+  def items(sch) when is_map(sch), do: Map.get(sch, @items)
+  def properties(sch) when is_map(sch), do: Map.get(sch, @properties)
+
+  defp props(), do: Access.key(@properties, %{})
+  defp items(), do: Access.key(@items, %{})
+
+  def object?(sch),
+    do: match?(%{@type_ => @object}, sch)
+
+  def array?(sch),
+    do: match?(%{@type_ => @array, @items => _}, sch)
+
+  def array?(sch, :empty),
+    do: match?(%{@type_ => @array, @items => item} when item == %{}, sch)
+
+  def array?(sch, :homo),
+    do: match?(%{@type_ => @array, @items => item} when is_map(item), sch)
+
+  def array?(sch, :hetero),
+    do: match?(%{@type_ => @array, @items => items} when is_list(items), sch)
+
+  def string?(sch), do: match?(%{@type_ => @string}, sch)
+  def number?(sch), do: match?(%{@type_ => @number}, sch)
+  def boolean?(sch), do: match?(%{@type_ => @boolean}, sch)
+  def null?(sch), do: match?(%{@type_ => @null}, sch)
+  def typed?(sch), do: match?(%{@type_ => _}, sch)
 
   def new(root_key) do
-    %{type: :object, properties: %{root_key => %{type: :object, order: []}}, order: [root_key]}
+    %{
+      @type_ => @object,
+      @properties => %{root_key => %{@type_ => @object, @order => []}},
+      @order => [root_key]
+    }
   end
+
+  def new_object, do: %{@type_ => @object, @order => []}
+  def new_array, do: %{@type_ => @array, @items => %{}}
+  def new_string, do: %{@type_ => @string}
+  def new_number, do: %{@type_ => @number}
+  def new_boolean, do: %{@type_ => @boolean}
+  def new_null, do: %{@type_ => @null}
 
   def get(map, path) when is_map(map) and is_binary(path) do
     get_in(map, access_path(path))
   end
 
-  def put_string(map, path, key \\ nil) do
-    put_schs(map, path, [%{key: key, sch: %{type: :string}, index: -1}])
-  end
+  def put(map, path, sch), do: put(map, path, nil, sch)
 
-  def put_boolean(map, path, key \\ nil) do
-    put_schs(map, path, [%{key: key, sch: %{type: :boolean}, index: -1}])
-  end
-
-  def put_number(map, path, key \\ nil) do
-    put_schs(map, path, [%{key: key, sch: %{type: :number}, index: -1}])
-  end
-
-  def put_object(map, path, key \\ nil) do
-    put_schs(map, path, [%{key: key, sch: %{type: :object, order: []}, index: -1}])
-  end
-
-  def put_array(map, path, key \\ nil) do
-    put_schs(map, path, [%{key: key, sch: %{type: :array, items: %{}}, index: -1}])
+  def put(map, path, key, sch) do
+    put_schs(map, path, [%{key: key, sch: sch, index: -1}])
   end
 
   def change_type(map, path, "object") do
-    update_in(map, access_path(path), fn %{type: _} = sch ->
+    update_in(map, access_path(path), fn %{@type_ => _} = sch ->
       sch
-      |> Map.put(:type, :object)
-      |> Map.put_new(:order, [])
+      |> Map.put(@type_, @object)
+      |> Map.put_new(@order, [])
     end)
   end
 
   def change_type(map, path, "array") do
-    update_in(map, access_path(path), fn %{type: _} = sch ->
+    update_in(map, access_path(path), fn %{@type_ => _} = sch ->
       sch
-      |> Map.put(:type, :array)
-      |> Map.put_new(:items, %{})
+      |> Map.put(@type_, @array)
+      |> Map.put_new(@items, %{})
     end)
   end
 
   def change_type(map, path, type) when type in @types do
-    update_in(map, access_path(path), fn %{type: _} = sch ->
-      Map.put(sch, :type, String.to_atom(type))
+    update_in(map, access_path(path), fn %{@type_ => _} = sch ->
+      Map.put(sch, @type_, type)
     end)
   end
 
@@ -81,7 +116,7 @@ defmodule Fset.Sch do
     popped =
       Enum.sort_by(popped, fn
         {k, _sch} when is_binary(k) ->
-          Enum.find_index(get(map, src).order, fn key -> key === k end)
+          Enum.find_index(get(map, src) |> order(), fn key -> key === k end)
 
         {i, _sch} when is_integer(i) ->
           i
@@ -108,7 +143,7 @@ defmodule Fset.Sch do
 
     src_path = dst_path = parent_path
     sch = get(map, parent_path)
-    index = Enum.find_index(sch.order, &(&1 == old_key))
+    index = Enum.find_index(order(sch), &(&1 == old_key))
 
     src_indices = [%{"from" => src_path, "index" => index}]
     dst_indices = [%{"to" => dst_path, "index" => index, "rename" => new_key}]
@@ -124,10 +159,10 @@ defmodule Fset.Sch do
       acc ->
         dst_paths =
           case get(map, dst) do
-            %{type: :object, order: order} ->
+            %{@type_ => @object, @order => order} ->
               Enum.map(dst_indices, fn i -> dst <> "[" <> Enum.at(order, i) <> "]" end)
 
-            %{type: :array} ->
+            %{@type_ => @array} ->
               Enum.map(dst_indices, fn i -> dst <> "[][" <> "#{i}" <> "]" end)
           end
 
@@ -152,12 +187,12 @@ defmodule Fset.Sch do
     update_in(map, parent_path, fn parent -> put_schs(parent, raw_schs) end)
   end
 
-  defp put_schs(%{type: :object} = parent, raw_schs) do
+  defp put_schs(%{@type_ => @object} = parent, raw_schs) do
     props = Map.new(raw_schs, fn raw_sch -> {raw_sch[:key], raw_sch[:sch]} end)
 
     parent
-    |> Map.update(:properties, props, fn p -> Map.merge(p, props) end)
-    |> Map.update!(:order, fn order ->
+    |> Map.update(@properties, props, fn p -> Map.merge(p, props) end)
+    |> Map.update!(@order, fn order ->
       reindex(raw_schs, order)
       |> Enum.map(fn
         %{key: k} -> k
@@ -167,17 +202,17 @@ defmodule Fset.Sch do
     end)
   end
 
-  defp put_schs(%{type: :array, items: item} = parent, raw_schs) do
+  defp put_schs(%{@type_ => @array, @items => item} = parent, raw_schs) do
     schs = Enum.map(raw_schs, fn sch -> sch[:sch] end)
 
     case {schs, item} do
       {[sch], item} when item == %{} ->
-        Map.put(parent, :items, sch)
+        Map.put(parent, @items, sch)
 
       {_schs, items} when is_map(items) or is_list(items) ->
         items = List.wrap(items) |> Enum.filter(fn a -> map_size(a) != 0 end)
 
-        Map.update!(parent, :items, fn _ ->
+        Map.update!(parent, @items, fn _ ->
           reindex(raw_schs, items)
           |> Enum.map(fn
             %{sch: sch} -> sch
@@ -221,49 +256,49 @@ defmodule Fset.Sch do
     end
   end
 
-  defp pop_schs(%{type: :object} = parent, keys) do
+  defp pop_schs(%{@type_ => @object} = parent, keys) do
     keys =
       Enum.map(keys, fn
         k when is_binary(k) -> k
-        i when is_integer(i) -> Enum.at(parent.order, i)
+        i when is_integer(i) -> Enum.at(order(parent), i)
       end)
 
     {popped, remained} =
       parent
-      |> Map.get(:properties)
+      |> Map.get(@properties)
       |> Enum.split_with(fn {prop, _} -> prop in keys end)
 
     map_ =
       parent
-      |> Map.put(:properties, Map.new(remained))
-      |> Map.update!(:order, fn order -> order -- Keyword.keys(popped) end)
+      |> Map.put(@properties, Map.new(remained))
+      |> Map.update!(@order, fn order -> order -- Keyword.keys(popped) end)
 
     {popped, map_}
   end
 
-  defp pop_schs(%{type: :array, items: item} = _parent, _indices) when item == %{} do
+  defp pop_schs(%{@type_ => @array, @items => item} = _parent, _indices) when item == %{} do
     raise "cannot pop an empty schema"
   end
 
-  defp pop_schs(%{type: :array, items: item} = parent, _indices) when is_map(item) do
-    {popped, _remained} = Map.pop!(parent, :items)
-    map_ = Map.put(parent, :items, %{})
+  defp pop_schs(%{@type_ => @array, @items => item} = parent, _indices) when is_map(item) do
+    {popped, _remained} = Map.pop!(parent, @items)
+    map_ = Map.put(parent, @items, %{})
     popped = [{0, popped}]
 
     {popped, map_}
   end
 
-  defp pop_schs(%{type: :array, items: items} = parent, indices) when is_list(items) do
+  defp pop_schs(%{@type_ => @array, @items => items} = parent, indices) when is_list(items) do
     {popped, remained} =
       parent
-      |> Map.get(:items)
+      |> Map.get(@items)
       |> Enum.with_index()
       |> Enum.split_with(fn {_, i} -> i in indices end)
 
     map_ =
       parent
-      |> Map.update!(:items, fn _ -> Keyword.keys(remained) end)
-      |> Map.update!(:items, fn
+      |> Map.update!(@items, fn _ -> Keyword.keys(remained) end)
+      |> Map.update!(@items, fn
         [] -> %{}
         [item] -> item
         items -> items
@@ -279,8 +314,8 @@ defmodule Fset.Sch do
   def update(map, path, key, val) when is_binary(key) do
     cond do
       key in ~w(title description) and is_binary(val) ->
-        update_in(map, access_path(path), fn %{type: _} = parent ->
-          Map.put(parent, String.to_atom(key), val)
+        update_in(map, access_path(path), fn %{@type_ => _} = parent ->
+          Map.put(parent, key, val)
         end)
 
       is_binary(key) ->
@@ -288,55 +323,55 @@ defmodule Fset.Sch do
     end
   end
 
-  defp update(%{type: :object} = parent, key, val) do
+  defp update(%{@type_ => @object} = parent, key, val) do
     val = positive_int(val)
 
     cond do
       key in ~w(maxProperties minProperties) && val ->
-        Map.put(parent, String.to_atom(key), val)
+        Map.put(parent, key, val)
 
       true ->
         parent
     end
   end
 
-  defp update(%{type: :array} = parent, key, val) do
+  defp update(%{@type_ => @array} = parent, key, val) do
     val = positive_int(val)
 
     cond do
       key in ~w(maxItems minItems) && val ->
-        Map.put(parent, String.to_atom(key), val)
+        Map.put(parent, key, val)
 
       true ->
         parent
     end
   end
 
-  defp update(%{type: :string} = parent, key, val) do
+  defp update(%{@type_ => @string} = parent, key, val) do
     val = positive_int(val)
 
     cond do
       key in ~w(maxLength minLength) && val ->
-        Map.put(parent, String.to_atom(key), val)
+        Map.put(parent, key, val)
 
       true ->
         parent
     end
   end
 
-  defp update(%{type: :number} = parent, key, val) do
+  defp update(%{@type_ => @number} = parent, key, val) do
     val = positive_int(val)
 
     cond do
       key in ~w(maximum minimum multipleOf) && val ->
-        Map.put(parent, String.to_atom(key), val)
+        Map.put(parent, key, val)
 
       true ->
         parent
     end
   end
 
-  defp update(%{type: _} = parent, _key, _val), do: parent
+  defp update(%{@type_ => _} = parent, _key, _val), do: parent
 
   defp positive_int(val) when is_binary(val) do
     if String.match?(val, ~r/\d+/), do: max(0, String.to_integer(val))
@@ -376,12 +411,6 @@ defmodule Fset.Sch do
   end
 
   # Helpers
-
-  def gen_key() do
-    id = DateTime.to_unix(DateTime.now!("Etc/UTC"), :microsecond)
-    id = String.slice("#{id}", 6..-1)
-    "key_#{to_string(id)}"
-  end
 
   def inspect_path(path) do
     Enum.map(path, fn

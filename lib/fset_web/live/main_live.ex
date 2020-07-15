@@ -21,11 +21,12 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def handle_event("add_prop", _val, %{assigns: %{ui: ui}} = socket) do
-    {:noreply, update(socket, :schema, &Sch.put_string(&1, ui.current_path, Sch.gen_key()))}
+    {:noreply,
+     update(socket, :schema, &Sch.put(&1, ui.current_path, gen_key(), Sch.new_string()))}
   end
 
   def handle_event("add_item", _val, %{assigns: %{ui: ui}} = socket) do
-    {:noreply, update(socket, :schema, &Sch.put_string(&1, ui.current_path))}
+    {:noreply, update(socket, :schema, &Sch.put(&1, ui.current_path, Sch.new_string()))}
   end
 
   def handle_event("select_type", %{"type" => type, "path" => sch_path}, socket) do
@@ -112,12 +113,18 @@ defmodule FsetWeb.MainLive do
 
   defp schema(schema) do
     schema
-    |> Sch.put_object("root", "a")
-    |> Sch.put_string("root[a]", "b")
+    |> Sch.put("root", "a", Sch.new_object())
+    |> Sch.put("root[a]", "b", Sch.new_string())
   end
 
   defp percent(byte_size, :per_mb, quota) do
     quota_byte = quota * (1024 * 1024)
     Float.floor(byte_size / quota_byte * 100, 2)
+  end
+
+  defp gen_key() do
+    id = DateTime.to_unix(DateTime.now!("Etc/UTC"), :microsecond)
+    id = String.slice("#{id}", 6..-1)
+    "key_#{to_string(id)}"
   end
 end

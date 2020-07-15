@@ -1,5 +1,6 @@
 defmodule FsetWeb.TreeListComponent do
   use FsetWeb, :live_component
+  alias Fset.Sch
 
   @impl true
   def mount(socket) do
@@ -8,18 +9,11 @@ defmodule FsetWeb.TreeListComponent do
 
   @impl true
   def render(assigns) do
-    case assigns do
-      %{sch: %{type: :object}, ui: %{level: _}} ->
-        render_folder(assigns)
-
-      %{sch: %{type: :object}} ->
-        render_root(assigns)
-
-      %{sch: %{type: :array, items: _}} ->
-        render_folder(assigns)
-
-      %{sch: %{type: _}} ->
-        render_file(assigns)
+    cond do
+      Sch.object?(assigns.sch) && match?(%{level: _}, assigns.ui) -> render_folder(assigns)
+      Sch.object?(assigns.sch) -> render_root(assigns)
+      Sch.array?(assigns.sch) -> render_folder(assigns)
+      Sch.typed?(assigns.sch) -> render_file(assigns)
     end
   end
 
@@ -47,14 +41,22 @@ defmodule FsetWeb.TreeListComponent do
     """
   end
 
-  defp render_itself(%{sch: %{type: :object}} = assigns) do
+  defp render_itself(assigns) do
+    cond do
+      Sch.object?(assigns.sch) -> render_object(assigns)
+      Sch.array?(assigns.sch, :empty) -> ~L""
+      Sch.array?(assigns.sch) -> render_array(assigns)
+    end
+  end
+
+  defp render_object(assigns) do
     ~L"""
-    <%= for key <- @sch.order do %>
+    <%= for key <- Sch.order(@sch) do %>
       <%= for f0 <- inputs_for(@f, key) do %>
         <%= live_component(@socket, __MODULE__,
           id: f0.name,
           key: key,
-          sch: @sch.properties[key],
+          sch: Sch.prop_sch(@sch, key),
           ui: %{@ui | level: @ui.level + 1, parent_path: @f.name},
           f: f0
         ) %>
@@ -63,14 +65,9 @@ defmodule FsetWeb.TreeListComponent do
     """
   end
 
-  defp render_itself(%{sch: %{type: :array, items: item}} = assigns) when item == %{} do
+  defp render_array(assigns) do
     ~L"""
-    """
-  end
-
-  defp render_itself(%{sch: %{type: :array}} = assigns) do
-    ~L"""
-    <%= for f0 <- inputs_for(@f, nil, default: List.wrap(@sch.items)) do %>
+    <%= for f0 <- inputs_for(@f, nil, default: List.wrap(Sch.items(@sch))) do %>
       <%= live_component(@socket, __MODULE__,
         id: f0.name,
         key: f0.index,
@@ -138,28 +135,31 @@ defmodule FsetWeb.TreeListComponent do
       <span class="flex-1"></span>
       <div class="flex items-center h-4 ml-4 text-xs">
         <%= for {type, display_type} <- type_options() do %>
-          <span class="mr-1 <%= if @sch.type == type, do: 'bg-gray-800 text-gray-200 rounded', else: 'text-gray-400 cursor-pointer' %> px-1" phx-click="select_type" phx-value-type="<%= type %>" phx-value-path="<%= @ui.current_path %>"><%= display_type %></span>
+          <span class="mr-1 <%= if Sch.type(@sch) == type, do: 'bg-gray-800 text-gray-200 rounded', else: 'text-gray-400 cursor-pointer' %> px-1" phx-click="select_type" phx-value-type="<%= type %>" phx-value-path="<%= @ui.current_path %>"><%= display_type %></span>
         <% end %>
       </div>
 
-      <%= render_add_button(assigns, @sch.type) %>
+      <%= render_add_button(assigns) %>
     <% end %>
     """
   end
 
-  defp render_add_button(assigns, :object) do
-    ~L"""
-    <span phx-click="add_prop" class="mx-2 px-2 bg-indigo-500 rounded text-xs cursor-pointer">+</span>
-    """
-  end
+  defp render_add_button(assigns) do
+    cond do
+      Sch.object?(assigns.sch) ->
+        ~L"""
+        <span phx-click="add_prop" class="mx-2 px-2 bg-indigo-500 rounded text-xs cursor-pointer">+</span>
+        """
 
-  defp render_add_button(assigns, :array) do
-    ~L"""
-    <span phx-click="add_item" class="mx-2 px-2 bg-indigo-500 rounded text-xs cursor-pointer">+</span>
-    """
-  end
+      Sch.array?(assigns.sch) ->
+        ~L"""
+        <span phx-click="add_item" class="mx-2 px-2 bg-indigo-500 rounded text-xs cursor-pointer">+</span>
+        """
 
-  defp render_add_button(assigns, _), do: ~L""
+      true ->
+        ~L""
+    end
+  end
 
   defp render_textarea(assigns) do
     ~L"""
@@ -194,50 +194,49 @@ defmodule FsetWeb.TreeListComponent do
     """
   end
 
-  defp render_type(%{sch: %{type: :object}} = assigns) do
-    ~L"""
-    <p class="text-xs flex-shrink-0">
-      <span class="close-marker self-center cursor-pointer text-sm select-none text-blue-500">{...}</span>
-      <span class="open-marker self-center cursor-pointer text-sm select-none text-blue-500">{  }</span>
-    </p>
-    """
-  end
-
-  defp render_type(%{sch: %{type: :array, items: item}} = assigns) when item == %{} do
-    ~L"""
-    <span class="text-sm text-blue-500">[any]</span>
-    """
-  end
-
-  defp render_type(%{sch: %{type: :array, items: item}} = assigns) when is_map(item) do
-    ~L"""
-    <span class="text-sm text-blue-500 cursor-pointer">[<%=  type_options()[@sch.items.type] %>]</span>
-    """
-  end
-
-  defp render_type(%{sch: %{type: :array, items: items}} = assigns) when is_list(items) do
-    ~L"""
-    <p class="text-xs flex-shrink-0">
-      <span class="close-marker self-center cursor-pointer text-sm select-none text-blue-500">[...]</span>
-      <span class="open-marker self-center cursor-pointer text-sm select-none text-blue-500">[  ]</span>
-    </p>
-    """
-  end
-
   defp render_type(assigns) do
-    ~L"""
-    <span class="text-sm text-blue-500"><%=  type_options()[@sch.type] %></span>
-    """
+    cond do
+      Sch.object?(assigns.sch) ->
+        ~L"""
+        <p class="text-xs flex-shrink-0">
+          <span class="close-marker self-center cursor-pointer text-sm select-none text-blue-500">{...}</span>
+          <span class="open-marker self-center cursor-pointer text-sm select-none text-blue-500">{  }</span>
+        </p>
+        """
+
+      Sch.array?(assigns.sch, :empty) ->
+        ~L"""
+        <span class="text-sm text-blue-500">[any]</span>
+        """
+
+      Sch.array?(assigns.sch, :homo) ->
+        ~L"""
+        <span class="text-sm text-blue-500 cursor-pointer">[<%= Map.get(Map.new(type_options()), Sch.type(Sch.items(@sch))) %>]</span>
+        """
+
+      Sch.array?(assigns.sch, :hetero) ->
+        ~L"""
+        <p class="text-xs flex-shrink-0">
+          <span class="close-marker self-center cursor-pointer text-sm select-none text-blue-500">[...]</span>
+          <span class="open-marker self-center cursor-pointer text-sm select-none text-blue-500">[  ]</span>
+        </p>
+        """
+
+      true ->
+        ~L"""
+        <span class="text-sm text-blue-500"><%=  Map.get(Map.new(type_options()), Sch.type(@sch)) %></span>
+        """
+    end
   end
 
   defp type_options do
     [
-      string: "str",
-      number: "num",
-      boolean: "bool",
-      object: "obj",
-      array: "arr",
-      null: "null"
+      {Sch.type(Sch.new_object()), "obj"},
+      {Sch.type(Sch.new_array()), "arr"},
+      {Sch.type(Sch.new_string()), "str"},
+      {Sch.type(Sch.new_number()), "num"},
+      {Sch.type(Sch.new_boolean()), "bool"},
+      {Sch.type(Sch.new_null()), "null"}
     ]
   end
 end
