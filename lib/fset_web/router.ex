@@ -17,13 +17,6 @@ defmodule FsetWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", FsetWeb do
-    pipe_through [:browser, :require_authenticated_user]
-
-    get "/", StaticPageController, :landing
-    live "/:file_id", MainLive, :index
-  end
-
   # Other scopes may use custom stacks.
   # scope "/api", FsetWeb do
   #   pipe_through :api
@@ -45,8 +38,6 @@ defmodule FsetWeb.Router do
     end
   end
 
-  ## Authentication routes
-
   scope "/", FsetWeb do
     pipe_through [:browser, :redirect_if_user_is_authenticated]
 
@@ -63,6 +54,8 @@ defmodule FsetWeb.Router do
   scope "/", FsetWeb do
     pipe_through [:browser, :require_authenticated_user]
 
+    live "/:file_id", MainLive, :index
+
     get "/users/settings", UserSettingsController, :edit
     put "/users/settings/update_password", UserSettingsController, :update_password
     put "/users/settings/update_email", UserSettingsController, :update_email
@@ -71,6 +64,8 @@ defmodule FsetWeb.Router do
 
   scope "/", FsetWeb do
     pipe_through [:browser]
+
+    get "/", HomeController, :index
 
     delete "/users/log_out", UserSessionController, :delete
     get "/users/confirm", UserConfirmationController, :new

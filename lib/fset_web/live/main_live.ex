@@ -126,12 +126,6 @@ defmodule FsetWeb.MainLive do
     {:noreply, socket}
   end
 
-  defp schema(schema) do
-    schema
-    |> Sch.put("root", "a", Sch.new_object())
-    |> Sch.put("root[a]", "b", Sch.new_string())
-  end
-
   defp percent(byte_size, :per_mb, quota) do
     quota_byte = quota * (1024 * 1024)
     Float.floor(byte_size / quota_byte * 100, 2)

@@ -11,8 +11,11 @@ defmodule FsetWeb.UserSessionController do
   def create(conn, %{"user" => user_params}) do
     %{"email" => email, "password" => password} = user_params
 
+    Accounts.get_user_by_email_and_password(email, password)
+
     if user = Accounts.get_user_by_email_and_password(email, password) do
-      UserAuth.log_in_user(conn, user, user_params)
+      home_path = Routes.home_path(conn, :index)
+      UserAuth.log_in_user(conn, user, Map.put(user_params, :user_return_to, home_path))
     else
       render(conn, "new.html", error_message: "Invalid e-mail or password")
     end
