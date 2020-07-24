@@ -25,13 +25,12 @@ defmodule FsetWeb.MainLive do
   def handle_event("add_prop", _val, %{assigns: %{ui: ui}} = socket) do
     Process.send_after(self(), :update_schema, 1000)
 
-    {:noreply,
-     update(socket, :schema, &Sch.put(&1, ui.current_path, gen_key(), Sch.new_string()))}
+    {:noreply, update(socket, :schema, &Sch.put(&1, ui.current_path, gen_key(), Sch.string()))}
   end
 
   def handle_event("add_item", _val, %{assigns: %{ui: ui}} = socket) do
     Process.send_after(self(), :update_schema, 1000)
-    {:noreply, update(socket, :schema, &Sch.put(&1, ui.current_path, Sch.new_string()))}
+    {:noreply, update(socket, :schema, &Sch.put(&1, ui.current_path, Sch.string()))}
   end
 
   def handle_event("select_type", %{"type" => type, "path" => sch_path}, socket) do

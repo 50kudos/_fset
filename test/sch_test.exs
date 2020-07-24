@@ -8,121 +8,121 @@ defmodule SchTest do
 
   test "#new", root do
     assert object?(root)
-    assert prop_sch(root, "root") == new_object()
+    assert prop_sch(root, "root") == object()
     assert order(root) == ["root"]
   end
 
   test "#get", root do
-    root = put(root, "root", "key", new_object())
-    assert get(root, "root[key]") == new_object()
+    root = put(root, "root", "key", object())
+    assert get(root, "root[key]") == object()
 
-    root = put(root, "root[key]", "arr_key", new_array())
-    assert get(root, "root[key][arr_key]") == new_array()
-    assert get(root, "root[key][arr_key][]") == new_array()
+    root = put(root, "root[key]", "arr_key", array())
+    assert get(root, "root[key][arr_key]") == array()
+    assert get(root, "root[key][arr_key][]") == array()
     assert get(root, "root[key][arr_key][][0]") == %{}
 
-    root = put(root, "root[key][arr_key]", new_string())
-    assert get(root, "root[key][arr_key][][0]") == new_string()
-    assert get(root, "root[key][arr_key][][0][]") == new_string()
+    root = put(root, "root[key][arr_key]", string())
+    assert get(root, "root[key][arr_key][][0]") == string()
+    assert get(root, "root[key][arr_key][][0][]") == string()
     assert get(root, "root[key][arr_key][][0][][0]") == %{}
   end
 
   test "#put_object to object", root do
-    root = put(root, "root", "key", new_object())
+    root = put(root, "root", "key", object())
 
     assert get(root, "root") |> object?()
     assert get(root, "root") |> order() == ["key"]
     assert get(root, "root") |> properties() |> Map.has_key?("key")
-    assert get(root, "root[key]") == new_object()
+    assert get(root, "root[key]") == object()
   end
 
   test "#put_array to object", root do
-    root = put(root, "root", "key", new_array())
+    root = put(root, "root", "key", array())
 
     assert get(root, "root") |> object?()
     assert get(root, "root") |> order() == ["key"]
     assert get(root, "root") |> properties() |> Map.has_key?("key")
-    assert get(root, "root[key]") == new_array()
+    assert get(root, "root[key]") == array()
   end
 
   test "#put_object to array", root do
-    root = put(root, "root", "arr_key", new_array())
-    root = put(root, "root[arr_key]", new_object())
+    root = put(root, "root", "arr_key", array())
+    root = put(root, "root[arr_key]", object())
 
     assert get(root, "root[arr_key]") |> array?()
-    assert get(root, "root[arr_key]") |> items() == new_object()
+    assert get(root, "root[arr_key]") |> items() == object()
 
-    root = put(root, "root[arr_key]", new_object())
+    root = put(root, "root[arr_key]", object())
 
-    assert get(root, "root[arr_key][][0]") == new_object()
-    assert get(root, "root[arr_key][][1]") == new_object()
+    assert get(root, "root[arr_key][][0]") == object()
+    assert get(root, "root[arr_key][][1]") == object()
   end
 
   test "#put_array to array", root do
-    root = put(root, "root", "arr_key", new_array())
-    root = put(root, "root[arr_key]", new_array())
+    root = put(root, "root", "arr_key", array())
+    root = put(root, "root[arr_key]", array())
 
     assert get(root, "root[arr_key]") |> array?()
-    assert get(root, "root[arr_key]") |> items() == new_array()
+    assert get(root, "root[arr_key]") |> items() == array()
 
-    root = put(root, "root[arr_key]", new_array())
+    root = put(root, "root[arr_key]", array())
 
-    assert get(root, "root[arr_key][][0]") == new_array()
-    assert get(root, "root[arr_key][][1]") == new_array()
+    assert get(root, "root[arr_key][][0]") == array()
+    assert get(root, "root[arr_key][][1]") == array()
   end
 
   test "#put_string to object", root do
-    root = put(root, "root", "key", new_string())
+    root = put(root, "root", "key", string())
 
     assert get(root, "root") |> object?()
     assert get(root, "root") |> order() == ["key"]
-    assert get(root, "root[key]") == new_string()
+    assert get(root, "root[key]") == string()
   end
 
   test "#put_string to array", root do
-    root = put(root, "root", "arr_key", new_array())
-    root = put(root, "root[arr_key]", new_string())
+    root = put(root, "root", "arr_key", array())
+    root = put(root, "root[arr_key]", string())
 
     assert get(root, "root[arr_key]") |> array?()
-    assert get(root, "root[arr_key]") |> items() == new_string()
-    assert get(root, "root[arr_key][][0]") == new_string()
+    assert get(root, "root[arr_key]") |> items() == string()
+    assert get(root, "root[arr_key][][0]") == string()
   end
 
   test "#pop_schs object", root do
-    root = put(root, "root", "key1", new_object())
-    root = put(root, "root", "key2", new_object())
+    root = put(root, "root", "key1", object())
+    root = put(root, "root", "key2", object())
     assert get(root, "root") |> properties() |> Map.has_key?("key1")
     assert get(root, "root") |> properties() |> Map.has_key?("key2")
     assert get(root, "root") |> order() == ["key1", "key2"]
 
     {schs, root} = pop_schs(root, "root", [0, 1])
-    assert schs == [{"key1", new_object()}, {"key2", new_object()}]
+    assert schs == [{"key1", object()}, {"key2", object()}]
     refute get(root, "root") |> properties() |> Map.has_key?("key1")
     refute get(root, "root") |> properties() |> Map.has_key?("key2")
     assert get(root, "root") |> order() == []
   end
 
   test "#pop_schs array", root do
-    root = put(root, "root", "arr_key", new_array())
-    root = put(root, "root[arr_key]", new_string())
-    root = put(root, "root[arr_key]", new_string())
+    root = put(root, "root", "arr_key", array())
+    root = put(root, "root[arr_key]", string())
+    root = put(root, "root[arr_key]", string())
 
     {schs, root} = pop_schs(root, "root[arr_key]", [0, 1])
-    assert schs == [{0, new_string()}, {1, new_string()}]
-    assert get(root, "root[arr_key]") == new_array()
+    assert schs == [{0, string()}, {1, string()}]
+    assert get(root, "root[arr_key]") == array()
   end
 
   test "#pop_schs outsider then insider", root do
     root =
       root
-      |> put("root", "outsider", new_array())
-      |> put("root[outsider]", new_array())
-      |> put("root[outsider][][0]", new_string())
+      |> put("root", "outsider", array())
+      |> put("root[outsider]", array())
+      |> put("root[outsider][][0]", string())
 
     {[sch], root} = pop_schs(root, "root[outsider]", [])
-    assert get(root, "root[outsider]") == new_array()
+    assert get(root, "root[outsider]") == array()
     assert elem(sch, 0) == 0
-    assert elem(sch, 1) |> items() == new_string()
+    assert elem(sch, 1) |> items() == string()
 
     {schs, _} = pop_schs(root, "root[outsider][][0]", [])
     assert schs == nil
@@ -131,74 +131,74 @@ defmodule SchTest do
   test "#pop_schs insider then outsider", root do
     root =
       root
-      |> put("root", "outsider", new_array())
-      |> put("root[outsider]", new_array())
-      |> put("root[outsider][][0]", new_string())
+      |> put("root", "outsider", array())
+      |> put("root[outsider]", array())
+      |> put("root[outsider][][0]", string())
 
     {[sch], root} = pop_schs(root, "root[outsider][][0]", [])
-    assert get(root, "root[outsider][][0]") == new_array()
-    assert sch == {0, new_string()}
+    assert get(root, "root[outsider][][0]") == array()
+    assert sch == {0, string()}
 
     {[sch], _} = pop_schs(root, "root[outsider]", [])
-    assert sch == {0, new_array()}
+    assert sch == {0, array()}
   end
 
   test "#pop_schs sibling ", root do
     root =
       root
-      |> put("root", "a", new_array())
-      |> put("root[a]", new_string())
-      |> put("root[a]", new_boolean())
+      |> put("root", "a", array())
+      |> put("root[a]", string())
+      |> put("root[a]", boolean())
       #
-      |> put("root", "b", new_array())
-      |> put("root[b]", new_number())
-      |> put("root[b]", new_string())
+      |> put("root", "b", array())
+      |> put("root[b]", number())
+      |> put("root[b]", string())
 
     {[sch1], root} = pop_schs(root, "root[a]", [1])
     {[sch2], root} = pop_schs(root, "root[b]", [0])
 
-    assert sch1 == {1, new_boolean()}
-    assert sch2 == {0, new_number()}
-    assert get(root, "root[a]") |> items() == new_string()
-    assert get(root, "root[b]") |> items() == new_string()
+    assert sch1 == {1, boolean()}
+    assert sch2 == {0, number()}
+    assert get(root, "root[a]") |> items() == string()
+    assert get(root, "root[b]") |> items() == string()
   end
 
   test "#put_schs multiple props to empty object", root do
     raw_schs = [
-      %{key: "a", sch: new_number(), index: 1},
-      %{key: "b", sch: new_boolean(), index: 0}
+      %{key: "a", sch: number(), index: 1},
+      %{key: "b", sch: boolean(), index: 0}
     ]
 
     root = put_schs(root, "root", raw_schs)
-    assert get(root, "root[a]") == new_number()
-    assert get(root, "root[b]") == new_boolean()
+    assert get(root, "root[a]") == number()
+    assert get(root, "root[b]") == boolean()
     assert get(root, "root") |> order() == ["b", "a"]
   end
 
   test "#put_schs multiple items to empty array", root do
-    root = put(root, "root", "arr_key", new_array())
+    root = put(root, "root", "arr_key", array())
 
     raw_schs = [
-      %{sch: new_number(), index: 1},
-      %{sch: new_boolean(), index: 0}
+      %{sch: number(), index: 1},
+      %{sch: boolean(), index: 0}
     ]
 
     root = put_schs(root, "root[arr_key]", raw_schs)
-    assert get(root, "root[arr_key][][1]") == new_number()
-    assert get(root, "root[arr_key][][0]") == new_boolean()
+    assert get(root, "root[arr_key][][1]") == number()
+    assert get(root, "root[arr_key][][0]") == boolean()
   end
 
   test "#rename_key", root do
-    root = put(root, "root", "a", new_string())
-    root = put(root, "root", "y", new_string())
-    root = put(root, "root", "b", new_string())
+    root = put(root, "root", "a", string())
+    root = put(root, "root", "y", string())
+    root = put(root, "root", "b", string())
     assert get(root, "root") |> order() == ["a", "y", "b"]
 
     root = rename_key(root, "root", "b", "x")
     root = rename_key(root, "root", "a", "a")
-    assert get(root, "root[a]") == new_string()
-    assert get(root, "root[y]") == new_string()
-    assert get(root, "root[x]") == new_string()
+    assert get(root, "root[a]") == string()
+    assert get(root, "root[y]") == string()
+    assert get(root, "root[x]") == string()
     assert get(root, "root[b]") == nil
     assert get(root, "root") |> order() == ["a", "y", "x"]
   end
@@ -206,31 +206,31 @@ defmodule SchTest do
   test "#move multi-items up and down", root do
     root =
       root
-      |> put("root", "a", new_object())
-      |> put("root[a]", "b", new_array())
-      |> put("root[a][b]", new_string())
-      |> put("root[a][b]", new_string())
+      |> put("root", "a", object())
+      |> put("root[a]", "b", array())
+      |> put("root[a][b]", string())
+      |> put("root[a][b]", string())
 
     src_indices = [
-      %{"from" => "root[a][b]", "index" => 0},
-      %{"from" => "root[a][b]", "index" => 1}
+      src_item("root[a][b]", 0),
+      src_item("root[a][b]", 1)
     ]
 
     dst_indices = [
-      %{"to" => "root[a]", "index" => 0},
-      %{"to" => "root[a]", "index" => 1}
+      dst_item("root[a]", 0),
+      dst_item("root[a]", 1)
     ]
 
     moved_up = move(root, src_indices, dst_indices)
 
     src_indices = [
-      %{"from" => "root[a]", "index" => 0},
-      %{"from" => "root[a]", "index" => 1}
+      src_item("root[a]", 0),
+      src_item("root[a]", 1)
     ]
 
     dst_indices = [
-      %{"to" => "root[a][b]", "index" => 0},
-      %{"to" => "root[a][b]", "index" => 1}
+      dst_item("root[a][b]", 0),
+      dst_item("root[a][b]", 1)
     ]
 
     moved_down = move(moved_up, src_indices, dst_indices)
@@ -242,16 +242,16 @@ defmodule SchTest do
   test "#move from multiple sources", root do
     root =
       root
-      |> put("root", "a", new_array())
-      |> put("root[a]", new_string())
-      |> put("root[a]", new_boolean())
+      |> put("root", "a", array())
+      |> put("root[a]", string())
+      |> put("root[a]", boolean())
       #
-      |> put("root", "b", new_array())
-      |> put("root[b]", new_number())
-      |> put("root[b]", new_string())
+      |> put("root", "b", array())
+      |> put("root[b]", number())
+      |> put("root[b]", string())
 
-    dst_indices = [%{"to" => "root", "index" => 1}, %{"to" => "root", "index" => 0}]
-    src_indices = [%{"from" => "root[a]", "index" => 1}, %{"from" => "root[b]", "index" => 0}]
+    dst_indices = [dst_item("root", 1), dst_item("root", 0)]
+    src_indices = [src_item("root[a]", 1), src_item("root[b]", 0)]
     root = move(root, src_indices, dst_indices)
 
     assert get(root, "root") |> order() == ["0", "1", "a", "b"]
@@ -260,18 +260,18 @@ defmodule SchTest do
   test "#get_paths", root do
     root =
       root
-      |> put("root", "a", new_array())
-      |> put("root[a]", new_string())
-      |> put("root[a]", new_string())
+      |> put("root", "a", array())
+      |> put("root[a]", string())
+      |> put("root[a]", string())
 
     src_indices = [
-      %{"from" => "root[a]", "index" => 0},
-      %{"from" => "root[a]", "index" => 1}
+      src_item("root[a]", 0),
+      src_item("root[a]", 1)
     ]
 
     dst_indices = [
-      %{"to" => "root", "index" => 0},
-      %{"to" => "root", "index" => 1}
+      dst_item("root", 0),
+      dst_item("root", 1)
     ]
 
     root = move(root, src_indices, dst_indices)

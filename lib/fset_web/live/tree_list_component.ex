@@ -231,12 +231,12 @@ defmodule FsetWeb.TreeListComponent do
 
   defp type_options do
     [
-      {Sch.type(Sch.new_object()), "obj"},
-      {Sch.type(Sch.new_array()), "arr"},
-      {Sch.type(Sch.new_string()), "str"},
-      {Sch.type(Sch.new_number()), "num"},
-      {Sch.type(Sch.new_boolean()), "bool"},
-      {Sch.type(Sch.new_null()), "null"}
+      {Sch.type(Sch.object()), "obj"},
+      {Sch.type(Sch.array()), "arr"},
+      {Sch.type(Sch.string()), "str"},
+      {Sch.type(Sch.number()), "num"},
+      {Sch.type(Sch.boolean()), "bool"},
+      {Sch.type(Sch.null()), "null"}
     ]
   end
 end

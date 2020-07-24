@@ -46,17 +46,17 @@ defmodule Fset.Sch do
   def new(root_key) do
     %{
       @type_ => @object,
-      @properties => %{root_key => %{@type_ => @object, @order => []}},
+      @properties => %{root_key => object()},
       @order => [root_key]
     }
   end
 
-  def new_object, do: %{@type_ => @object, @order => []}
-  def new_array, do: %{@type_ => @array, @items => %{}}
-  def new_string, do: %{@type_ => @string}
-  def new_number, do: %{@type_ => @number}
-  def new_boolean, do: %{@type_ => @boolean}
-  def new_null, do: %{@type_ => @null}
+  def object(), do: %{@type_ => @object, @order => []}
+  def array(), do: %{@type_ => @array, @items => %{}}
+  def string(), do: %{@type_ => @string}
+  def number(), do: %{@type_ => @number}
+  def boolean(), do: %{@type_ => @boolean}
+  def null(), do: %{@type_ => @null}
 
   def get(map, path) when is_map(map) and is_binary(path) do
     get_in(map, access_path(path))
@@ -64,6 +64,9 @@ defmodule Fset.Sch do
 
   def put(map, path, sch), do: put(map, path, nil, sch)
 
+  @doc """
+    %{key: _, sch: _, index: _} is called `raw_sch` within this module.
+  """
   def put(map, path, key, sch) do
     put_schs(map, path, [%{key: key, sch: sch, index: -1}])
   end
@@ -88,6 +91,14 @@ defmodule Fset.Sch do
     update_in(map, access_path(path), fn %{@type_ => _} = sch ->
       Map.put(sch, @type_, type)
     end)
+  end
+
+  def src_item(path, index) when is_binary(path) and is_integer(index) do
+    %{"from" => path, "index" => index}
+  end
+
+  def dst_item(path, index) when is_binary(path) and is_integer(index) do
+    %{"to" => path, "index" => index}
   end
 
   def move(map, src_indices, dst_indices)
