@@ -20,7 +20,7 @@ defmodule FsetWeb.TreeListComponent do
   defp render_folder(assigns) do
     ~L"""
     <nav class="sort-handle" data-path="<%= @f.name %>">
-      <details data-path="<%= @f.name %>" phx-hook="expandableSortable" data-indent="<%= (@ui.level + 1) * 1.25 %>rem" open>
+      <details id="expandableSortable__<%= @f.name %>" phx-hook="expandableSortable" data-indent="<%= (@ui.level + 1) * 1.25 %>rem" open>
         <summary class="flex w-full">
           <div class="dragover-hl flex items-center w-full h-8 <%= if @f.name in List.flatten([@ui.current_path]), do: 'bg-indigo-700 text-gray-100' %>">
             <%= if @ui.level > 0 do %>
@@ -44,7 +44,7 @@ defmodule FsetWeb.TreeListComponent do
   defp render_itself(assigns) do
     cond do
       Sch.object?(assigns.sch) -> render_object(assigns)
-      Sch.array?(assigns.sch, :empty) -> ~L""
+      Sch.array?(assigns.sch, :empty) -> {:safe, []}
       Sch.array?(assigns.sch) -> render_array(assigns)
     end
   end
@@ -84,7 +84,7 @@ defmodule FsetWeb.TreeListComponent do
     <nav>
       <div phx-hook="expandableSortable" data-group="root" data-path="<%= @f.name %>"
         data-current-paths="<%= Jason.encode!(List.wrap(@ui.current_path)) %>"
-        phx-capture-click="select_sch" phx-value-paths="root" class="h-full">
+        phx-capture-click="select_sch" phx-value-paths="root" class="h-full" id="expandableSortable__<%= @f.name %>">
 
         <%= render(
           assigns
@@ -157,13 +157,13 @@ defmodule FsetWeb.TreeListComponent do
         """
 
       true ->
-        ~L""
+        {:safe, []}
     end
   end
 
   defp render_textarea(assigns) do
     ~L"""
-    <textarea type="text" class="filtered p-2 w-full h-full self-start text-xs bg-indigo-800 z-10 shadow-inner text-white"
+    <textarea type="text" id="autoFocus__<%= @ui.current_path %>" class="filtered p-2 w-full h-full self-start text-xs bg-indigo-800 z-10 shadow-inner text-white"
       phx-hook="autoFocus"
       phx-blur="rename_key"
       phx-keydown="rename_key"
@@ -174,23 +174,25 @@ defmodule FsetWeb.TreeListComponent do
     """
   end
 
+  defp render_key(%{ui: %{current_path: name}, f: %{name: name}} = assigns) do
+    ~L"""
+    <p class="flex items-center text-sm h-full overflow-hidden"
+      phx-click="edit_sch"
+      phx-value-path="<%= @f.name %>"
+      onclick="event.preventDefault()">
+      <span class="px-1 max-w-xs truncate"><%= @key %></span>
+      <span class="mx-2">:</span>
+    </p>
+    """
+  end
+
   defp render_key(assigns) do
     ~L"""
-    <%= if @ui.current_path == @f.name do %>
-      <p class="flex items-center text-sm h-full overflow-hidden"
-        phx-click="edit_sch"
-        phx-value-path="<%= @f.name %>"
-        onclick="event.preventDefault()">
-        <span class="px-1 max-w-xs truncate"><%= @key %></span>
-        <span class="mx-2">:</span>
-      </p>
-    <% else %>
-      <p class="flex items-center text-sm h-full overflow-hidden"
-        onclick="event.preventDefault()">
-        <span class="px-1 max-w-xs truncate"><%= @key %></span>
-        <span class="mx-2">:</span>
-      </p>
-    <% end %>
+    <p class="flex items-center text-sm h-full overflow-hidden"
+      onclick="event.preventDefault()">
+      <span class="px-1 max-w-xs truncate"><%= @key %></span>
+      <span class="mx-2">:</span>
+    </p>
     """
   end
 

@@ -54,7 +54,7 @@
     </div>
 
     <footer class="flex items-center justify-center py-1 text-sm bg-gray-900 border-t border-gray-800">
-      <p class="text-xs text-gray-500 "><%= if !is_list(@ui.current_path), do: @ui.current_path %></p>
+      <p class="text-xs text-gray-500 "><%= if !is_list(@ui.current_path), do: @ui.current_path, else: "multi-paths" %></p>
     </footer>
   </section>
 </form>

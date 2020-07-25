@@ -72,7 +72,7 @@ Hooks.expandableSortable = {
     indentEl.style.paddingLeft = box.dataset.indent
   },
   itemPath(item) {
-    return item.dataset.path
+    return Sortable.utils.closest(item, "[data-path]").dataset.path
   },
   selectCurrentItems() {
     const root = document.querySelector("[data-group='root']")

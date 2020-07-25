@@ -5,6 +5,7 @@ defmodule FsetWeb.SchComponent do
   @impl true
   def render(assigns) do
     ~L"""
+    <article>
       <label class="block mb-2 border border-gray-800 bg-gray-800">
         <p class="p-1 text-xs text-gray-600">Title</p>
         <input type="text" phx-blur="update_sch" phx-value-key="title" value="<%= Map.get(@sch, ~s(title)) %>" class="h-6 p-1 bg-gray-800 shadow w-full">
@@ -15,6 +16,7 @@ defmodule FsetWeb.SchComponent do
         <textarea type="text" phx-blur="update_sch" phx-value-key="description" class="h-6 p-1 bg-gray-800 shadow w-full"><%= Map.get(@sch, "description") %></textarea>
       </label>
       <%= render_sch(assigns) %>
+    </article>
     """
   end
 
@@ -34,8 +36,8 @@ defmodule FsetWeb.SchComponent do
       Sch.array?(assigns.sch) -> render_array(assigns)
       Sch.string?(assigns.sch) -> render_string(assigns)
       Sch.number?(assigns.sch) -> render_number(assigns)
-      Sch.boolean?(assigns.sch) -> ~L""
-      Sch.null?(assigns.sch) -> ~L""
+      Sch.boolean?(assigns.sch) -> {:safe, []}
+      Sch.null?(assigns.sch) -> {:safe, []}
     end
   end
 
@@ -48,7 +50,8 @@ defmodule FsetWeb.SchComponent do
             phx-hook="updateSch"
             phx-value-key="maxProperties"
             value="<%= Map.get(@sch, ~s(maxProperties), 0) %>"
-            class="h-6 p-1 bg-gray-800 shadow w-full"></textarea>
+            class="h-6 p-1 bg-gray-800 shadow w-full"
+            id="updateSch__<%= @ui.current_path %>"></textarea>
         </label>
         <label class="block mb-2 border border-gray-800 bg-gray-800">
           <p class="p-1 text-xs text-gray-600">Min Properties</p>
@@ -56,7 +59,8 @@ defmodule FsetWeb.SchComponent do
             phx-hook="updateSch"
             phx-value-key="minProperties"
             value="<%= Map.get(@sch, ~s(minProperties), 0) %>"
-            class="h-6 p-1 bg-gray-800 shadow w-full"></textarea>
+            class="h-6 p-1 bg-gray-800 shadow w-full"
+            id="updateSch__<%= @ui.current_path %>"></textarea>
         </label>
       </div>
     """
@@ -71,7 +75,8 @@ defmodule FsetWeb.SchComponent do
           phx-hook="updateSch"
           phx-value-key="maxItems"
           value="<%= Map.get(@sch, ~s(maxItems), 0) %>"
-          class="h-6 p-1 bg-gray-800 shadow w-full"></textarea>
+          class="h-6 p-1 bg-gray-800 shadow w-full"
+          id="updateSch__<%= @ui.current_path %>"></textarea>
       </label>
       <label class="block mb-2 border border-gray-800 bg-gray-800">
         <p class="p-1 text-xs text-gray-600">Min Items</p>
@@ -79,7 +84,8 @@ defmodule FsetWeb.SchComponent do
           phx-hook="updateSch"
           phx-value-key="minItems"
           value="<%= Map.get(@sch, ~s(minItems), 0) %>"
-          class="h-6 p-1 bg-gray-800 shadow w-full"></textarea>
+          class="h-6 p-1 bg-gray-800 shadow w-full"
+          id="updateSch__<%= @ui.current_path %>"></textarea>
       </label>
     </div>
     """
@@ -94,7 +100,8 @@ defmodule FsetWeb.SchComponent do
             phx-hook="updateSch"
             phx-value-key="maxLength"
             value="<%= Map.get(@sch, ~s(maxLength), 0) %>"
-            class="h-6 p-1 bg-gray-800 shadow w-full"></textarea>
+            class="h-6 p-1 bg-gray-800 shadow w-full"
+            id="updateSch__<%= @ui.current_path %>"></textarea>
         </label>
         <label class="mb-2 border border-gray-800 bg-gray-800">
           <p class="p-1 text-xs text-gray-600">Min Length</p>
@@ -102,7 +109,8 @@ defmodule FsetWeb.SchComponent do
             phx-hook="updateSch"
             phx-value-key="minLength"
             value="<%= Map.get(@sch, ~s(minLength), 0) %>"
-            class="h-6 p-1 bg-gray-800 shadow w-full"></textarea>
+            class="h-6 p-1 bg-gray-800 shadow w-full"
+            id="updateSch__<%= @ui.current_path %>"></textarea>
         </label>
       </div>
     """
@@ -116,7 +124,8 @@ defmodule FsetWeb.SchComponent do
           phx-hook="updateSch"
           phx-value-key="maximum"
           value="<%= Map.get(@sch, ~s(maximum), 0) %>"
-          class="h-6 p-1 bg-gray-800 shadow w-full"></textarea>
+          class="h-6 p-1 bg-gray-800 shadow w-full"
+          id="updateSch__<%= @ui.current_path %>"></textarea>
       </label>
       <label class="block mb-2 border border-gray-800 bg-gray-800">
         <p class="p-1 text-xs text-gray-600">Minimum</p>
@@ -124,7 +133,8 @@ defmodule FsetWeb.SchComponent do
           phx-hook="updateSch"
           phx-value-key="minimum"
           value="<%= Map.get(@sch, ~s(minimum), 0) %>"
-          class="h-6 p-1 bg-gray-800 shadow w-full"></textarea>
+          class="h-6 p-1 bg-gray-800 shadow w-full"
+          id="updateSch__<%= @ui.current_path %>"></textarea>
       </label>
       <label class="block mb-2 border border-gray-800 bg-gray-800">
         <p class="p-1 text-xs text-gray-600">MultipleOf</p>
