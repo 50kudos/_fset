@@ -91,23 +91,37 @@
 }
 
 .stripe-gray {
-  /* gray-800, gray-900 */
   --bg-opacity: 1;
+  --gray-700: rgba(74, 85, 104, var(--bg-opacity));
+  --gray-800: rgba(45, 55, 72, var(--bg-opacity));
+  --gray-900: rgba(26, 32, 44, var(--bg-opacity));
+
   background: linear-gradient(
     to bottom,
-    rgba(45, 55, 72, var(--bg-opacity)),
-    rgba(45, 55, 72, var(--bg-opacity)) 50%,
-    rgba(26, 32, 44, var(--bg-opacity)) 50%,
-    rgba(26, 32, 44, var(--bg-opacity))
+    var(--gray-700),
+    var(--gray-700) 50%,
+    var(--gray-800) 50%,
+    var(--gray-800)
   ),
-  linear-gradient(to left, gray 0%, white 150%);
+  linear-gradient(to left, var(--gray-700) 0%, var(--gray-700) 100%);
   background-blend-mode: multiply;
   background-size: 100% 4rem;
 }
 
-.sortable-ghost {
+/* version 1 */
+/*.sortable-ghost {
   > * { @apply hidden }
   @apply h-0 py-0 border-b border-green-600 border-dashed
+}*/
+
+/* version 2 */
+
+
+.sortable-ghost {
+  @apply py-0 border border-gray-700 border-dashed
+}
+.sortable-selected {
+  @apply bg-indigo-600 bg-opacity-25 border-dashed box-border
 }
 
 details > summary::-webkit-details-marker {
@@ -130,4 +144,14 @@ details[open] > summary {
   .open-marker {
     display: block;
   }
+}
+
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance:textfield;
 }

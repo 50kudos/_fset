@@ -82,7 +82,7 @@ Hooks.expandableSortable = {
       Sortable.get(this.el).multiDrag._deselectMultiDrag()
 
       JSON.parse(currentPaths).forEach(currentPath => {
-        let item = root.querySelector("[data-path='" + currentPath + "']")
+        let item = root.querySelector("[data-path='" + currentPath + "']") || root
         let itemBox = Sortable.utils.closest(item, "[phx-hook='expandableSortable']")
 
         item.from = itemBox
@@ -119,7 +119,7 @@ Hooks.expandableSortable = {
       preventOnFilter: false,
       handle: this.itemClass,
       draggable: this.itemClass,
-      direction: "vertical",
+      direction: "horizontal",
       revertOnSpill: true,
 
       onEnd: (evt) => {

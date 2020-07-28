@@ -21,38 +21,45 @@
         </ul>
       <% end %>
     </header>
-    <div class="grid grid-cols-3 flex-grow overflow-scroll">
-      <nav class="overflow-scroll shadow">
+    <section class="flex flex-grow overflow-scroll">
+      <aside class="w-1/5 p-4 text-gray-500 shadow">
+        <div>
+          <h5 class="text-lg">Storage</h4>
+          <div class="my-4">
+            <label for="disk" class="block my-4">
+              <p class="text-sm">Internal (of 500 KB quota):</p>
+              <progress id="disk" max="100" value="<%= percent(Fset.Persistence.term_size(@schema), :per_mb, 0.5) %>" class="h-1 w-full"></progress>
+              <p>
+                <span class="text-xs"><%= Fset.Persistence.term_size(@schema) %> bytes</span>
+                <span>·</span>
+                <span class="text-xs"><%= percent(Fset.Persistence.term_size(@schema), :per_mb, 0.5) %>%</span>
+              </p>
+            </label>
+          </div>
+          <hr class="border-gray-800 border-opacity-50">
+          <div class="my-4">
+            <p class="text-sm">External:</p>
+            <a href="/auth/github" class="inline-block my-2 px-2 py-1 border border-gray-700 rounded self-end text-sm text-gray-500 hover:text-gray-400">Connect Github</a>
+          </div>
+        </div>
+      </aside>
+      <nav class="w-3/5 overflow-scroll shadow">
         <div class="stripe-gray min-h-full">
-          <%= live_component @socket, TreeListComponent, id: f.name, key: "root", sch: Sch.get(@schema, "root"), ui: @ui, f: f %>
+          <%= live_component @socket, FileComponent, id: f.name, name: "root", body: Sch.get(@schema, "root"), ui: @ui, f: f %>
+          <%= #live_component @socket, TreeListComponent,
+            #id: f.name,
+            #key: "root",
+            #sch: Sch.get(@schema, "root"),
+            #ui: Map.put_new(@ui, :limit, 100),
+            #f: f %>
         </div>
       </nav>
-      <aside class="p-4 text-sm shadow">
+      <aside class="w-1/5 p-4 text-sm shadow">
         <%= if !is_list(@ui.current_path) do %>
           <%= live_component @socket, SchComponent, id: @ui.current_path, sch: Sch.get(@schema, @ui.current_path), ui: @ui %>
         <% end %>
       </aside>
-      <aside class="p-4 text-gray-500 shadow">
-        <h5 class="text-lg">Storage</h4>
-        <div class="my-4">
-          <label for="disk" class="block my-4">
-            <p class="text-sm">Internal (of 500 KB quota):</p>
-            <progress id="disk" max="100" value="<%= percent(Fset.Persistence.term_size(@schema), :per_mb, 0.5) %>" class="h-1 w-full"></progress>
-            <p>
-              <span class="text-xs"><%= Fset.Persistence.term_size(@schema) %> bytes</span>
-              <span>·</span>
-              <span class="text-xs"><%= percent(Fset.Persistence.term_size(@schema), :per_mb, 0.5) %>%</span>
-            </p>
-          </label>
-        </div>
-        <hr class="border-gray-800 border-opacity-50">
-        <div class="my-4">
-          <p class="text-sm">External:</p>
-          <a href="/auth/github" class="inline-block my-2 px-2 py-1 border border-gray-700 rounded self-end text-sm text-gray-500 hover:text-gray-400">Connect Github</a>
-        </div>
-      </aside>
-    </div>
-
+    </section>
     <footer class="flex items-center justify-center py-1 text-sm bg-gray-900 border-t border-gray-800">
       <p class="text-xs text-gray-500 "><%= if !is_list(@ui.current_path), do: @ui.current_path, else: "multi-paths" %></p>
     </footer>

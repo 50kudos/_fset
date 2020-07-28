@@ -1,6 +1,6 @@
 defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
-  alias FsetWeb.{TreeListComponent, SchComponent}
+  alias FsetWeb.{TreeListComponent, SchComponent, FileComponent}
   alias Fset.{Accounts, Sch, Persistence}
 
   @impl true
