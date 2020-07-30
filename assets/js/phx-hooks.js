@@ -57,7 +57,7 @@ Hooks.expandableSortable = {
   // User defined functions and properties
   itemClass: ".sort-handle",
   highlightClass: ".dragover-hl",
-  heighlightStyle: ["bg-indigo-700", "bg-opacity-75"],
+  heighlightStyle: ["bg-indigo-800", "bg-opacity-25"],
   indentClass: ".indent",
 
   resetHighLight() {
@@ -75,7 +75,7 @@ Hooks.expandableSortable = {
     return Sortable.utils.closest(item, "[data-path]").dataset.path
   },
   selectCurrentItems() {
-    const root = document.querySelector("[data-group='root']")
+    const root = document.querySelector("[data-group='file_1.json']")
     const currentPaths = root.dataset.currentPaths
 
     if (currentPaths) {
@@ -108,7 +108,8 @@ Hooks.expandableSortable = {
   setupSortable() {
     let sortableEl = this.el
     let sortableOpts = {
-      group: this.el.dataset.group || "nested",
+      // group: this.el.dataset.group || "nested",
+      group: "nested",
       // disabled: !!this.el.dataset.group,
       fallbackOnBody: true,
       swapThreshold: 0.35,
@@ -119,7 +120,7 @@ Hooks.expandableSortable = {
       preventOnFilter: false,
       handle: this.itemClass,
       draggable: this.itemClass,
-      direction: "horizontal",
+      // direction: "horizontal",
       revertOnSpill: true,
 
       onEnd: (evt) => {

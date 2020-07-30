@@ -43,10 +43,41 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_folder_header(%{ui: %{level: _}} = assigns) do
     ~L"""
-    <div class="dragover-hl flex items-center w-full h-8 <%= if @f.name in List.flatten([@ui.current_path]), do: 'bg-indigo-700 text-gray-100' %>">
+    <div class="dragover-hl flex flex-wrap items-center w-full <%= if @f.name in List.flatten([@ui.current_path]), do: 'bg-indigo-700 bg-opacity-50 text-gray-100' %>">
       <%= render_key_type_pair(assigns) %>
     </div>
     """
+  end
+
+  defp render_inline_type(%{sch: sch} = assigns) do
+    cond do
+      Sch.object?(sch) ->
+        ~L"""
+        <div class="flex items-center ml-1 border border-blue-900 rounded leading-snug">
+          <%= for {k, sch_} <- Sch.properties(sch) do %>
+            <p class="px-1 border-r last:border-r-0 border-blue-900">
+              <span class=""><%= k %></span>
+              <span class="">:</span>
+              <span class="text-blue-500"><%= Map.get(Map.new(type_options()), Sch.type(sch_)) %></span>
+            </p>
+          <% end %>
+        </div>
+        """
+
+      Sch.array?(sch, :hetero) ->
+        ~L"""
+        <div class="flex items-center ml-1 border border-blue-900 rounded leading-snug">
+          <%= for sch_ <- Sch.items(sch) do %>
+            <p class="px-1 border-r last:border-r-0 border-blue-900">
+              <span class="text-blue-500"><%= Map.get(Map.new(type_options()), Sch.type(sch_)) %></span>
+            </p>
+          <% end %>
+        </div>
+        """
+
+      true ->
+        ~L""
+    end
   end
 
   # defp render_folder_header(assigns) do
@@ -116,7 +147,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_key_type_pair(assigns) do
     ~L"""
-    <div class="flex items-center w-full h-8 <%= if @f.name in List.flatten([@ui.current_path]), do: 'bg-indigo-700 text-gray-100' %>">
+    <div class="flex items-baseline w-full <%= if @f.name in List.flatten([@ui.current_path]), do: 'bg-indigo-700 bg-opacity-50 text-gray-100' %>">
       <div
         class="indent h-full"
         style="padding-left: <%= @ui.level * 1.25 %>rem"
@@ -130,10 +161,9 @@ defmodule FsetWeb.TreeListComponent do
         <%= render_type(assigns) %>
       <% end %>
 
-      <div
-        class="flex-1 flex items-center h-full"
-        onclick="event.preventDefault()">
-        <%= #render_type_options(assigns) %>
+      <div class="flex-1 h-full overflow-hidden" onclick="event.preventDefault()">
+        &nbsp;
+        <div class="close-marker flex items-center h-full text-sm"><%= #render_inline_type(assigns) %></div>
       </div>
     </div>
     """
@@ -173,20 +203,21 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_textarea(assigns) do
     ~L"""
-    <textarea type="text" id="autoFocus__<%= @ui.current_path %>" class="filtered p-2 min-w-0 h-full self-start text-xs bg-indigo-800 z-10 shadow-inner text-white"
+    <textarea type="text" id="autoFocus__<%= @ui.current_path %>" class="filtered p-2 min-w-0 h-full w-full self-start text-xs bg-gray-800 z-10 shadow-inner text-white"
       phx-hook="autoFocus"
       phx-blur="rename_key"
       phx-keydown="rename_key"
       phx-key="Enter"
       phx-value-parent_path="<%= @ui.parent_path %>"
       phx-value-old_key="<%= @key %>"
+      rows="1"
       ><%= @key %></textarea>
     """
   end
 
-  defp render_key(%{ui: %{current_path: name} = ui, f: %{name: name}} = assigns) do
+  defp render_key(%{ui: %{current_path: name}, f: %{name: name}} = assigns) do
     ~L"""
-    <p class="flex items-center text-sm h-full overflow-hidden"
+    <p class="flex items-baseline text-sm"
       phx-click="edit_sch"
       phx-value-path="<%= @f.name %>"
       onclick="event.preventDefault()">
@@ -197,7 +228,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_key(assigns) do
     ~L"""
-    <p class="flex items-center text-sm h-full overflow-hidden"
+    <p class="flex items-baseline text-sm"
       onclick="event.preventDefault()">
       <%= render_key_(assigns) %>
     </p>
@@ -208,14 +239,21 @@ defmodule FsetWeb.TreeListComponent do
     cond do
       Sch.object?(assigns.sch) ->
         ~L"""
-        <span class="text-blue-400 mr-1">record</span>
+        <span class="text-blue-400 mr-1">Record</span>
         <%= render_key_text(assigns) %>
         <span class="mx-2">=</span>
         """
 
-      Sch.array?(assigns.sch) ->
+      Sch.array?(assigns.sch, :hetero) ->
         ~L"""
-        <span class="text-blue-400 mr-1">list</span>
+        <span class="text-blue-400 mr-1">Tuple</span>
+        <%= render_key_text(assigns) %>
+        <span class="mx-2">=</span>
+        """
+
+      Sch.array?(assigns.sch, :homo) ->
+        ~L"""
+        <span class="text-blue-400 mr-1">List</span>
         <%= render_key_text(assigns) %>
         <span class="mx-2">=</span>
         """
@@ -237,14 +275,19 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_key_text(assigns) do
     cond do
-      Sch.array?(assigns.parent) ->
+      Sch.array?(assigns.parent, :hetero) ->
         ~L"""
-        <span class="pl-1 max-w-xs truncate text-gray-600"><%= @key %></span>
+        <span class="pl-1 break-words max-w-xs leading-8 text-gray-600"><%= @key %></span>
+        """
+
+      Sch.array?(assigns.parent, :homo) ->
+        ~L"""
+        <span class="pl-1 break-words max-w-xs leading-8 text-gray-600"><%= @key %> .. n</span>
         """
 
       true ->
         ~L"""
-        <span class="pl-1 max-w-xs truncate"><%= @key %></span>
+        <span class="pl-1 break-words max-w-xs leading-8"><%= @key %></span>
         """
     end
   end
@@ -268,7 +311,6 @@ defmodule FsetWeb.TreeListComponent do
         ~L"""
         <p class="text-xs flex-shrink-0">
           <span class="close-marker self-center cursor-pointer text-sm select-none text-blue-500">(...)</span>
-          <span class="open-marker self-center cursor-pointer text-sm select-none text-blue-500">(  )</span>
         </p>
         """
 

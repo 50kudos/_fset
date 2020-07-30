@@ -1,4 +1,4 @@
-<%= f = form_for :root, "#", [class: "w-full"] %>
+<%= f = form_for :"file_1.json", "#", [class: "w-full"] %>
   <section class="flex flex-col h-screen">
     <header class="flex justify-between items-center px-4 h-8 text-sm border-b border-gray-800">
       <span class="text-gray-600"><b>F</b>SET</span>
@@ -23,6 +23,13 @@
     </header>
     <section class="flex flex-grow overflow-scroll">
       <aside class="w-1/5 p-4 text-gray-500 shadow">
+        <%= #live_component(@socket, TreeListComponent,
+            #id: f0.name,
+            #key: key,
+            #sch: Sch.prop_sch(@body, key),
+            #parent: @body,
+            #ui: @ui,
+            #f: f0 %>
         <div>
           <h5 class="text-lg">Storage</h4>
           <div class="my-4">
@@ -45,13 +52,7 @@
       </aside>
       <nav class="w-3/5 overflow-scroll shadow">
         <div class="stripe-gray min-h-full">
-          <%= live_component @socket, FileComponent, id: f.name, name: "root", body: Sch.get(@schema, "root"), ui: @ui, f: f %>
-          <%= #live_component @socket, TreeListComponent,
-            #id: f.name,
-            #key: "root",
-            #sch: Sch.get(@schema, "root"),
-            #ui: Map.put_new(@ui, :limit, 100),
-            #f: f %>
+          <%= live_component @socket, FileComponent, id: f.name, name: "file_1.json", body: Sch.get(@schema, "file_1.json"), ui: @ui, f: f %>
         </div>
       </nav>
       <aside class="w-1/5 p-4 text-sm shadow">

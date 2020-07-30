@@ -1,7 +1,7 @@
 module.exports = {
   // ...
   variants: {
-    borderWidth: ['responsive', 'hover', 'focus', 'odd', 'even'],
-    borderColor: ['responsive', 'hover', 'focus', 'odd', 'even']
+    borderWidth: ['responsive', 'hover', 'focus', 'odd', 'last'],
+    borderColor: ['responsive', 'hover', 'focus', 'odd', 'last']
   },
 }

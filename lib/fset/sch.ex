@@ -1,4 +1,7 @@
 defmodule Fset.Sch do
+  # Changing keyword name MUST only be done by a dedicate transform process.
+  # Because during that process, it will "stop the world", and transform safely.
+  # The same mechanism can be used to compress schema by shrinking internal string.
   @object "object"
   @array "array"
   @string "string"
@@ -8,13 +11,15 @@ defmodule Fset.Sch do
 
   @type_ "type"
   @types [@string, @number, @boolean, @object, @array, @null]
+  @defs "$defs"
   @properties "properties"
   @items "items"
 
-  @order "order"
+  # Internal keywords. Can be opted-in/out when export schema.
+  @props_order "order"
 
   def type(sch) when is_map(sch), do: Map.get(sch, @type_)
-  def order(sch) when is_map(sch), do: Map.get(sch, @order)
+  def order(sch) when is_map(sch), do: Map.get(sch, @props_order)
   def prop_sch(sch, key) when is_map(sch), do: Map.get(Map.get(sch, @properties), key)
   def items(sch) when is_map(sch), do: Map.get(sch, @items)
   def properties(sch) when is_map(sch), do: Map.get(sch, @properties)
@@ -41,17 +46,17 @@ defmodule Fset.Sch do
   def number?(sch), do: match?(%{@type_ => @number}, sch)
   def boolean?(sch), do: match?(%{@type_ => @boolean}, sch)
   def null?(sch), do: match?(%{@type_ => @null}, sch)
-  def typed?(sch), do: match?(%{@type_ => _}, sch)
+  def leaf?(sch), do: match?(%{@type_ => _}, sch)
 
   def new(root_key) do
     %{
       @type_ => @object,
       @properties => %{root_key => object()},
-      @order => [root_key]
+      @props_order => [root_key]
     }
   end
 
-  def object(), do: %{@type_ => @object, @order => []}
+  def object(), do: %{@type_ => @object, @props_order => []}
   def array(), do: %{@type_ => @array, @items => %{}}
   def string(), do: %{@type_ => @string}
   def number(), do: %{@type_ => @number}
@@ -75,7 +80,7 @@ defmodule Fset.Sch do
     update_in(map, access_path(path), fn %{@type_ => _} = sch ->
       sch
       |> Map.put(@type_, @object)
-      |> Map.put_new(@order, [])
+      |> Map.put_new(@props_order, [])
     end)
   end
 
@@ -170,7 +175,7 @@ defmodule Fset.Sch do
       acc ->
         dst_paths =
           case get(map, dst) do
-            %{@type_ => @object, @order => order} ->
+            %{@type_ => @object, @props_order => order} ->
               Enum.map(dst_indices, fn i -> dst <> "[" <> Enum.at(order, i) <> "]" end)
 
             %{@type_ => @array} ->
@@ -203,7 +208,7 @@ defmodule Fset.Sch do
 
     parent
     |> Map.update(@properties, props, fn p -> Map.merge(p, props) end)
-    |> Map.update!(@order, fn order ->
+    |> Map.update!(@props_order, fn order ->
       reindex(raw_schs, order)
       |> Enum.map(fn
         %{key: k} -> k
@@ -233,6 +238,9 @@ defmodule Fset.Sch do
     end
   end
 
+  # New schs come as raw_schs that contain an index for each. `reindex/2` sort
+  # those schs combined with existing ones in a container responsible for its ordering.
+  # And returns sorted items in raw form (contain indices).
   defp reindex(raw_schs, list) do
     whole_length = Enum.count(raw_schs ++ list)
 
@@ -282,7 +290,7 @@ defmodule Fset.Sch do
     map_ =
       parent
       |> Map.put(@properties, Map.new(remained))
-      |> Map.update!(@order, fn order -> order -- Keyword.keys(popped) end)
+      |> Map.update!(@props_order, fn order -> order -- Keyword.keys(popped) end)
 
     {popped, map_}
   end

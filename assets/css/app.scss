@@ -109,18 +109,17 @@
 }
 
 /* version 1 */
-/*.sortable-ghost {
+.sortable-ghost {
   > * { @apply hidden }
   @apply h-0 py-0 border-b border-green-600 border-dashed
-}*/
+}
 
 /* version 2 */
 
-
-.sortable-ghost {
+/*.sortable-ghost {
   @apply py-0 border border-gray-700 border-dashed
-}
-.sortable-selected {
+}*/
+.sortable-selected > details {
   @apply bg-indigo-600 bg-opacity-25 border-dashed box-border
 }
 
@@ -131,7 +130,7 @@ details > summary {
   outline: none;
 
   .close-marker {
-    display: block;
+    display: flex;
    }
   .open-marker {
     display: none;
@@ -142,7 +141,7 @@ details[open] > summary {
     display: none;
    }
   .open-marker {
-    display: block;
+    display: flex;
   }
 }
 

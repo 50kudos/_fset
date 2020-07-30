@@ -16,7 +16,7 @@ defmodule FsetWeb.MainLive do
      |> assign(:file_id, user_file.file.id)
      |> assign(:schema, user_file.file.schema)
      |> assign(:ui, %{
-       current_path: "root",
+       current_path: "file_1.json",
        current_edit: nil
      })}
   end
@@ -41,7 +41,7 @@ defmodule FsetWeb.MainLive do
   def handle_event("select_sch", %{"paths" => sch_path}, socket) do
     sch_path =
       case sch_path do
-        [] -> "root"
+        [] -> "file_1.json"
         [a] -> a
         a -> a
       end
@@ -99,7 +99,7 @@ defmodule FsetWeb.MainLive do
     {:noreply,
      update(socket, :ui, fn ui ->
        ui
-       |> Map.put(:current_path, "root")
+       |> Map.put(:current_path, "file_1.json")
        |> Map.put(:current_edit, nil)
      end)}
   end

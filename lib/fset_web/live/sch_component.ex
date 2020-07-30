@@ -6,17 +6,22 @@ defmodule FsetWeb.SchComponent do
   def render(assigns) do
     ~L"""
     <article>
-      <p class="mb-2">
-        <span class="text-xs text-gray-600">Path :</span>
-        <span class="text-gray-500"><%= if !is_list(@ui.current_path), do: @ui.current_path, else: "multi-paths" %></span>
-      </p>
-      <label class="block mb-2 border border-gray-800 bg-transparent">
+      <dl class="mb-2">
+        <dt class="inline-block text-xs text-gray-600">Path :</dt>
+        <dd class="inline-block text-gray-500 break-all"><%= if !is_list(@ui.current_path), do: @ui.current_path, else: "multi-paths" %></dd>
+        <br>
+        <dt class="inline-block text-xs text-gray-600">Raw :</dt>
+        <dd class="inline-block text-gray-500">
+          <a href="data:application/json,<%= Jason.encode!(@sch, html_safe: true) %>" target="_blank" class="underline cursor-pointer">open</a>
+        </dd>
+      </dl>
+      <label class="block mb-2 bg-transparent">
         <p class="p-1 text-xs text-gray-600">Title</p>
-        <input type="text" phx-blur="update_sch" phx-value-key="title" value="<%= Map.get(@sch, ~s(title)) %>" class="h-6 p-1 bg-transparent shadow w-full">
+        <input type="text" phx-blur="update_sch" phx-value-key="title" value="<%= Map.get(@sch, ~s(title)) %>" class="h-6 p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full">
       </label>
-      <label class="block mb-2 border border-gray-800 bg-transparent">
+      <label class="block mb-2 bg-transparent">
         <p class="p-1 text-xs text-gray-600">Description</p>
-        <textarea type="text" phx-blur="update_sch" phx-value-key="description" class="h-6 p-1 bg-transparent shadow w-full"><%= Map.get(@sch, "description") %></textarea>
+        <textarea type="text" phx-blur="update_sch" phx-value-key="description" class="h-6 p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"><%= Map.get(@sch, "description") %></textarea>
       </label>
       <%= render_sch(assigns) %>
     </article>
@@ -47,22 +52,22 @@ defmodule FsetWeb.SchComponent do
   defp render_object(assigns) do
     ~L"""
       <div class="grid grid-cols-2 gap-1">
-        <label class="block mb-2 border border-gray-800 bg-transparent">
+        <label class="block mb-2 bg-transparent">
           <p class="p-1 text-xs text-gray-600">Max Properties</p>
           <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
             phx-hook="updateSch"
             phx-value-key="maxProperties"
             value="<%= Map.get(@sch, ~s(maxProperties), 0) %>"
-            class="h-6 p-1 bg-transparent shadow w-full"
+            class="h-6 p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"
             id="updateSch__<%= @ui.current_path %>">
         </label>
-        <label class="block mb-2 border border-gray-800 bg-transparent">
+        <label class="block mb-2 bg-transparent">
           <p class="p-1 text-xs text-gray-600">Min Properties</p>
           <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
             phx-hook="updateSch"
             phx-value-key="minProperties"
             value="<%= Map.get(@sch, ~s(minProperties), 0) %>"
-            class="h-6 p-1 bg-transparent shadow w-full"
+            class="h-6 p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"
             id="updateSch__<%= @ui.current_path %>">
         </label>
       </div>
@@ -96,22 +101,22 @@ defmodule FsetWeb.SchComponent do
   defp render_string(assigns) do
     ~L"""
       <div class="grid grid-cols-2 gap-1">
-        <label class="mb-2 border border-gray-800 bg-transparent">
+        <label class="mb-2 bg-transparent">
           <p class="p-1 text-xs text-gray-600">Max Length</p>
           <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
             phx-hook="updateSch"
             phx-value-key="maxLength"
             value="<%= Map.get(@sch, ~s(maxLength), 0) %>"
-            class="h-6 p-1 bg-transparent shadow w-full"
+            class="h-6 p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"
             id="updateSch__<%= @ui.current_path %>">
         </label>
-        <label class="mb-2 border border-gray-800 bg-transparent">
+        <label class="mb-2 bg-transparent">
           <p class="p-1 text-xs text-gray-600">Min Length</p>
           <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
             phx-hook="updateSch"
             phx-value-key="minLength"
             value="<%= Map.get(@sch, ~s(minLength), 0) %>"
-            class="h-6 p-1 bg-transparent shadow w-full"
+            class="h-6 p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"
             id="updateSch__<%= @ui.current_path %>">
         </label>
       </div>
@@ -120,25 +125,25 @@ defmodule FsetWeb.SchComponent do
 
   defp render_number(assigns) do
     ~L"""
-      <label class="block mb-2 border border-gray-800 bg-transparent">
+      <label class="block mb-2 bg-transparent">
         <p class="p-1 text-xs text-gray-600">Maximum</p>
         <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
           phx-hook="updateSch"
           phx-value-key="maximum"
           value="<%= Map.get(@sch, ~s(maximum), 0) %>"
-          class="h-6 p-1 bg-transparent shadow w-full"
+          class="h-6 p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"
           id="updateSch__<%= @ui.current_path %>">
       </label>
-      <label class="block mb-2 border border-gray-800 bg-transparent">
+      <label class="block mb-2 bg-transparent">
         <p class="p-1 text-xs text-gray-600">Minimum</p>
         <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
           phx-hook="updateSch"
           phx-value-key="minimum"
           value="<%= Map.get(@sch, ~s(minimum), 0) %>"
-          class="h-6 p-1 bg-transparent shadow w-full"
+          class="h-6 p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"
           id="updateSch__<%= @ui.current_path %>">
       </label>
-      <label class="block mb-2 border border-gray-800 bg-transparent">
+      <label class="block mb-2 bg-transparent">
         <p class="p-1 text-xs text-gray-600">MultipleOf</p>
         <input type="range" phx-blur="update_sch" phx-value-key="multipleOf" value="<%= Map.get(@sch, ~s(multipleOf)) %>" min="0">
       </label>
