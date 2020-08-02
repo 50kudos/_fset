@@ -1,9 +1,9 @@
-defmodule SchTest do
+defmodule Fset.SchTest do
   use ExUnit.Case, async: true
   import Fset.Sch
 
   setup do
-    new("root")
+    new("root", object())
   end
 
   test "#new", root do
