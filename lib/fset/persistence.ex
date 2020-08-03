@@ -103,7 +103,7 @@ defmodule Fset.Persistence do
   end
 
   @doc """
-  Returns a size of term
+  Returns a size of term (in byte unit)
 
   ## Examples
 
@@ -149,7 +149,8 @@ defmodule Fset.Persistence do
       [%UserFile{}]
   """
   def get_user_files(user_id) do
-    Repo.all(from uf in UserFile, where: uf.user_id == ^user_id) |> Repo.preload(:file)
+    Repo.all(from uf in UserFile, where: uf.user_id == ^user_id)
+    |> Repo.preload(:file)
   end
 
   @doc """
@@ -157,12 +158,12 @@ defmodule Fset.Persistence do
 
   ## Examples
 
-      iex> create_user_file(user)
+      iex> create_user_file(user, File.new())
       {:ok, %UserFile{user_id: 1, file_id: 1}}
   """
-  def create_user_file(user, sch) do
+  def create_user_file(user, file) do
     Repo.transaction(fn ->
-      file = Repo.insert!(File.changeset(%File{}, %{schema: sch}))
+      file = Repo.insert!(File.changeset(%File{}, %{schema: file.body, name: file.name}))
       Repo.insert!(UserFile.changeset(%UserFile{}, %{user_id: user.id, file_id: file.id}))
     end)
   end
@@ -172,13 +173,13 @@ defmodule Fset.Persistence do
 
   ## Examples
 
-      iex> update_file(schema)
+      iex> update_file(1, schema: %{})
       %File{}
   """
-  def update_file(file_id, schema) do
+  def update_file(file_id, attrs) do
     File
     |> Repo.get!(file_id)
-    |> File.changeset(%{schema: schema})
+    |> File.changeset(Enum.into(attrs, %{}))
     |> Repo.update!()
   end
 end

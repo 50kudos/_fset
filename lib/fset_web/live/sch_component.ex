@@ -33,7 +33,7 @@ defmodule FsetWeb.SchComponent do
     socket =
       socket
       |> assign(:ui, assigns.ui)
-      |> assign(:sch, assigns.sch)
+      |> assign(:sch, assigns.sch || %{})
 
     {:ok, socket}
   end
@@ -46,6 +46,7 @@ defmodule FsetWeb.SchComponent do
       Sch.number?(assigns.sch) -> render_number(assigns)
       Sch.boolean?(assigns.sch) -> {:safe, []}
       Sch.null?(assigns.sch) -> {:safe, []}
+      true -> {:safe, []}
     end
   end
 

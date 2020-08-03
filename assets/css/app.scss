@@ -91,7 +91,7 @@
 }
 
 .stripe-gray {
-  --bg-opacity: 1;
+  --bg-opacity: .9;
   --gray-700: rgba(74, 85, 104, var(--bg-opacity));
   --gray-800: rgba(45, 55, 72, var(--bg-opacity));
   --gray-900: rgba(26, 32, 44, var(--bg-opacity));
@@ -105,7 +105,7 @@
   ),
   linear-gradient(to left, var(--gray-700) 0%, var(--gray-700) 100%);
   background-blend-mode: multiply;
-  background-size: 100% 4rem;
+  background-size: 100% 3rem;
 }
 
 /* version 1 */

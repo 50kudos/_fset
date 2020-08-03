@@ -1,4 +1,4 @@
-<%= f = form_for :"file_1.json", "#", [class: "w-full"] %>
+<%= f = form_for String.to_atom(@current_file.module.current_section_key), "#", [class: "w-full"] %>
   <section class="flex flex-col h-screen">
     <header class="flex justify-between items-center px-4 h-8 text-sm border-b border-gray-800">
       <span class="text-gray-600"><b>F</b>SET</span>
@@ -22,42 +22,55 @@
       <% end %>
     </header>
     <section class="flex flex-grow overflow-scroll">
-      <aside class="w-1/5 p-4 text-gray-500 shadow">
-        <%= #live_component(@socket, TreeListComponent,
-            #id: f0.name,
-            #key: key,
-            #sch: Sch.prop_sch(@body, key),
-            #parent: @body,
-            #ui: @ui,
-            #f: f0 %>
-        <div>
-          <h5 class="text-lg">Storage</h4>
-          <div class="my-4">
-            <label for="disk" class="block my-4">
-              <p class="text-sm">Internal (of 500 KB quota):</p>
-              <progress id="disk" max="100" value="<%= percent(Fset.Persistence.term_size(@schema), :per_mb, 0.5) %>" class="h-1 w-full"></progress>
+      <aside class="w-1/5 flex flex-col text-gray-500 shadow">
+        <ul>
+          <%= for file <- @files do %>
+            <%= if @current_file.id == file.id do %>
+              <li class="">
+                <p class="pl-4 text-sm leading-8 bg-gray-800 bg-opacity-50"><%= file.name %></p>
+                <ul class="pl-8 pt-2 text-xs space-y-1">
+                  <li class="<%= if @current_file.module.current_section == :model, do: "text-indigo-500" %>">MODEL</li>
+                  <li class="<%= if @current_file.module.current_section == :main, do: "text-indigo-500" %>">MAIN</li>
+                </ul>
+              </li>
+            <% else %>
+              <%= live_patch to: Routes.main_path(@socket, :index, file.id), replace: false do %>
+                <li class="pl-4 text-sm leading-8 bg-gray-800 bg-opacity-50">
+                  <%= file.name %>
+                </li>
+              <% end %>
+            <% end %>
+          <% end %>
+          </ul>
+        <span class="flex-1"></span>
+        <div class="px-4">
+          <h5>Storage</h4>
+          <div class="my-1">
+            <label for="disk" class="block my-1">
+              <p class="text-xs">Internal (of 1 MB quota):</p>
+              <progress id="disk" max="100" value="<%= percent(@current_file.bytes, :per_mb, 1) %>" class="h-1 w-full"></progress>
               <p>
-                <span class="text-xs"><%= Fset.Persistence.term_size(@schema) %> bytes</span>
+                <span class="text-xs"><%= (@current_file.bytes / 1024) |> Float.round(2) %> KB</span>
                 <span>·</span>
-                <span class="text-xs"><%= percent(Fset.Persistence.term_size(@schema), :per_mb, 0.5) %>%</span>
+                <span class="text-xs"><%= percent(@current_file.bytes, :per_mb, 1) %>%</span>
               </p>
             </label>
           </div>
           <hr class="border-gray-800 border-opacity-50">
-          <div class="my-4">
-            <p class="text-sm">External:</p>
-            <a href="/auth/github" class="inline-block my-2 px-2 py-1 border border-gray-700 rounded self-end text-sm text-gray-500 hover:text-gray-400">Connect Github</a>
+          <div class="mt-2 text-xs">
+            <p>External:</p>
+            <a href="/auth/github" class="inline-block my-2 px-2 py-1 border border-gray-700 rounded self-end text-gray-500 hover:text-gray-400">Connect Github</a>
           </div>
         </div>
       </aside>
       <nav class="w-3/5 overflow-scroll shadow">
-        <div class="stripe-gray min-h-full">
-          <%= live_component @socket, FileComponent, id: f.name, name: "file_1.json", body: Sch.get(@schema, "file_1.json"), ui: @ui, f: f %>
+        <div class="stripe-gray min-h-full" phx-window-keyup="module_keyup">
+          <%= live_component @socket, FileComponent, id: f.name, file: @current_file, ui: @ui, f: f %>
         </div>
       </nav>
       <aside class="w-1/5 p-4 text-sm shadow">
         <%= if !is_list(@ui.current_path) do %>
-          <%= live_component @socket, SchComponent, id: @ui.current_path, sch: Sch.get(@schema, @ui.current_path), ui: @ui %>
+          <%= live_component @socket, SchComponent, id: @ui.current_path, sch: Sch.get(File.current_section(@current_file.module), @ui.current_path), ui: @ui %>
         <% end %>
       </aside>
     </section>

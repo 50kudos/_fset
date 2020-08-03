@@ -1,7 +1,19 @@
 defmodule Fset.Sch do
+  alias FSet.Emap
   # Changing keyword name MUST only be done by a dedicate transform process.
   # Because during that process, it will "stop the world", and transform safely.
   # The same mechanism can be used to compress schema by shrinking internal string.
+
+  # JSON Schema draft 2019-09
+  #
+  # Core
+  @ref "$ref"
+  @defs "$defs"
+  @anchor "$anchor"
+
+  # Validation
+  @type_ "type"
+
   @object "object"
   @array "array"
   @string "string"
@@ -9,11 +21,15 @@ defmodule Fset.Sch do
   @number "number"
   @null "null"
 
-  @type_ "type"
   @types [@string, @number, @boolean, @object, @array, @null]
-  @defs "$defs"
+
+  # Applicator
   @properties "properties"
   @items "items"
+
+  @all_of "allOf"
+  @any_of "anyOf"
+  @one_of "oneOf"
 
   # Internal keywords. Can be opted-in/out when export schema.
   @props_order "order"
@@ -23,9 +39,11 @@ defmodule Fset.Sch do
   def prop_sch(sch, key) when is_map(sch), do: Map.get(Map.get(sch, @properties), key)
   def items(sch) when is_map(sch), do: Map.get(sch, @items)
   def properties(sch) when is_map(sch), do: Map.get(sch, @properties)
+  def defs(sch) when is_map(sch), do: Map.get(sch, @defs)
 
   defp props(), do: Access.key(@properties, %{})
   defp items(), do: Access.key(@items, %{})
+  defp defs(), do: Access.key(@defs, %{})
 
   def object?(sch),
     do: match?(%{@type_ => @object}, sch)
@@ -48,20 +66,42 @@ defmodule Fset.Sch do
   def null?(sch), do: match?(%{@type_ => @null}, sch)
   def leaf?(sch), do: match?(%{@type_ => _}, sch)
 
-  def new(root_key) do
+  @doc """
+  schema with a wrapper name. When a schema is created, we can then use this wrapper
+  name to query its body.
+
+  ## Examples
+
+      iex> new("root", %{})
+      %{
+        "type" => @object,
+        "properties" => %{root_key => %{}},
+        "order" => [root_key]
+      }
+
+  """
+  def new(root_key, init_sch \\ %{}) do
     %{
       @type_ => @object,
-      @properties => %{root_key => object()},
+      @properties => %{root_key => init_sch},
       @props_order => [root_key]
     }
   end
 
+  # Contructor
   def object(), do: %{@type_ => @object, @props_order => []}
   def array(), do: %{@type_ => @array, @items => %{}}
   def string(), do: %{@type_ => @string}
   def number(), do: %{@type_ => @number}
   def boolean(), do: %{@type_ => @boolean}
   def null(), do: %{@type_ => @null}
+
+  def all_of(schs) when is_list(schs) and length(schs) > 0, do: %{@all_of => schs}
+  def any_of(schs) when is_list(schs) and length(schs) > 0, do: %{@any_of => schs}
+  def one_of(schs) when is_list(schs) and length(schs) > 0, do: %{@one_of => schs}
+
+  def ref("#" <> _ref = pointer) when is_binary(pointer), do: %{@ref => pointer}
+  def anchor(a) when is_binary(a), do: %{@anchor => a}
 
   def get(map, path) when is_map(map) and is_binary(path) do
     get_in(map, access_path(path))
@@ -74,6 +114,12 @@ defmodule Fset.Sch do
   """
   def put(map, path, key, sch) do
     put_schs(map, path, [%{key: key, sch: sch, index: -1}])
+  end
+
+  def put_def(map, key, sch) when is_binary(key) and is_map(sch) do
+    update_in(map, [defs()], fn defs ->
+      Map.update(defs, key, sch, fn def_sch -> Map.merge(def_sch, sch) end)
+    end)
   end
 
   def change_type(map, path, "object") do
@@ -186,6 +232,12 @@ defmodule Fset.Sch do
     end
   end
 
+  def delete(map, paths) when is_binary(paths) or is_list(paths) do
+    for path <- List.wrap(paths), reduce: map do
+      acc -> pop_schs(acc, path, []) |> elem(1)
+    end
+  end
+
   def follow_lead(dst_indices) when is_list(dst_indices) do
     [lead | _] = Enum.sort_by(dst_indices, fn %{"index" => index} -> index end)
 
@@ -262,16 +314,54 @@ defmodule Fset.Sch do
     end)
   end
 
+  # This only works with path style produced by Plug.Conn.Query
+  def find_parent(path) do
+    path_tokens = String.split(path, :binary.compile_pattern(["[", "][", "]"]), trim: true)
+
+    case path_tokens do
+      [] ->
+        %{parent_path: path, child_key: nil}
+
+      [p] ->
+        %{parent_path: p, child_key: nil}
+
+      _ ->
+        [leaf | parent] = Enum.reverse(path_tokens)
+        [root | rest] = Enum.reverse(parent)
+
+        parent =
+          for a <- rest, reduce: root do
+            acc -> acc <> "[" <> a <> "]"
+          end
+
+        %{parent_path: parent, child_key: leaf}
+    end
+  end
+
+  # pop_schs/3 intends to work with path that points to container type such as object or array.
+  # If a given path points to a leaf, it will find its parent and pop the leaf.
   def pop_schs(map, path, keys)
       when is_map(map) and is_binary(path) and is_list(keys) do
     parent_path = access_path(path)
 
     map
     |> get(path)
-    |> pop_schs(keys)
     |> case do
-      nil -> {nil, map}
-      {schs, map_} -> {schs, update_in(map, parent_path, fn _ -> map_ end)}
+      %{@type_ => t} = parent when t in [@array, @object] ->
+        {schs, map_} = pop_schs(parent, keys)
+
+        {schs, update_in(map, parent_path, fn _ -> map_ end)}
+
+      %{@type_ => t} = _leaf when t not in [@array, @object] ->
+        %{parent_path: parent_path_, child_key: key} = find_parent(path)
+        parent = get(map, parent_path_)
+        {schs, map_} = pop_schs(parent, [key])
+
+        parent_path = access_path(parent_path_)
+        {schs, update_in(map, parent_path, fn _ -> map_ end)}
+
+      _ ->
+        {nil, map}
     end
   end
 
@@ -308,11 +398,18 @@ defmodule Fset.Sch do
   end
 
   defp pop_schs(%{@type_ => @array, @items => items} = parent, indices) when is_list(items) do
+    integer_indices =
+      Enum.map(indices, fn
+        i when is_binary(i) -> String.to_integer(i)
+        i when is_integer(i) -> i
+        i -> raise "#{i} index must be integer"
+      end)
+
     {popped, remained} =
       parent
       |> Map.get(@items)
       |> Enum.with_index()
-      |> Enum.split_with(fn {_, i} -> i in indices end)
+      |> Enum.split_with(fn {_, i} -> i in integer_indices end)
 
     map_ =
       parent
@@ -327,8 +424,6 @@ defmodule Fset.Sch do
 
     {popped, map_}
   end
-
-  defp pop_schs(_, _), do: nil
 
   def update(map, path, key, val) when is_binary(key) do
     cond do
@@ -439,5 +534,11 @@ defmodule Fset.Sch do
     |> IO.inspect()
 
     path
+  end
+
+  def gen_key(prefix \\ "key") do
+    id = DateTime.to_unix(DateTime.now!("Etc/UTC"), :microsecond)
+    id = String.slice("#{id}", 6..-1)
+    "#{prefix}_#{to_string(id)}"
   end
 end

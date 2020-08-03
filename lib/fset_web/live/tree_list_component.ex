@@ -24,6 +24,7 @@ defmodule FsetWeb.TreeListComponent do
       Sch.object?(sch) && match?(%{level: _}, ui) -> render_folder(assigns)
       Sch.array?(sch) -> render_folder(assigns)
       Sch.leaf?(sch) -> render_file(assigns)
+      true -> raise "Wrong schema structure :: #{sch}"
     end
   end
 
@@ -95,13 +96,14 @@ defmodule FsetWeb.TreeListComponent do
   #   """
   # end
 
-  defp render_itself(%{ui: %{level: l, limit: limit}}) when l == limit, do: {:safe, []}
+  defp render_itself(%{ui: %{level: l, limit: limit}} = assigns) when l == limit, do: ~L""
 
   defp render_itself(assigns) do
     cond do
       Sch.object?(assigns.sch) -> render_object(assigns)
-      Sch.array?(assigns.sch, :empty) -> {:safe, []}
+      Sch.array?(assigns.sch, :empty) -> ~L""
       Sch.array?(assigns.sch) -> render_array(assigns)
+      true -> ~L""
     end
   end
 
@@ -147,7 +149,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_key_type_pair(assigns) do
     ~L"""
-    <div class="flex items-baseline w-full <%= if @f.name in List.flatten([@ui.current_path]), do: 'bg-indigo-700 bg-opacity-50 text-gray-100' %>">
+    <div class="flex items-start w-full leading-6 <%= if @f.name in List.flatten([@ui.current_path]), do: 'bg-indigo-700 bg-opacity-50 text-gray-100' %>">
       <div
         class="indent h-full"
         style="padding-left: <%= @ui.level * 1.25 %>rem"
@@ -197,7 +199,7 @@ defmodule FsetWeb.TreeListComponent do
         """
 
       true ->
-        {:safe, []}
+        ~L""
     end
   end
 
@@ -275,83 +277,85 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_key_text(assigns) do
     cond do
-      Sch.array?(assigns.parent, :hetero) ->
+      Sch.array?(Map.get(assigns, :parent), :hetero) ->
         ~L"""
-        <span class="pl-1 break-words max-w-xs leading-8 text-gray-600"><%= @key %></span>
+        <span class="pl-1 break-words max-w-xs text-gray-600"><%= @key %></span>
         """
 
-      Sch.array?(assigns.parent, :homo) ->
+      Sch.array?(Map.get(assigns, :parent), :homo) ->
         ~L"""
-        <span class="pl-1 break-words max-w-xs leading-8 text-gray-600"><%= @key %> .. n</span>
-        """
-
-      true ->
-        ~L"""
-        <span class="pl-1 break-words max-w-xs leading-8"><%= @key %></span>
-        """
-    end
-  end
-
-  defp render_type(%{ui: %{level: l, tab: t}} = assigns) when l == t do
-    cond do
-      Sch.object?(assigns.sch) ->
-        {:safe, []}
-
-      Sch.array?(assigns.sch, :empty) ->
-        ~L"""
-        <span class="text-sm text-blue-500">[any]</span>
-        """
-
-      Sch.array?(assigns.sch, :homo) ->
-        ~L"""
-        <span class="text-sm text-blue-500 cursor-pointer">[<%= Map.get(Map.new(type_options()), Sch.type(Sch.items(@sch))) %>]</span>
-        """
-
-      Sch.array?(assigns.sch, :hetero) ->
-        ~L"""
-        <p class="text-xs flex-shrink-0">
-          <span class="close-marker self-center cursor-pointer text-sm select-none text-blue-500">(...)</span>
-        </p>
+        <span class="pl-1 break-words max-w-xs text-gray-600"><%= @key %> .. n</span>
         """
 
       true ->
         ~L"""
-        <span class="text-sm text-blue-500"><%=  Map.get(Map.new(type_options()), Sch.type(@sch)) %></span>
+        <span class="pl-1 break-words max-w-xs"><%= @key %></span>
         """
     end
   end
 
   defp render_type(assigns) do
+    ~L"""
+    <p class="text-blue-500 text-sm shrink-0">
+      <%= render_type_(assigns) %>
+    </p>
+    """
+  end
+
+  defp render_type_(%{ui: %{level: l, tab: t}} = assigns) when l == t do
     cond do
       Sch.object?(assigns.sch) ->
-        ~L"""
-        <p class="text-xs flex-shrink-0">
-          <span class="close-marker self-center cursor-pointer text-sm select-none text-blue-500">{...}</span>
-          <span class="open-marker self-center cursor-pointer text-sm select-none text-blue-500">{  }</span>
-        </p>
-        """
+        ~L""
 
       Sch.array?(assigns.sch, :empty) ->
         ~L"""
-        <span class="text-sm text-blue-500">[any]</span>
+        <span class="">[any]</span>
         """
 
       Sch.array?(assigns.sch, :homo) ->
         ~L"""
-        <span class="text-sm text-blue-500 cursor-pointer">[<%= Map.get(Map.new(type_options()), Sch.type(Sch.items(@sch))) %>]</span>
+        <span class="cursor-pointer">[<%= Map.get(Map.new(type_options()), Sch.type(Sch.items(@sch))) %>]</span>
         """
 
       Sch.array?(assigns.sch, :hetero) ->
         ~L"""
-        <p class="text-xs flex-shrink-0">
-          <span class="close-marker self-center cursor-pointer text-sm select-none text-blue-500">(...)</span>
-          <span class="open-marker self-center cursor-pointer text-sm select-none text-blue-500">(  )</span>
-        </p>
+        <span class="close-marker self-center cursor-pointer select-none">(...)</span>
         """
 
       true ->
         ~L"""
-        <span class="text-sm text-blue-500"><%=  Map.get(Map.new(type_options()), Sch.type(@sch)) %></span>
+        <span class=""><%=  Map.get(Map.new(type_options()), Sch.type(@sch)) %></span>
+        """
+    end
+  end
+
+  defp render_type_(assigns) do
+    cond do
+      Sch.object?(assigns.sch) ->
+        ~L"""
+        <span class="close-marker self-center cursor-pointer text-sm select-none text-blue-500">{...}</span>
+        <span class="open-marker self-center cursor-pointer text-sm select-none text-blue-500">{  }</span>
+        """
+
+      Sch.array?(assigns.sch, :empty) ->
+        ~L"""
+        <span class="">[any]</span>
+        """
+
+      Sch.array?(assigns.sch, :homo) ->
+        ~L"""
+        <span class="cursor-pointer">[<%= Map.get(Map.new(type_options()), Sch.type(Sch.items(@sch))) %>]</span>
+        """
+
+      Sch.array?(assigns.sch, :hetero) ->
+        ~L"""
+        <span class="close-marker self-center cursor-pointer text-sm select-none text-blue-500">(...)</span>
+        <span class="open-marker self-center cursor-pointer text-sm select-none text-blue-500">(  )</span>
+        """
+
+      true ->
+        ~L"""
+        <span class=""><%=  Map.get(Map.new(type_options()), Sch.type(@sch)) %></span>
         """
     end
   end

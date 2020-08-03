@@ -75,7 +75,7 @@ Hooks.expandableSortable = {
     return Sortable.utils.closest(item, "[data-path]").dataset.path
   },
   selectCurrentItems() {
-    const root = document.querySelector("[data-group='file_1.json']")
+    const root = document.querySelector("[data-group='body']")
     const currentPaths = root.dataset.currentPaths
 
     if (currentPaths) {

@@ -278,4 +278,21 @@ defmodule Fset.SchTest do
 
     assert get_paths(root, dst_indices) == ["root[0]", "root[1]"]
   end
+
+  test "#delete by paths", root do
+    root =
+      root
+      |> put("root", "a", array())
+      |> put("root[a]", string())
+      |> put("root[a]", boolean())
+      #
+      |> put("root", "b", array())
+      |> put("root[b]", number())
+      |> put("root[b]", string())
+
+    root = delete(root, ["root[a][][1]", "root[b][][0]"])
+
+    assert get(root, "root[a]") |> items() == string()
+    assert get(root, "root[b]") |> items() == string()
+  end
 end
