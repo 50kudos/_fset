@@ -48,6 +48,40 @@ defmodule FsetWeb.MainLive do
 
   #   {:noreply , updated_socket}
   # end
+
+  def handle_event("add_model", %{"model" => model}, socket) do
+    file = socket.assigns.current_file
+    ui = socket.assigns.ui
+
+    add_model_fun =
+      case model do
+        "Record" ->
+          fn sch -> Sch.put(sch, ui.current_path, Sch.gen_key(), Sch.object(), 0) end
+
+        "Field" ->
+          fn sch -> Sch.put(sch, ui.current_path, Sch.gen_key(), Sch.string(), 0) end
+
+        "List" ->
+          fn sch -> Sch.put(sch, ui.current_path, Sch.gen_key(), Sch.array(:hetero), 0) end
+
+        "Tuple" ->
+          fn sch -> Sch.put(sch, ui.current_path, Sch.gen_key(), Sch.array(:homo), 0) end
+
+        "Union" ->
+          fn a -> a end
+
+        _ ->
+          fn a -> a end
+      end
+
+    module = File.update_current_section(file.module, add_model_fun)
+    socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
+
+    Process.send_after(self(), :update_schema, 1000)
+
+    {:noreply, socket}
+  end
+
   def handle_event("add_prop", _val, %{assigns: %{ui: ui}} = socket) do
     Process.send_after(self(), :update_schema, 1000)
 
@@ -196,11 +230,11 @@ defmodule FsetWeb.MainLive do
               Sch.delete(section_sch, ui.current_path)
             end)
 
-          new_current_path = Sch.find_parent(ui.current_path).parent_path
+          new_current_paths = Map.keys(Sch.find_parent(ui.current_path))
 
           assigns
           |> put_in([:current_file], %{file | module: module})
-          |> put_in([:ui, :current_path], new_current_path)
+          |> put_in([:ui, :current_path], new_current_paths)
 
         _ ->
           file.module

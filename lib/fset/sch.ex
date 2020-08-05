@@ -89,8 +89,10 @@ defmodule Fset.Sch do
   end
 
   # Contructor
-  def object(), do: %{@type_ => @object, @props_order => []}
+  def object(), do: %{@type_ => @object, @props_order => [], @properties => %{}}
   def array(), do: %{@type_ => @array, @items => %{}}
+  def array(:homo), do: array()
+  def array(:hetero), do: %{@type_ => @array, @items => [string()]}
   def string(), do: %{@type_ => @string}
   def number(), do: %{@type_ => @number}
   def boolean(), do: %{@type_ => @boolean}
@@ -112,8 +114,8 @@ defmodule Fset.Sch do
   @doc """
     %{key: _, sch: _, index: _} is called `raw_sch` within this module.
   """
-  def put(map, path, key, sch) do
-    put_schs(map, path, [%{key: key, sch: sch, index: -1}])
+  def put(map, path, key, sch, index \\ -1) do
+    put_schs(map, path, [%{key: key, sch: sch, index: index}])
   end
 
   def put_def(map, key, sch) when is_binary(key) and is_map(sch) do
@@ -233,8 +235,10 @@ defmodule Fset.Sch do
   end
 
   def delete(map, paths) when is_binary(paths) or is_list(paths) do
-    for path <- List.wrap(paths), reduce: map do
-      acc -> pop_schs(acc, path, []) |> elem(1)
+    parent_paths_children_keys = find_parent(paths)
+
+    for {parent_path, children_keys} <- parent_paths_children_keys, reduce: map do
+      acc -> pop_schs(acc, parent_path, children_keys) |> elem(1)
     end
   end
 
@@ -315,7 +319,14 @@ defmodule Fset.Sch do
   end
 
   # This only works with path style produced by Plug.Conn.Query
-  def find_parent(path) do
+  def find_parent(paths) when is_list(paths) or is_binary(paths) do
+    paths
+    |> List.wrap()
+    |> Enum.map(fn path -> find_parent_(path) end)
+    |> Enum.group_by(& &1.parent_path, & &1.child_key)
+  end
+
+  defp find_parent_(path) when is_binary(path) do
     path_tokens = String.split(path, :binary.compile_pattern(["[", "][", "]"]), trim: true)
 
     case path_tokens do
@@ -346,22 +357,10 @@ defmodule Fset.Sch do
 
     map
     |> get(path)
+    |> pop_schs(keys)
     |> case do
-      %{@type_ => t} = parent when t in [@array, @object] ->
-        {schs, map_} = pop_schs(parent, keys)
-
-        {schs, update_in(map, parent_path, fn _ -> map_ end)}
-
-      %{@type_ => t} = _leaf when t not in [@array, @object] ->
-        %{parent_path: parent_path_, child_key: key} = find_parent(path)
-        parent = get(map, parent_path_)
-        {schs, map_} = pop_schs(parent, [key])
-
-        parent_path = access_path(parent_path_)
-        {schs, update_in(map, parent_path, fn _ -> map_ end)}
-
-      _ ->
-        {nil, map}
+      nil -> {nil, map}
+      {schs, map_} -> {schs, update_in(map, parent_path, fn _ -> map_ end)}
     end
   end
 
@@ -374,7 +373,7 @@ defmodule Fset.Sch do
 
     {popped, remained} =
       parent
-      |> Map.get(@properties)
+      |> Map.get(@properties, %{})
       |> Enum.split_with(fn {prop, _} -> prop in keys end)
 
     map_ =
@@ -424,6 +423,8 @@ defmodule Fset.Sch do
 
     {popped, map_}
   end
+
+  defp pop_schs(_, _), do: nil
 
   def update(map, path, key, val) when is_binary(key) do
     cond do

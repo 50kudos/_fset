@@ -149,21 +149,22 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_key_type_pair(assigns) do
     ~L"""
-    <div class="flex items-start w-full leading-6 <%= if @f.name in List.flatten([@ui.current_path]), do: 'bg-indigo-700 bg-opacity-50 text-gray-100' %>">
+    <div class="flex items-stretch w-full leading-6 <%= if @f.name in List.flatten([@ui.current_path]), do: 'bg-indigo-700 bg-opacity-50 text-gray-100' %>">
       <div
-        class="indent h-full"
+        class="indent"
         style="padding-left: <%= @ui.level * 1.25 %>rem"
         onclick="event.preventDefault()">
       </div>
 
       <%= if @ui.current_edit == @f.name && is_binary(@key) do %>
         <%= render_textarea(assigns) %>
+        <%= render_type(assigns) %>
       <% else %>
         <%= render_key(assigns) %>
         <%= render_type(assigns) %>
       <% end %>
 
-      <div class="flex-1 h-full overflow-hidden" onclick="event.preventDefault()">
+      <div class="flex-1 overflow-hidden" onclick="event.preventDefault()">
         &nbsp;
         <div class="close-marker flex items-center h-full text-sm"><%= #render_inline_type(assigns) %></div>
       </div>
@@ -205,7 +206,8 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_textarea(assigns) do
     ~L"""
-    <textarea type="text" id="autoFocus__<%= @ui.current_path %>" class="filtered p-2 min-w-0 h-full w-full self-start text-xs bg-gray-800 z-10 shadow-inner text-white"
+    <textarea type="text" id="autoFocus__<%= @ui.current_path %>"
+      class="filtered px-2 box-border mr-2 min-w-0 h-full w-full max-w-xs self-start text-xs leading-6 bg-gray-800 z-10 shadow-inner text-white"
       phx-hook="autoFocus"
       phx-blur="rename_key"
       phx-keydown="rename_key"
@@ -217,23 +219,12 @@ defmodule FsetWeb.TreeListComponent do
     """
   end
 
-  defp render_key(%{ui: %{current_path: name}, f: %{name: name}} = assigns) do
-    ~L"""
-    <p class="flex items-baseline text-sm"
-      phx-click="edit_sch"
-      phx-value-path="<%= @f.name %>"
-      onclick="event.preventDefault()">
-      <%= render_key_(assigns) %>
-    </p>
-    """
-  end
-
   defp render_key(assigns) do
     ~L"""
-    <p class="flex items-baseline text-sm"
+    <div class="flex items-baseline text-sm"
       onclick="event.preventDefault()">
       <%= render_key_(assigns) %>
-    </p>
+    </div>
     """
   end
 
@@ -275,7 +266,27 @@ defmodule FsetWeb.TreeListComponent do
     """
   end
 
+  defp render_key_text(%{ui: %{current_path: name}, f: %{name: name}} = assigns) do
+    ~L"""
+    <p class="flex"
+      phx-click="edit_sch"
+      phx-value-path="<%= @f.name %>"
+      onclick="event.preventDefault()">
+      <%= render_key_text_(assigns) %>
+    </p>
+    """
+  end
+
   defp render_key_text(assigns) do
+    ~L"""
+    <p class="flex"
+      onclick="event.preventDefault()">
+      <%= render_key_text_(assigns) %>
+    </p>
+    """
+  end
+
+  defp render_key_text_(assigns) do
     cond do
       Sch.array?(Map.get(assigns, :parent), :hetero) ->
         ~L"""
