@@ -34,12 +34,15 @@ defmodule Fset.Sch do
   # Internal keywords. Can be opted-in/out when export schema.
   @props_order "order"
 
+  # Accessor
   def type(sch) when is_map(sch), do: Map.get(sch, @type_)
   def order(sch) when is_map(sch), do: Map.get(sch, @props_order)
   def prop_sch(sch, key) when is_map(sch), do: Map.get(Map.get(sch, @properties), key)
   def items(sch) when is_map(sch), do: Map.get(sch, @items)
   def properties(sch) when is_map(sch), do: Map.get(sch, @properties)
   def defs(sch) when is_map(sch), do: Map.get(sch, @defs)
+  def any_of(sch) when is_map(sch), do: Map.get(sch, @any_of)
+  # END Accessor
 
   defp props(), do: Access.key(@properties, %{})
   defp items(), do: Access.key(@items, %{})
@@ -47,6 +50,9 @@ defmodule Fset.Sch do
 
   def object?(sch),
     do: match?(%{@type_ => @object}, sch)
+
+  def object?(sch, :empty),
+    do: match?(%{@type_ => @object, @properties => prop} when prop == %{}, sch)
 
   def array?(sch),
     do: match?(%{@type_ => @array, @items => _}, sch)
@@ -65,6 +71,8 @@ defmodule Fset.Sch do
   def boolean?(sch), do: match?(%{@type_ => @boolean}, sch)
   def null?(sch), do: match?(%{@type_ => @null}, sch)
   def leaf?(sch), do: match?(%{@type_ => _}, sch)
+
+  def any_of?(sch), do: match?(%{@any_of => schs} when is_list(schs) and length(schs) > 0, sch)
 
   @doc """
   schema with a wrapper name. When a schema is created, we can then use this wrapper
@@ -104,6 +112,7 @@ defmodule Fset.Sch do
 
   def ref("#" <> _ref = pointer) when is_binary(pointer), do: %{@ref => pointer}
   def anchor(a) when is_binary(a), do: %{@anchor => a}
+  # END Contructor
 
   def get(map, path) when is_map(map) and is_binary(path) do
     get_in(map, access_path(path))

@@ -60,7 +60,7 @@ defmodule FsetWeb.SchComponent do
             phx-value-key="maxProperties"
             value="<%= Map.get(@sch, ~s(maxProperties), 0) %>"
             class="h-6 p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"
-            id="updateSch__<%= @ui.current_path %>">
+            id="updateSch__maxProperties_<%= @ui.current_path %>">
         </label>
         <label class="block mb-2 bg-transparent">
           <p class="p-1 text-xs text-gray-600">Min Properties</p>
@@ -69,7 +69,7 @@ defmodule FsetWeb.SchComponent do
             phx-value-key="minProperties"
             value="<%= Map.get(@sch, ~s(minProperties), 0) %>"
             class="h-6 p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"
-            id="updateSch__<%= @ui.current_path %>">
+            id="updateSch__minProperties_<%= @ui.current_path %>">
         </label>
       </div>
     """
@@ -84,7 +84,7 @@ defmodule FsetWeb.SchComponent do
           phx-value-key="minItems"
           value="<%= Map.get(@sch, ~s(minItems), 0) %>"
           class="flex-1 min-w-0 h-6 p-1 bg-transparent text-center shadow"
-          id="updateSch__<%= @ui.current_path %>">
+          id="updateSch__minItem_<%= @ui.current_path %>">
       <span class="flex-1 text-center text-blue-500"><</span>
       <span class="flex-1 text-center text-blue-500">N</span>
       <span class="flex-1 text-center text-blue-500"><</span>
@@ -93,7 +93,7 @@ defmodule FsetWeb.SchComponent do
         phx-value-key="maxItems"
         value="<%= Map.get(@sch, ~s(maxItems), 0) %>"
         class="flex-1 min-w-0 h-6 p-1 bg-transparent text-center shadow"
-        id="updateSch__<%= @ui.current_path %>">
+        id="updateSch__maxItem_<%= @ui.current_path %>">
     </div>
 
     """
@@ -109,7 +109,7 @@ defmodule FsetWeb.SchComponent do
             phx-value-key="maxLength"
             value="<%= Map.get(@sch, ~s(maxLength), 0) %>"
             class="h-6 p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"
-            id="updateSch__<%= @ui.current_path %>">
+            id="updateSch__maxLength_<%= @ui.current_path %>">
         </label>
         <label class="mb-2 bg-transparent">
           <p class="p-1 text-xs text-gray-600">Min Length</p>
@@ -118,7 +118,7 @@ defmodule FsetWeb.SchComponent do
             phx-value-key="minLength"
             value="<%= Map.get(@sch, ~s(minLength), 0) %>"
             class="h-6 p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"
-            id="updateSch__<%= @ui.current_path %>">
+            id="updateSch__minLength_<%= @ui.current_path %>">
         </label>
       </div>
     """
@@ -133,7 +133,7 @@ defmodule FsetWeb.SchComponent do
           phx-value-key="maximum"
           value="<%= Map.get(@sch, ~s(maximum), 0) %>"
           class="h-6 p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"
-          id="updateSch__<%= @ui.current_path %>">
+          id="updateSch__maximum_<%= @ui.current_path %>">
       </label>
       <label class="block mb-2 bg-transparent">
         <p class="p-1 text-xs text-gray-600">Minimum</p>
@@ -142,7 +142,7 @@ defmodule FsetWeb.SchComponent do
           phx-value-key="minimum"
           value="<%= Map.get(@sch, ~s(minimum), 0) %>"
           class="h-6 p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"
-          id="updateSch__<%= @ui.current_path %>">
+          id="updateSch__minimum_<%= @ui.current_path %>">
       </label>
       <label class="block mb-2 bg-transparent">
         <p class="p-1 text-xs text-gray-600">MultipleOf</p>

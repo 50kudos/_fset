@@ -139,17 +139,6 @@ defmodule Fset.File do
   def which_section(@main_key), do: :main
   def which_section(@model_key), do: :model
 
-  # def put_model(file, key, sch) when is_map(file) and is_binary(key) do
-  #   wrapper_key = "model_wrapper"
-
-  #   model =
-  #     Sch.new(wrapper_key, main_section(file))
-  #     |> Sch.put(wrapper_key <> "[#{@model_key}]", key, sch)
-  #     |> Sch.get(wrapper_key)
-
-  #   Sch.put_def(file, @model_key, model)
-  # end
-
   # Sch path requires a root properties to operate on its ("root" path) schema.
   # In order to rename the root key, we wrap it in a temp root, change key, and
   # unwrap it.

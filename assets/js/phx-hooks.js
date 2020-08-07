@@ -108,11 +108,12 @@ Hooks.expandableSortable = {
   setupSortable() {
     let sortableEl = this.el
     let sortableOpts = {
-      // group: this.el.dataset.group || "nested",
-      group: "nested",
+      group: this.el.dataset.group || "nested",
+      // group: "nested",
       // disabled: !!this.el.dataset.group,
       fallbackOnBody: true,
-      swapThreshold: 0.35,
+      // swapThreshold: 0.5,
+      animation: 150,
       multiDrag: true,
       multiDragKey: "Meta",
       dragoverBubble: true,

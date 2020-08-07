@@ -24,14 +24,19 @@ defmodule FsetWeb.TreeListComponent do
       Sch.object?(sch) && match?(%{level: _}, ui) -> render_folder(assigns)
       Sch.array?(sch) -> render_folder(assigns)
       Sch.leaf?(sch) -> render_file(assigns)
-      true -> raise "Wrong schema structure :: #{sch}"
+      Sch.any_of?(sch) -> render_folder(assigns)
+      true -> raise "Wrong schema structure :: #{inspect(sch)}"
     end
   end
 
   defp render_folder(assigns) do
     ~L"""
     <nav class="sort-handle" data-path="<%= @f.name %>">
-      <details id="expandableSortable__<%= @f.name %>" phx-hook="expandableSortable" data-indent="<%= (@ui.level + 1) * 1.25 %>rem" open>
+      <details id="expandableSortable__<%= @f.name %>"
+        phx-hook="expandableSortable"
+        data-group="<%= if @ui.level == @ui.tab, do: 'top', else: 'down' %>"
+        data-indent="<%= (@ui.level + 1) * 1.25 %>rem" open>
+
         <summary class="flex" >
           <%= render_folder_header(assigns) %>
         </summary>
@@ -44,7 +49,13 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_folder_header(%{ui: %{level: _}} = assigns) do
     ~L"""
-    <div class="dragover-hl flex flex-wrap items-center w-full <%= if @f.name in List.flatten([@ui.current_path]), do: 'bg-indigo-700 bg-opacity-50 text-gray-100' %>">
+    <div class="relative dragover-hl flex flex-wrap items-start w-full <%= if selected?(@f, @ui), do: 'bg-indigo-700 bg-opacity-50 text-gray-100' %>">
+      <%= if selected?(@f, @ui, :single) do %>
+        <p class="absolute m-1 leading-4 text-gray-900 font-mono text-xs">
+          <span class="close-marker cursor-pointer select-none">+</span>
+          <span class="open-marker cursor-pointer select-none">-</span>
+        </p>
+      <% end %>
       <%= render_key_type_pair(assigns) %>
     </div>
     """
@@ -103,6 +114,7 @@ defmodule FsetWeb.TreeListComponent do
       Sch.object?(assigns.sch) -> render_object(assigns)
       Sch.array?(assigns.sch, :empty) -> ~L""
       Sch.array?(assigns.sch) -> render_array(assigns)
+      Sch.any_of?(assigns.sch) -> render_union(assigns)
       true -> ~L""
     end
   end
@@ -139,6 +151,21 @@ defmodule FsetWeb.TreeListComponent do
     """
   end
 
+  defp render_union(assigns) do
+    ~L"""
+    <%= for f0 <- inputs_for(@f, nil, default: Sch.any_of(@sch)) do %>
+      <%= live_component(@socket, __MODULE__,
+        id: f0.name,
+        key: "",
+        sch: f0.data,
+        parent: @sch,
+        ui: %{@ui | level: @ui.level + 1, parent_path: @f.name},
+        f: f0
+      ) %>
+    <% end %>
+    """
+  end
+
   defp render_file(assigns) do
     ~L"""
     <nav class="sort-handle" data-path="<%= @f.name %>">
@@ -149,7 +176,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_key_type_pair(assigns) do
     ~L"""
-    <div class="flex items-stretch w-full leading-6 <%= if @f.name in List.flatten([@ui.current_path]), do: 'bg-indigo-700 bg-opacity-50 text-gray-100' %>">
+    <div class="flex items-stretch w-full leading-6 <%= if selected?(@f, @ui), do: 'bg-indigo-700 bg-opacity-50 text-gray-100' %>">
       <div
         class="indent"
         style="padding-left: <%= @ui.level * 1.25 %>rem"
@@ -160,13 +187,17 @@ defmodule FsetWeb.TreeListComponent do
         <%= render_textarea(assigns) %>
         <%= render_type(assigns) %>
       <% else %>
-        <%= render_key(assigns) %>
-        <%= render_type(assigns) %>
+        <%= if selected?(@f, @ui, :single) do %>
+          <%= render_key(assigns) %>
+          <%= render_type_options(assigns) %>
+        <% else %>
+          <%= render_key(assigns) %>
+          <%= render_type(assigns) %>
+        <% end %>
       <% end %>
 
       <div class="flex-1 overflow-hidden" onclick="event.preventDefault()">
         &nbsp;
-        <div class="close-marker flex items-center h-full text-sm"><%= #render_inline_type(assigns) %></div>
       </div>
     </div>
     """
@@ -174,15 +205,23 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_type_options(assigns) do
     ~L"""
-    <%= if @ui.current_path == @f.name && !is_list(@ui.current_path) do %>
-      <span class="flex-1"></span>
-      <div class="flex items-center h-4 ml-4 text-xs">
-        <%= for {type, display_type} <- type_options() do %>
-          <span class="mr-1 <%= if Sch.type(@sch) == type, do: 'bg-gray-800 text-gray-200 rounded', else: 'text-gray-400 cursor-pointer' %> px-1" phx-click="select_type" phx-value-type="<%= type %>" phx-value-path="<%= @ui.current_path %>"><%= display_type %></span>
-        <% end %>
-      </div>
+    <%= if selected?(@f, @ui, :single) do %>
+      <details class="relative">
+        <summary class="flex">
+          <div class="flex rounded cursor-pointer select-none text-gray-500 text-xs">
+            <%= render_type(assigns, :no_prevent) %>
+          </div>
+        </summary>
+        <ul class="details-menu absolute mt-1 z-10 bg-gray-900 border border-gray-800 rounded text-xs">
+          <%= for type <- [:record, :list, :tuple, :string, :bool, :number, :null] do %>
+            <li class="px-2 py-1 hover:bg-gray-800 bg-opacity-75 cursor-pointer border-b border-gray-800 last:border-0"
+              phx-click="change_type" phx-value-type="<%= type %>">
+              <%= type %>
+            </li>
+          <% end %>
+        </ul>
+      </details>
 
-      <%= render_add_button(assigns) %>
     <% end %>
     """
   end
@@ -232,23 +271,47 @@ defmodule FsetWeb.TreeListComponent do
     cond do
       Sch.object?(assigns.sch) ->
         ~L"""
-        <span class="text-blue-400 mr-1">Record</span>
+        <span class="text-blue-400 mr-1">record</span>
         <%= render_key_text(assigns) %>
         <span class="mx-2">=</span>
         """
 
       Sch.array?(assigns.sch, :hetero) ->
         ~L"""
-        <span class="text-blue-400 mr-1">Tuple</span>
+        <span class="text-blue-400 mr-1">tuple</span>
         <%= render_key_text(assigns) %>
         <span class="mx-2">=</span>
         """
 
       Sch.array?(assigns.sch, :homo) ->
         ~L"""
-        <span class="text-blue-400 mr-1">List</span>
+        <span class="text-blue-400 mr-1">list</span>
         <%= render_key_text(assigns) %>
         <span class="mx-2">=</span>
+        """
+
+      Sch.any_of?(assigns.sch) ->
+        ~L"""
+        <span class="text-blue-400 mr-1">union</span>
+        <%= render_key_text(assigns) %>
+        <span class="mx-2">=</span>
+        """
+
+      true ->
+        ~L"""
+        <span class="text-blue-400 mr-1">field</span>
+        <%= render_key_text(assigns) %>
+        <span class="mx-2">:</span>
+        """
+    end
+  end
+
+  defp render_key_(assigns) do
+    cond do
+      Sch.any_of?(Map.get(assigns, :parent)) ->
+        ~L"""
+        <%= render_key_text(assigns) %>
+        <span class="mx-2 text-base text-gray-600">|</span>
         """
 
       true ->
@@ -257,13 +320,6 @@ defmodule FsetWeb.TreeListComponent do
         <span class="mx-2">:</span>
         """
     end
-  end
-
-  defp render_key_(assigns) do
-    ~L"""
-    <%= render_key_text(assigns) %>
-    <span class="mx-2">:</span>
-    """
   end
 
   defp render_key_text(%{ui: %{current_path: name}, f: %{name: name}} = assigns) do
@@ -305,9 +361,17 @@ defmodule FsetWeb.TreeListComponent do
     end
   end
 
+  defp render_type(assigns, :no_prevent) do
+    ~L"""
+    <p class="text-blue-500 text-sm flex-shrink-0">
+      <%= render_type_(assigns) %>
+    </p>
+    """
+  end
+
   defp render_type(assigns) do
     ~L"""
-    <p class="text-blue-500 text-sm shrink-0">
+    <p class="text-blue-500 text-sm flex-shrink-0" onclick="event.preventDefault()">
       <%= render_type_(assigns) %>
     </p>
     """
@@ -315,6 +379,11 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_type_(%{ui: %{level: l, tab: t}} = assigns) when l == t do
     cond do
+      Sch.object?(assigns.sch, :empty) ->
+        ~L"""
+        <span class="">{any}</span>
+        """
+
       Sch.object?(assigns.sch) ->
         ~L""
 
@@ -330,7 +399,7 @@ defmodule FsetWeb.TreeListComponent do
 
       Sch.array?(assigns.sch, :hetero) ->
         ~L"""
-        <span class="close-marker self-center cursor-pointer select-none">(...)</span>
+        <span class="self-center cursor-pointer select-none">( )</span>
         """
 
       true ->
@@ -344,8 +413,7 @@ defmodule FsetWeb.TreeListComponent do
     cond do
       Sch.object?(assigns.sch) ->
         ~L"""
-        <span class="close-marker self-center cursor-pointer text-sm select-none text-blue-500">{...}</span>
-        <span class="open-marker self-center cursor-pointer text-sm select-none text-blue-500">{  }</span>
+        <span class="self-center cursor-pointer text-sm select-none text-blue-500">{  }</span>
         """
 
       Sch.array?(assigns.sch, :empty) ->
@@ -360,8 +428,7 @@ defmodule FsetWeb.TreeListComponent do
 
       Sch.array?(assigns.sch, :hetero) ->
         ~L"""
-        <span class="close-marker self-center cursor-pointer text-sm select-none text-blue-500">(...)</span>
-        <span class="open-marker self-center cursor-pointer text-sm select-none text-blue-500">(  )</span>
+        <span class="self-center cursor-pointer text-sm select-none text-blue-500">(  )</span>
         """
 
       true ->
@@ -370,6 +437,10 @@ defmodule FsetWeb.TreeListComponent do
         """
     end
   end
+
+  defp selected?(f, ui), do: f.name in List.flatten([ui.current_path])
+  defp selected?(f, ui, :multi), do: selected?(f, ui) && is_list(ui.current_path)
+  defp selected?(f, ui, :single), do: selected?(f, ui) && !is_list(ui.current_path)
 
   defp type_options do
     [

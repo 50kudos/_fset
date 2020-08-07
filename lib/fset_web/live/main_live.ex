@@ -62,13 +62,14 @@ defmodule FsetWeb.MainLive do
           fn sch -> Sch.put(sch, ui.current_path, Sch.gen_key(), Sch.string(), 0) end
 
         "List" ->
-          fn sch -> Sch.put(sch, ui.current_path, Sch.gen_key(), Sch.array(:hetero), 0) end
-
-        "Tuple" ->
           fn sch -> Sch.put(sch, ui.current_path, Sch.gen_key(), Sch.array(:homo), 0) end
 
+        "Tuple" ->
+          fn sch -> Sch.put(sch, ui.current_path, Sch.gen_key(), Sch.array(:hetero), 0) end
+
         "Union" ->
-          fn a -> a end
+          union = Sch.any_of([Sch.object(), Sch.array(), Sch.string()])
+          fn sch -> Sch.put(sch, ui.current_path, Sch.gen_key(), union, 0) end
 
         _ ->
           fn a -> a end
@@ -94,9 +95,32 @@ defmodule FsetWeb.MainLive do
     {:noreply, update(socket, :current_file, &Sch.put(&1, ui.current_path, Sch.string()))}
   end
 
-  def handle_event("select_type", %{"type" => type, "path" => sch_path}, socket) do
+  def handle_event("change_type", %{"type" => type}, socket) do
+    file = socket.assigns.current_file
+    ui = socket.assigns.ui
+
+    type =
+      case type do
+        "record" -> "object"
+        "list" -> "array"
+        "tuple" -> "array"
+        "string" -> "string"
+        "bool" -> "boolean"
+        "number" -> "number"
+        "null" -> "null"
+        _ -> "null"
+      end
+
+    module =
+      File.update_current_section(file.module, fn section_sch ->
+        Sch.change_type(section_sch, ui.current_path, type)
+      end)
+
+    socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
+
     Process.send_after(self(), :update_schema, 1000)
-    {:noreply, update(socket, :current_file, &Sch.change_type(&1, sch_path, type))}
+
+    {:noreply, socket}
   end
 
   def handle_event("select_sch", %{"paths" => sch_path}, socket) do
