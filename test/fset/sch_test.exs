@@ -24,7 +24,12 @@ defmodule Fset.SchTest do
     root = put(root, "root[key][arr_key]", string())
     assert get(root, "root[key][arr_key][][0]") == string()
     assert get(root, "root[key][arr_key][][0][]") == string()
-    assert get(root, "root[key][arr_key][][0][][0]") == %{}
+
+    assert_raise RuntimeError, fn -> get(root, "root[key][arr_key][][0][][0]") end
+
+    union = any_of([object(), array(), string()])
+    root = put(root, "root", "union", union)
+    assert get(root, "root[union][][1]") == array()
   end
 
   test "#put_object to object", root do

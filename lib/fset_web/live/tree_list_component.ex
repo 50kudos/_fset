@@ -198,6 +198,9 @@ defmodule FsetWeb.TreeListComponent do
 
       <div class="flex-1 overflow-hidden" onclick="event.preventDefault()">
         &nbsp;
+        <%= if selected?(@f, @ui, :single) do %>
+          <%= render_add_button(assigns) %>
+        <% end %>
       </div>
     </div>
     """
@@ -230,12 +233,12 @@ defmodule FsetWeb.TreeListComponent do
     cond do
       Sch.object?(assigns.sch) ->
         ~L"""
-        <span phx-click="add_prop" class="mx-2 px-2 bg-indigo-500 rounded text-xs cursor-pointer">+</span>
+        <span phx-click="add_model" phx-value-model="Record" class="mx-2 px-2 bg-indigo-500 rounded text-xs cursor-pointer">+</span>
         """
 
       Sch.array?(assigns.sch) ->
         ~L"""
-        <span phx-click="add_item" class="mx-2 px-2 bg-indigo-500 rounded text-xs cursor-pointer">+</span>
+        <span phx-click="add_model" phx-value-model="Record" class="mx-2 px-2 bg-indigo-500 rounded text-xs cursor-pointer">+</span>
         """
 
       true ->

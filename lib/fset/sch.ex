@@ -1,5 +1,4 @@
 defmodule Fset.Sch do
-  alias FSet.Emap
   # Changing keyword name MUST only be done by a dedicate transform process.
   # Because during that process, it will "stop the world", and transform safely.
   # The same mechanism can be used to compress schema by shrinking internal string.
@@ -123,7 +122,7 @@ defmodule Fset.Sch do
   @doc """
     %{key: _, sch: _, index: _} is called `raw_sch` within this module.
   """
-  def put(map, path, key, sch, index \\ -1) do
+  def put(map, path, key, sch, index \\ -1) when is_map(sch) do
     put_schs(map, path, [%{key: key, sch: sch, index: index}])
   end
 
@@ -237,6 +236,9 @@ defmodule Fset.Sch do
 
             %{@type_ => @array} ->
               Enum.map(dst_indices, fn i -> dst <> "[][" <> "#{i}" <> "]" end)
+
+            %{@any_of => _} ->
+              Enum.map(dst_indices, fn i -> dst <> "[][" <> "#{i}" <> "]" end)
           end
 
         dst_paths ++ acc
@@ -269,7 +271,7 @@ defmodule Fset.Sch do
   end
 
   defp put_schs(%{@type_ => @object} = parent, raw_schs) do
-    props = Map.new(raw_schs, fn raw_sch -> {raw_sch[:key], raw_sch[:sch]} end)
+    props = Map.new(raw_schs, fn %{key: key, sch: sch} when not is_nil(key) -> {key, sch} end)
 
     parent
     |> Map.update(@properties, props, fn p -> Map.merge(p, props) end)
@@ -301,6 +303,16 @@ defmodule Fset.Sch do
           end)
         end)
     end
+  end
+
+  defp put_schs(%{@any_of => any_of_schs} = parent, raw_schs) when is_list(any_of_schs) do
+    Map.update!(parent, @any_of, fn _ ->
+      reindex(raw_schs, any_of_schs)
+      |> Enum.map(fn
+        %{sch: sch} -> sch
+        {sch, _i} -> sch
+      end)
+    end)
   end
 
   # New schs come as raw_schs that contain an index for each. `reindex/2` sort
@@ -351,7 +363,14 @@ defmodule Fset.Sch do
 
         parent =
           for a <- rest, reduce: root do
-            acc -> acc <> "[" <> a <> "]"
+            acc ->
+              path =
+                case Integer.parse(a) do
+                  :error -> "[" <> a <> "]"
+                  _ -> "[]" <> "[" <> a <> "]"
+                end
+
+              acc <> path
           end
 
         %{parent_path: parent, child_key: leaf}
@@ -433,6 +452,33 @@ defmodule Fset.Sch do
     {popped, map_}
   end
 
+  defp pop_schs(%{@any_of => any_of_schs} = parent, indices) when is_list(any_of_schs) do
+    integer_indices =
+      Enum.map(indices, fn
+        i when is_binary(i) -> String.to_integer(i)
+        i when is_integer(i) -> i
+        i -> raise "#{i} index must be integer"
+      end)
+
+    {popped, remained} =
+      parent
+      |> Map.get(@any_of)
+      |> Enum.with_index()
+      |> Enum.split_with(fn {_, i} -> i in integer_indices end)
+
+    map_ =
+      parent
+      |> Map.update!(@any_of, fn _ -> Keyword.keys(remained) end)
+      |> Map.update!(@any_of, fn
+        [] -> [%{}]
+        schs -> schs
+      end)
+
+    popped = Enum.map(popped, fn {sch, i} -> {i, sch} end)
+
+    {popped, map_}
+  end
+
   defp pop_schs(_, _), do: nil
 
   def update(map, path, key, val) when is_binary(key) do
@@ -503,13 +549,24 @@ defmodule Fset.Sch do
 
   defp positive_int(val), do: val
 
-  defp homo_or_hetero(index) do
+  defp access_list(index) do
     fn
-      _ops, data, next when is_map(data) ->
-        next.(data)
+      ops, %{@type_ => @array, @items => item} = data, next when is_map(item) ->
+        Access.key!(@items).(ops, data, next)
 
-      ops, data, next when is_list(data) ->
-        Access.at(String.to_integer(index)).(ops, data, next)
+      ops, %{@type_ => @array, @items => items} = data, next when is_list(items) ->
+        next = fn items_ -> Access.at(String.to_integer(index)).(ops, items_, next) end
+        Access.key!(@items).(ops, data, next)
+
+      ops, %{@any_of => any_of_schs} = data, next when is_list(any_of_schs) ->
+        next = fn any_of_schs_ ->
+          Access.at(String.to_integer(index)).(ops, any_of_schs_, next)
+        end
+
+        Access.key!(@any_of).(ops, data, next)
+
+      _ops, data, _next ->
+        raise "#{inspect(data)} is not a list container"
     end
   end
 
@@ -530,7 +587,7 @@ defmodule Fset.Sch do
 
       %{} = map, acc ->
         [{index, v}] = Map.to_list(map)
-        access_path(v) ++ [homo_or_hetero(index) | [items() | acc]]
+        access_path(v) ++ [access_list(index) | acc]
     end)
   end
 
