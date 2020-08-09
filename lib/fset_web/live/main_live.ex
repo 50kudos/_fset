@@ -27,100 +27,25 @@ defmodule FsetWeb.MainLive do
   end
 
   @impl true
-  # def handle_event(event, val, socket) do
-  #   updated =
-  #     case event do
-  #       "add_prop" -> add_prop(val, socket)
-  #       "add_item" -> add_item(val, socket)
-  #       "select_type" -> select_type(val, socket)
-  #       "select_sch" -> select_sch(val, socket)
-  #       "edit_sch" ->edit_sch(val, socket)
-  #       "update_sch" ->update_sch(val, socket)
-  #       "rename_key" ->rename_key(val, socket)
-  #       "escape" ->escape(val, socket)
-  #       "move" ->move(val, socket)
-  #     end
-
-  #   updated_socket =
-  #     socket
-  #     |> update(:ui, fn u -> updated.ui || u end)
-  #     |> update(:current_file, fn c -> updated.current_file || c end)
-
-  #   {:noreply , updated_socket}
-  # end
-
   def handle_event("add_model", %{"model" => model}, socket) do
     file = socket.assigns.current_file
     ui = socket.assigns.ui
 
-    add_model_fun =
-      case model do
-        "Record" ->
-          fn sch -> Sch.put(sch, ui.current_path, Sch.gen_key(), Sch.any(), 0) end
-
-        "Field" ->
-          fn sch -> Sch.put(sch, ui.current_path, Sch.gen_key(), Sch.string(), 0) end
-
-        "List" ->
-          fn sch -> Sch.put(sch, ui.current_path, Sch.gen_key(), Sch.array(:homo), 0) end
-
-        "Tuple" ->
-          fn sch -> Sch.put(sch, ui.current_path, Sch.gen_key(), Sch.array(:hetero), 0) end
-
-        "Union" ->
-          union = Sch.any_of([Sch.object(), Sch.array(), Sch.string()])
-          fn sch -> Sch.put(sch, ui.current_path, Sch.gen_key(), union, 0) end
-
-        _ ->
-          fn a -> a end
-      end
-
-    module = File.update_current_section(file.module, add_model_fun)
+    module = File.update_current_section(file.module, File.add_model_fun(model, ui.current_path))
     socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
 
     Process.send_after(self(), :update_schema, 1000)
-
     {:noreply, socket}
-  end
-
-  def handle_event("add_prop", _val, %{assigns: %{ui: ui}} = socket) do
-    Process.send_after(self(), :update_schema, 1000)
-
-    {:noreply,
-     update(socket, :current_file, &Sch.put(&1, ui.current_path, Sch.gen_key(), Sch.string()))}
-  end
-
-  def handle_event("add_item", _val, %{assigns: %{ui: ui}} = socket) do
-    Process.send_after(self(), :update_schema, 1000)
-    {:noreply, update(socket, :current_file, &Sch.put(&1, ui.current_path, Sch.string()))}
   end
 
   def handle_event("change_type", %{"type" => type}, socket) do
     file = socket.assigns.current_file
     ui = socket.assigns.ui
 
-    type =
-      case type do
-        "record" -> "object"
-        "list" -> "array"
-        "tuple" -> "array"
-        "string" -> "string"
-        "bool" -> "boolean"
-        "number" -> "number"
-        "null" -> "null"
-        "union" -> "anyOf"
-        _ -> "null"
-      end
-
-    module =
-      File.update_current_section(file.module, fn section_sch ->
-        Sch.change_type(section_sch, ui.current_path, type)
-      end)
-
+    module = File.update_current_section(file.module, File.change_type_fun(type, ui.current_path))
     socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
 
     Process.send_after(self(), :update_schema, 1000)
-
     {:noreply, socket}
   end
 

@@ -139,6 +139,61 @@ defmodule Fset.File do
   def which_section(@main_key), do: :main
   def which_section(@model_key), do: :model
 
+  def add_model_fun(model, path) do
+    case model do
+      "Record" ->
+        fn sch -> Sch.put(sch, path, Sch.gen_key(), Sch.string(), 0) end
+
+      "Field" ->
+        fn sch -> Sch.put(sch, path, Sch.gen_key(), Sch.string(), 0) end
+
+      "List" ->
+        fn sch -> Sch.put(sch, path, Sch.gen_key(), Sch.array(:homo), 0) end
+
+      "Tuple" ->
+        fn sch -> Sch.put(sch, path, Sch.gen_key(), Sch.array(:hetero), 0) end
+
+      "Union" ->
+        union = Sch.any_of([Sch.object(), Sch.array(), Sch.string()])
+        fn sch -> Sch.put(sch, path, Sch.gen_key(), union, 0) end
+
+      _ ->
+        fn a -> a end
+    end
+  end
+
+  def change_type_fun(type, path) do
+    case type do
+      "record" ->
+        fn sch -> Sch.change_type(sch, path, Sch.object()) end
+
+      "list" ->
+        fn sch -> Sch.change_type(sch, path, Sch.array(:homo)) end
+
+      "tuple" ->
+        fn sch -> Sch.change_type(sch, path, Sch.array(:hetero)) end
+
+      "string" ->
+        fn sch -> Sch.change_type(sch, path, Sch.string()) end
+
+      "bool" ->
+        fn sch -> Sch.change_type(sch, path, Sch.boolean()) end
+
+      "number" ->
+        fn sch -> Sch.change_type(sch, path, Sch.number()) end
+
+      "null" ->
+        fn sch -> Sch.change_type(sch, path, Sch.null()) end
+
+      "union" ->
+        union = Sch.any_of([Sch.object(), Sch.array(), Sch.string()])
+        fn sch -> Sch.change_type(sch, path, union) end
+
+      _ ->
+        fn a -> a end
+    end
+  end
+
   # Sch path requires a root properties to operate on its ("root" path) schema.
   # In order to rename the root key, we wrap it in a temp root, change key, and
   # unwrap it.

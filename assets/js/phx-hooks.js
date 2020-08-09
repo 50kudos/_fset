@@ -158,6 +158,15 @@ Hooks.expandableSortable = {
           evt.items = evt.items.filter(item => !fromDiffList.includes(item))
         }
 
+        // Do not multi-select same-list when multiDragKey is not pressed.
+        // This is implemented separately from above. It may be better this way.
+        if (!evt.item.multiDragKeyDown) {
+          let exceptItselfItems = evt.items.filter(item => {
+            return item != evt.item
+          })
+          exceptItselfItems.forEach(item => item.parentNode && Sortable.utils.deselect(item))
+          evt.items = evt.items.filter(item => !exceptItselfItems.includes(item))
+        }
 
         // PushEvent only when necessary
         const ShiftSelect = evt.items.length == this.el.shiftSelect

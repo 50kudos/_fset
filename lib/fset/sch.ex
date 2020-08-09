@@ -34,7 +34,27 @@ defmodule Fset.Sch do
   @props_order "order"
 
   # Accessor
-  def type(sch) when is_map(sch), do: Map.get(sch, @type_)
+  def read(sch) when is_map(sch) do
+    Enum.reduce(sch, sch, fn
+      {@type_, type}, acc ->
+        type_map = %{
+          @object => :object,
+          @array => :array,
+          @string => :string,
+          @boolean => :boolean,
+          @number => :number,
+          @null => :null
+        }
+
+        acc
+        |> Map.delete(@type_)
+        |> Map.put(:type, Map.get(type_map, type))
+
+      _, acc ->
+        acc
+    end)
+  end
+
   def order(sch) when is_map(sch), do: Map.get(sch, @props_order)
   def prop_sch(sch, key) when is_map(sch), do: Map.get(Map.get(sch, @properties), key)
   def items(sch) when is_map(sch), do: Map.get(sch, @items)
@@ -44,7 +64,6 @@ defmodule Fset.Sch do
   # END Accessor
 
   defp props(), do: Access.key(@properties, %{})
-  defp items(), do: Access.key(@items, %{})
   defp defs(), do: Access.key(@defs, %{})
 
   def object?(sch),
@@ -134,33 +153,21 @@ defmodule Fset.Sch do
     end)
   end
 
-  def change_type(map, path, "object") do
+  def change_type(map, path, %{@type_ => type} = new_sch) when type in @types do
     update_in(map, access_path(path), fn sch ->
-      sch
-      |> Map.put(@type_, @object)
-      |> Map.put_new(@props_order, [])
+      Map.merge(sch, new_sch, fn
+        @type_, _v1, v2 -> v2
+        @items, _v1, v2 -> v2
+        _k, v1, _v2 -> v1
+      end)
     end)
   end
 
-  def change_type(map, path, "array") do
-    update_in(map, access_path(path), fn sch ->
-      sch
-      |> Map.put(@type_, @array)
-      |> Map.put_new(@items, %{})
-    end)
-  end
-
-  def change_type(map, path, "anyOf") do
+  def change_type(map, path, %{@any_of => schs}) when is_list(schs) and length(schs) > 0 do
     update_in(map, access_path(path), fn sch ->
       sch
       |> Map.delete(@type_)
-      |> Map.put_new(@any_of, [string()])
-    end)
-  end
-
-  def change_type(map, path, type) when type in @types do
-    update_in(map, access_path(path), fn sch ->
-      Map.put(sch, @type_, type)
+      |> Map.update(@any_of, schs, fn old_schs -> old_schs end)
     end)
   end
 
@@ -303,7 +310,7 @@ defmodule Fset.Sch do
         Map.put(parent, @items, sch)
 
       {_schs, items} when is_map(items) or is_list(items) ->
-        items = List.wrap(items) |> Enum.filter(fn a -> map_size(a) != 0 end)
+        items = List.wrap(items)
 
         Map.update!(parent, @items, fn _ ->
           reindex(raw_schs, items)
@@ -453,6 +460,7 @@ defmodule Fset.Sch do
       |> Map.update!(@items, fn _ -> Keyword.keys(remained) end)
       |> Map.update!(@items, fn
         [] -> %{}
+        [item] when item == %{} -> [%{}]
         [item] -> item
         items -> items
       end)

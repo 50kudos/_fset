@@ -193,6 +193,17 @@ defmodule Fset.SchTest do
     assert get(root, "root[arr_key][][0]") == boolean()
   end
 
+  test "#put_schs any to empty array", root do
+    root = put(root, "root", "arr_key", array())
+
+    raw_schs = [
+      %{sch: any(), index: 0}
+    ]
+
+    root = put_schs(root, "root[arr_key]", raw_schs)
+    assert get(root, "root[arr_key]") |> items() == any()
+  end
+
   test "#rename_key", root do
     root = put(root, "root", "a", string())
     root = put(root, "root", "y", string())
@@ -241,7 +252,7 @@ defmodule Fset.SchTest do
     moved_down = move(moved_up, src_indices, dst_indices)
 
     assert get(moved_up, "root[a]") |> order() == ["0", "1", "b"]
-    assert get(moved_down, "root") == get(root, "root")
+    assert get(moved_down, "root[a][b]") |> items() == [string(), string(), any()]
   end
 
   test "#move from multiple sources", root do
@@ -260,6 +271,17 @@ defmodule Fset.SchTest do
     root = move(root, src_indices, dst_indices)
 
     assert get(root, "root") |> order() == ["0", "1", "a", "b"]
+  end
+
+  test "#move non-any (any, str) in tuple, should not delete the any", root do
+    root = put(root, "root", "tuple", array(:hetero))
+    root = put(root, "root[tuple]", any())
+
+    dst_indices = [dst_item("root[tuple]", 1)]
+    src_indices = [src_item("root[tuple]", 0)]
+    root = move(root, src_indices, dst_indices)
+
+    assert get(root, "root[tuple]") |> items() |> length() == 2
   end
 
   test "#get_paths", root do
