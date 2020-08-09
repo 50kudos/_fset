@@ -70,6 +70,7 @@ defmodule Fset.Sch do
   def boolean?(sch), do: match?(%{@type_ => @boolean}, sch)
   def null?(sch), do: match?(%{@type_ => @null}, sch)
   def leaf?(sch), do: match?(%{@type_ => _}, sch)
+  def any?(sch), do: sch == %{}
 
   def any_of?(sch), do: match?(%{@any_of => schs} when is_list(schs) and length(schs) > 0, sch)
 
@@ -104,6 +105,7 @@ defmodule Fset.Sch do
   def number(), do: %{@type_ => @number}
   def boolean(), do: %{@type_ => @boolean}
   def null(), do: %{@type_ => @null}
+  def any(), do: %{}
 
   def all_of(schs) when is_list(schs) and length(schs) > 0, do: %{@all_of => schs}
   def any_of(schs) when is_list(schs) and length(schs) > 0, do: %{@any_of => schs}
@@ -133,7 +135,7 @@ defmodule Fset.Sch do
   end
 
   def change_type(map, path, "object") do
-    update_in(map, access_path(path), fn %{@type_ => _} = sch ->
+    update_in(map, access_path(path), fn sch ->
       sch
       |> Map.put(@type_, @object)
       |> Map.put_new(@props_order, [])
@@ -141,15 +143,23 @@ defmodule Fset.Sch do
   end
 
   def change_type(map, path, "array") do
-    update_in(map, access_path(path), fn %{@type_ => _} = sch ->
+    update_in(map, access_path(path), fn sch ->
       sch
       |> Map.put(@type_, @array)
       |> Map.put_new(@items, %{})
     end)
   end
 
+  def change_type(map, path, "anyOf") do
+    update_in(map, access_path(path), fn sch ->
+      sch
+      |> Map.delete(@type_)
+      |> Map.put_new(@any_of, [string()])
+    end)
+  end
+
   def change_type(map, path, type) when type in @types do
-    update_in(map, access_path(path), fn %{@type_ => _} = sch ->
+    update_in(map, access_path(path), fn sch ->
       Map.put(sch, @type_, type)
     end)
   end

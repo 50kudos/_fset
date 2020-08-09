@@ -64,7 +64,7 @@
         </div>
       </aside>
       <nav class="w-3/5 overflow-scroll shadow">
-        <div class="flex items-center text-xs h-8 bg-gray-900 sticky top-0 border-b border-gray-800">
+        <div class="flex items-center text-xs h-8 bg-gray-900 sticky top-0 z-10 border-b border-gray-800">
         <%= if !is_list(@ui.current_path) do %>
           <%= if @ui.current_path == f.name do %>
             <p class="mx-5 text-gray-600">Add type : </p>

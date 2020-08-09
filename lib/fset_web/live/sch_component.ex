@@ -17,11 +17,11 @@ defmodule FsetWeb.SchComponent do
       </dl>
       <label class="block mb-2 bg-transparent">
         <p class="p-1 text-xs text-gray-600">Title</p>
-        <input type="text" phx-blur="update_sch" phx-value-key="title" value="<%= Map.get(@sch, ~s(title)) %>" class="h-6 p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full">
+        <textarea type="text" phx-blur="update_sch" phx-value-key="title" rows="2" class="p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"><%= Map.get(@sch, "title") %></textarea>
       </label>
       <label class="block mb-2 bg-transparent">
         <p class="p-1 text-xs text-gray-600">Description</p>
-        <textarea type="text" phx-blur="update_sch" phx-value-key="description" class="h-6 p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"><%= Map.get(@sch, "description") %></textarea>
+        <textarea type="text" phx-blur="update_sch" phx-value-key="description" rows="2" class="p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"><%= Map.get(@sch, "description") %></textarea>
       </label>
       <%= render_sch(assigns) %>
     </article>

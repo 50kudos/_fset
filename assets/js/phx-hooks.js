@@ -86,6 +86,7 @@ Hooks.expandableSortable = {
         let itemBox = Sortable.utils.closest(item, "[phx-hook='expandableSortable']")
 
         item.from = itemBox
+        item.multiDragKeyDown = false
         Sortable.utils.select(item)
       })
     }
@@ -112,11 +113,13 @@ Hooks.expandableSortable = {
       // group: "nested",
       // disabled: !!this.el.dataset.group,
       fallbackOnBody: true,
-      // swapThreshold: 0.5,
+      // swapThreshold: 0.1,
+      // invertedSwapThreshold: 0.2,
+      // invertSwap: true,
       animation: 150,
       multiDrag: true,
       multiDragKey: "Meta",
-      dragoverBubble: true,
+      dragoverBubble: false,
       filter: ".filtered",
       preventOnFilter: false,
       handle: this.itemClass,

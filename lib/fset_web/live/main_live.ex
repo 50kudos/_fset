@@ -56,7 +56,7 @@ defmodule FsetWeb.MainLive do
     add_model_fun =
       case model do
         "Record" ->
-          fn sch -> Sch.put(sch, ui.current_path, Sch.gen_key(), Sch.object(), 0) end
+          fn sch -> Sch.put(sch, ui.current_path, Sch.gen_key(), Sch.any(), 0) end
 
         "Field" ->
           fn sch -> Sch.put(sch, ui.current_path, Sch.gen_key(), Sch.string(), 0) end
@@ -108,6 +108,7 @@ defmodule FsetWeb.MainLive do
         "bool" -> "boolean"
         "number" -> "number"
         "null" -> "null"
+        "union" -> "anyOf"
         _ -> "null"
       end
 
