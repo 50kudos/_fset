@@ -162,36 +162,31 @@ defmodule Fset.File do
     end
   end
 
+  defp change_type_fun_table(path) do
+    [
+      {"record", fn sch -> Sch.change_type(sch, path, Sch.object()) end},
+      {"list", fn sch -> Sch.change_type(sch, path, Sch.array(:homo)) end},
+      {"tuple", fn sch -> Sch.change_type(sch, path, Sch.array(:hetero)) end},
+      {"string", fn sch -> Sch.change_type(sch, path, Sch.string()) end},
+      {"bool", fn sch -> Sch.change_type(sch, path, Sch.boolean()) end},
+      {"number", fn sch -> Sch.change_type(sch, path, Sch.number()) end},
+      {"null", fn sch -> Sch.change_type(sch, path, Sch.null()) end},
+      {"union",
+       fn sch ->
+         Sch.change_type(sch, path, Sch.any_of([Sch.object(), Sch.array(), Sch.string()]))
+       end}
+    ]
+  end
+
+  def changable_types() do
+    Enum.map(change_type_fun_table(""), fn {k, _} -> k end)
+  end
+
   def change_type_fun(type, path) do
-    case type do
-      "record" ->
-        fn sch -> Sch.change_type(sch, path, Sch.object()) end
-
-      "list" ->
-        fn sch -> Sch.change_type(sch, path, Sch.array(:homo)) end
-
-      "tuple" ->
-        fn sch -> Sch.change_type(sch, path, Sch.array(:hetero)) end
-
-      "string" ->
-        fn sch -> Sch.change_type(sch, path, Sch.string()) end
-
-      "bool" ->
-        fn sch -> Sch.change_type(sch, path, Sch.boolean()) end
-
-      "number" ->
-        fn sch -> Sch.change_type(sch, path, Sch.number()) end
-
-      "null" ->
-        fn sch -> Sch.change_type(sch, path, Sch.null()) end
-
-      "union" ->
-        union = Sch.any_of([Sch.object(), Sch.array(), Sch.string()])
-        fn sch -> Sch.change_type(sch, path, union) end
-
-      _ ->
-        fn a -> a end
-    end
+    path
+    |> change_type_fun_table()
+    |> List.keyfind(type, 0, fn a -> a end)
+    |> elem(1)
   end
 
   # Sch path requires a root properties to operate on its ("root" path) schema.

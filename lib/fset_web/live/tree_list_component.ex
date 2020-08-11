@@ -1,6 +1,6 @@
 defmodule FsetWeb.TreeListComponent do
   use FsetWeb, :live_component
-  alias Fset.Sch
+  alias Fset.{Sch, File}
 
   @impl true
   def mount(socket) do
@@ -201,7 +201,7 @@ defmodule FsetWeb.TreeListComponent do
           </div>
         </summary>
         <ul class="details-menu absolute mt-1 z-10 bg-gray-300 text-gray-800 border border-gray-900 rounded text-xs">
-          <%= for type <- [:record, :list, :tuple, :union, :string, :bool, :number, :null] do %>
+          <%= for type <- File.changable_types() do %>
             <li class="px-2 py-1 hover:bg-gray-800 hover:text-gray-300 bg-opacity-75 cursor-pointer border-b border-gray-500 last:border-0"
               phx-click="change_type" phx-value-type="<%= type %>">
               <%= type %>
@@ -478,6 +478,7 @@ defmodule FsetWeb.TreeListComponent do
       Sch.number?(sch) -> "num"
       Sch.boolean?(sch) -> "bool"
       Sch.null?(sch) -> "null"
+      Sch.any_of?(sch) -> "union"
     end
   end
 end

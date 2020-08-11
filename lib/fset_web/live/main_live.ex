@@ -123,15 +123,6 @@ defmodule FsetWeb.MainLive do
     {:noreply, socket}
   end
 
-  def handle_event("escape", _, socket) do
-    {:noreply,
-     update(socket, :ui, fn ui ->
-       ui
-       |> Map.put(:current_path, socket.assigns.ui.current_path)
-       |> Map.put(:current_edit, nil)
-     end)}
-  end
-
   def handle_event("move", payload, socket) do
     %{"oldIndices" => src_indices, "newIndices" => dst_indices} = payload
 
@@ -202,6 +193,11 @@ defmodule FsetWeb.MainLive do
           assigns
           |> put_in([:current_file], %{file | module: module})
           |> put_in([:ui, :current_path], new_current_paths)
+
+        "Escape" ->
+          assigns
+          |> put_in([:ui, :current_path], assigns.current_file.module.current_section_key)
+          |> put_in([:ui, :current_edit], nil)
 
         _ ->
           file.module
