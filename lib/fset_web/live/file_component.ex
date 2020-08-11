@@ -13,7 +13,7 @@ defmodule FsetWeb.FileComponent do
      socket
      |> assign(:ui, init_ui)
      |> assign(:f, assigns.f)
-     |> assign(:body, Sch.get(section_sch, file.module.current_section_key))
+     |> assign(:body, Sch.get(section_sch, file.module.current_section_key) |> Sch.sanitize())
      |> assign(:name, file.name)
      |> assign(:section, file.module.current_section)}
   end

@@ -6,6 +6,7 @@ defmodule Fset.Sch do
   # JSON Schema draft 2019-09
   #
   # Core
+  @id "$id"
   @ref "$ref"
   @defs "$defs"
   @anchor "$anchor"
@@ -89,7 +90,7 @@ defmodule Fset.Sch do
   def boolean?(sch), do: match?(%{@type_ => @boolean}, sch)
   def null?(sch), do: match?(%{@type_ => @null}, sch)
   def leaf?(sch), do: match?(%{@type_ => _}, sch)
-  def any?(sch), do: sch == %{} || match?(%{"temp_id" => _}, sch)
+  def any?(sch), do: sch == %{} || match?(%{@id => _}, sch)
 
   def any_of?(sch), do: match?(%{@any_of => schs} when is_list(schs) and length(schs) > 0, sch)
 
@@ -188,7 +189,7 @@ defmodule Fset.Sch do
 
       acc =
         update_in(acc, access_path(dst), fn dst_sch ->
-          Map.put(dst_sch, "temp_id", temp_id)
+          Map.put(dst_sch, @id, temp_id)
         end)
 
       {%{dst => temp_id}, acc}
@@ -221,7 +222,7 @@ defmodule Fset.Sch do
         _ ->
           update_in(acc, access_path(dst), fn parent ->
             parent
-            |> Map.delete("temp_id")
+            |> Map.delete(@id)
             |> put_schs(raw_schs)
           end)
       end
@@ -308,14 +309,14 @@ defmodule Fset.Sch do
   def attempt_put_schs(map, dst, raw_schs, temp_ids) do
     temp_id = Enum.find_value(temp_ids, fn %{^dst => temp_id} -> temp_id end)
 
-    case find_path(map, fn sch -> Map.get(sch, "temp_id") == temp_id end) do
+    case find_path(map, fn sch -> Map.get(sch, @id) == temp_id end) do
       "" ->
         raise "not found sch for #{dst} path"
 
       dst ->
         update_in(map, access_path(dst), fn parent ->
           parent
-          |> Map.delete("temp_id")
+          |> Map.delete(@id)
           |> put_schs(raw_schs)
         end)
     end
@@ -602,7 +603,7 @@ defmodule Fset.Sch do
 
   def update(map, path, key, val) when is_binary(key) do
     cond do
-      key in ~w(title description temp_id) and is_binary(val) ->
+      key in ~w(title description $id) and is_binary(val) ->
         update_in(map, access_path(path), fn parent ->
           Map.put(parent, key, val)
         end)
@@ -714,7 +715,45 @@ defmodule Fset.Sch do
     end)
   end
 
+  def walk_container(map, fun) when is_map(map) and is_function(fun) do
+    case map do
+      %{@type_ => @object} ->
+        for {k, sch} <- properties(map), reduce: map do
+          acc ->
+            acc
+            |> Map.update(@properties, %{}, fn props ->
+              Map.put(props, k, walk_container(sch, fun))
+            end)
+        end
+
+      %{@type_ => @array} ->
+        items =
+          case items(map) do
+            item when is_map(item) ->
+              walk_container(item, fun)
+
+            items when is_list(items) ->
+              for {sch, _i} <- Enum.with_index(items), do: walk_container(sch, fun)
+          end
+
+        Map.put(map, @items, items)
+
+      %{@any_of => schs} ->
+        schs = for {sch, _i} <- Enum.with_index(schs), do: walk_container(sch, fun)
+        Map.put(map, @any_of, schs)
+
+      _ ->
+        map
+    end
+    |> fun.()
+  end
+
   # Helpers
+
+  def sanitize(map) when is_map(map) do
+    map
+    |> walk_container(fn sch -> Map.delete(sch, "temp_id") end)
+  end
 
   def inspect_path(path) do
     Enum.map(path, fn

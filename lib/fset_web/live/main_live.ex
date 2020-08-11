@@ -143,7 +143,7 @@ defmodule FsetWeb.MainLive do
     module =
       File.update_current_section(file.module, fn section_sch ->
         for {current_path, ref} <- paths_refs, reduce: section_sch do
-          acc -> Sch.update(acc, current_path, "temp_id", ref)
+          acc -> Sch.update(acc, current_path, "$id", ref)
         end
       end)
 
@@ -160,7 +160,7 @@ defmodule FsetWeb.MainLive do
 
         current_paths =
           for ref <- Keyword.values(paths_refs) do
-            Sch.find_path(section_sch, fn sch -> Map.get(sch, "temp_id") == ref end)
+            Sch.find_path(section_sch, fn sch -> Map.get(sch, "$id") == ref end)
           end
 
         current_paths = Enum.filter(current_paths, fn p -> p != "" end)
@@ -219,6 +219,7 @@ defmodule FsetWeb.MainLive do
   @impl true
   def handle_info(:update_schema, socket) do
     module = socket.assigns.current_file.module
+    module = File.update_current_section(module, &Sch.sanitize/1)
     file_sch = File.from_module(module)
 
     Persistence.update_file(socket.assigns.current_file.id, schema: file_sch)
