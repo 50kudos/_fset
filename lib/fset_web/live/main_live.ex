@@ -137,8 +137,18 @@ defmodule FsetWeb.MainLive do
 
     file = socket.assigns.current_file
 
+    paths_refs =
+      Enum.map(List.wrap(socket.assigns.ui.current_path), fn p -> {p, Ecto.UUID.generate()} end)
+
     module =
       File.update_current_section(file.module, fn section_sch ->
+        for {current_path, ref} <- paths_refs, reduce: section_sch do
+          acc -> Sch.update(acc, current_path, "temp_id", ref)
+        end
+      end)
+
+    module =
+      File.update_current_section(module, fn section_sch ->
         Sch.move(section_sch, src_indices, dst_indices)
       end)
 
@@ -147,7 +157,14 @@ defmodule FsetWeb.MainLive do
     socket =
       update(socket, :ui, fn ui ->
         section_sch = File.current_section(socket.assigns.current_file.module)
-        current_paths = Sch.get_paths(section_sch, dst_indices)
+
+        current_paths =
+          for ref <- Keyword.values(paths_refs) do
+            Sch.find_path(section_sch, fn sch -> Map.get(sch, "temp_id") == ref end)
+          end
+
+        current_paths = Enum.filter(current_paths, fn p -> p != "" end)
+        # current_paths = Sch.get_paths(section_sch, dst_indices)
         Map.put(ui, :current_path, current_paths)
       end)
 
@@ -201,9 +218,10 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def handle_info(:update_schema, socket) do
-    file_sch = File.from_module(socket.assigns.current_file.module)
-    Persistence.update_file(socket.assigns.current_file.id, schema: file_sch)
+    module = socket.assigns.current_file.module
+    file_sch = File.from_module(module)
 
+    Persistence.update_file(socket.assigns.current_file.id, schema: file_sch)
     {:noreply, socket}
   end
 

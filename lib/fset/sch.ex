@@ -89,7 +89,7 @@ defmodule Fset.Sch do
   def boolean?(sch), do: match?(%{@type_ => @boolean}, sch)
   def null?(sch), do: match?(%{@type_ => @null}, sch)
   def leaf?(sch), do: match?(%{@type_ => _}, sch)
-  def any?(sch), do: sch == %{}
+  def any?(sch), do: sch == %{} || match?(%{"temp_id" => _}, sch)
 
   def any_of?(sch), do: match?(%{@any_of => schs} when is_list(schs) and length(schs) > 0, sch)
 
@@ -158,6 +158,7 @@ defmodule Fset.Sch do
       Map.merge(sch, new_sch, fn
         @type_, _v1, v2 -> v2
         @items, _v1, v2 -> v2
+        # TODO: When prefixItem is added (draft-8 patch), add @prefixItems here.
         _k, v1, _v2 -> v1
       end)
     end)
@@ -179,9 +180,25 @@ defmodule Fset.Sch do
     %{"to" => path, "index" => index}
   end
 
+  def put_dst_temp_id(map, dst_indices) do
+    dst_indices
+    |> Enum.group_by(fn %{"to" => dst} -> dst end)
+    |> Enum.map_reduce(map, fn {dst, _}, acc ->
+      temp_id = Ecto.UUID.generate()
+
+      acc =
+        update_in(acc, access_path(dst), fn dst_sch ->
+          Map.put(dst_sch, "temp_id", temp_id)
+        end)
+
+      {%{dst => temp_id}, acc}
+    end)
+  end
+
   def move(map, src_indices, dst_indices)
       when is_list(src_indices) and is_list(dst_indices) and is_map(map) do
     zipped_indices = Enum.zip(src_indices, dst_indices)
+    {temp_ids, map} = put_dst_temp_id(map, dst_indices)
 
     {popped_zips, remained} =
       zipped_indices
@@ -197,7 +214,17 @@ defmodule Fset.Sch do
     put_payloads = unzip_popped_with_dst(popped_zips)
 
     Enum.reduce(put_payloads, remained, fn {dst, raw_schs}, acc ->
-      put_schs(acc, dst, raw_schs)
+      case get(acc, dst) do
+        nil ->
+          attempt_put_schs(acc, dst, raw_schs, temp_ids)
+
+        _ ->
+          update_in(acc, access_path(dst), fn parent ->
+            parent
+            |> Map.delete("temp_id")
+            |> put_schs(raw_schs)
+          end)
+      end
     end)
   end
 
@@ -276,6 +303,74 @@ defmodule Fset.Sch do
     dst_indices
     |> Enum.with_index(lead["index"])
     |> Enum.map(fn {a, i} -> Map.update!(a, "index", i) end)
+  end
+
+  def attempt_put_schs(map, dst, raw_schs, temp_ids) do
+    temp_id = Enum.find_value(temp_ids, fn %{^dst => temp_id} -> temp_id end)
+
+    case find_path(map, fn sch -> Map.get(sch, "temp_id") == temp_id end) do
+      "" ->
+        raise "not found sch for #{dst} path"
+
+      dst ->
+        update_in(map, access_path(dst), fn parent ->
+          parent
+          |> Map.delete("temp_id")
+          |> put_schs(raw_schs)
+        end)
+    end
+  end
+
+  @doc """
+  Find path based on a given function result as boolean.
+  Halted immedialy when condition is met.
+  """
+  def find_path(map, fun) do
+    map
+    |> find_path_by(fun)
+    |> Enum.reverse()
+    |> List.update_at(0, fn head -> head |> String.trim("[") |> String.trim("]") end)
+    |> Enum.join()
+  end
+
+  defp find_path_by(%{@type_ => @object} = map, fun) when is_function(fun) do
+    Enum.reduce_while(properties(map), [], fn {k, sch}, acc ->
+      path = ["[#{k}]" | acc]
+      find_path_by_(sch, fun, path)
+    end)
+  end
+
+  defp find_path_by(%{@type_ => @array} = map, fun) when is_function(fun) do
+    List.wrap(items(map))
+    |> Enum.with_index()
+    |> Enum.reduce_while([], fn {sch, i}, acc ->
+      path = ["[#{i}]", "[]"] ++ acc
+      find_path_by_(sch, fun, path)
+    end)
+  end
+
+  defp find_path_by(%{@any_of => schs}, fun) when is_function(fun) do
+    schs
+    |> Enum.with_index()
+    |> Enum.reduce_while([], fn {sch, i}, acc ->
+      path = ["[#{i}]", "[]"] ++ acc
+      find_path_by_(sch, fun, path)
+    end)
+  end
+
+  defp find_path_by(_map, _fun), do: []
+
+  defp find_path_by_(sch, fun, path) do
+    cond do
+      fun.(sch) ->
+        {:halt, path}
+
+      true ->
+        case find_path_by(sch, fun) do
+          [] -> {:cont, []}
+          p -> {:halt, p ++ path}
+        end
+    end
   end
 
   def put_schs(map, _path, []), do: map
@@ -365,9 +460,7 @@ defmodule Fset.Sch do
   end
 
   defp find_parent_(path) when is_binary(path) do
-    path_tokens = String.split(path, :binary.compile_pattern(["[", "][", "]"]), trim: true)
-
-    case path_tokens do
+    case path_tokens = split_path(path) do
       [] ->
         %{parent_path: path, child_key: nil}
 
@@ -393,6 +486,14 @@ defmodule Fset.Sch do
         %{parent_path: parent, child_key: leaf}
     end
   end
+
+  defp split_path(path) when is_binary(path) do
+    String.split(path, :binary.compile_pattern(["[", "][", "]"]), trim: true)
+  end
+
+  # defp find_root(path) when is_binary(path) do
+  #   hd(split_path(path))
+  # end
 
   # pop_schs/3 intends to work with path that points to container type such as object or array.
   # If a given path points to a leaf, it will find its parent and pop the leaf.
@@ -501,8 +602,8 @@ defmodule Fset.Sch do
 
   def update(map, path, key, val) when is_binary(key) do
     cond do
-      key in ~w(title description) and is_binary(val) ->
-        update_in(map, access_path(path), fn %{@type_ => _} = parent ->
+      key in ~w(title description temp_id) and is_binary(val) ->
+        update_in(map, access_path(path), fn parent ->
           Map.put(parent, key, val)
         end)
 
@@ -511,8 +612,12 @@ defmodule Fset.Sch do
     end
   end
 
+  defp positive_int_keys(),
+    do:
+      ~w(maxProperties minProperties maxItems minItems maxLength minLength maximum minimum multipleOf)
+
   defp update(%{@type_ => @object} = parent, key, val) do
-    val = positive_int(val)
+    val = if key in positive_int_keys(), do: positive_int(val), else: val
 
     cond do
       key in ~w(maxProperties minProperties) && val ->
@@ -524,7 +629,7 @@ defmodule Fset.Sch do
   end
 
   defp update(%{@type_ => @array} = parent, key, val) do
-    val = positive_int(val)
+    val = if key in positive_int_keys(), do: positive_int(val), else: val
 
     cond do
       key in ~w(maxItems minItems) && val ->
@@ -536,7 +641,7 @@ defmodule Fset.Sch do
   end
 
   defp update(%{@type_ => @string} = parent, key, val) do
-    val = positive_int(val)
+    val = if key in positive_int_keys(), do: positive_int(val), else: val
 
     cond do
       key in ~w(maxLength minLength) && val ->
@@ -548,7 +653,7 @@ defmodule Fset.Sch do
   end
 
   defp update(%{@type_ => @number} = parent, key, val) do
-    val = positive_int(val)
+    val = if key in positive_int_keys(), do: positive_int(val), else: val
 
     cond do
       key in ~w(maximum minimum multipleOf) && val ->
@@ -583,8 +688,8 @@ defmodule Fset.Sch do
 
         Access.key!(@any_of).(ops, data, next)
 
-      _ops, data, _next ->
-        raise "#{inspect(data)} is not a list container"
+      _ops, _data, next ->
+        next.(nil)
     end
   end
 

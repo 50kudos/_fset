@@ -160,7 +160,7 @@ Hooks.expandableSortable = {
 
         // Do not multi-select same-list when multiDragKey is not pressed.
         // This is implemented separately from above. It may be better this way.
-        if (!evt.item.multiDragKeyDown) {
+        if (!evt.item.multiDragKeyDown && !this.el.shiftSelect) {
           let exceptItselfItems = evt.items.filter(item => {
             return item != evt.item
           })

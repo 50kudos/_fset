@@ -349,7 +349,7 @@ defmodule FsetWeb.TreeListComponent do
 
       Sch.array?(Map.get(assigns, :parent), :homo) ->
         ~L"""
-        <span class="pl-1 break-words max-w-xs text-gray-600"><%= @key %> .. n</span>
+        <span class="pl-1 break-words max-w-xs text-gray-600">└</span>
         """
 
       true ->
@@ -470,13 +470,14 @@ defmodule FsetWeb.TreeListComponent do
   defp read_type(sch) when sch == %{}, do: "any"
 
   defp read_type(sch) do
-    case Sch.read(sch).type do
-      :object -> "record"
-      :array -> "list"
-      :string -> "str"
-      :number -> "num"
-      :boolean -> "bool"
-      :null -> "null"
+    cond do
+      Sch.object?(sch) -> "record"
+      Sch.array?(sch, :homo) -> "list"
+      Sch.array?(sch, :hetero) -> "tuple"
+      Sch.string?(sch) -> "str"
+      Sch.number?(sch) -> "num"
+      Sch.boolean?(sch) -> "bool"
+      Sch.null?(sch) -> "null"
     end
   end
 end

@@ -25,7 +25,7 @@ defmodule Fset.SchTest do
     assert get(root, "root[key][arr_key][][0]") == string()
     assert get(root, "root[key][arr_key][][0][]") == string()
 
-    assert_raise RuntimeError, fn -> get(root, "root[key][arr_key][][0][][0]") end
+    assert get(root, "root[key][arr_key][][0][][0]") == nil
 
     union = any_of([object(), array(), string()])
     root = put(root, "root", "union", union)
@@ -282,6 +282,21 @@ defmodule Fset.SchTest do
     root = move(root, src_indices, dst_indices)
 
     assert get(root, "root[tuple]") |> items() |> length() == 2
+  end
+
+  test "#move a leaf of 1st level list into 3rd level list", root do
+    root = put(root, "root", "arr_key", array())
+    root = put(root, "root[arr_key]", boolean())
+    root = put(root, "root[arr_key]", string())
+    root = put(root, "root[arr_key]", null())
+    root = put(root, "root[arr_key]", array(:hetero))
+    root = put(root, "root[arr_key][][3]", array(:hetero))
+
+    dst_indices = [dst_item("root[arr_key][][3][][1]", 1)]
+    src_indices = [src_item("root[arr_key]", 2)]
+
+    root = move(root, src_indices, dst_indices)
+    assert get(root, "root[arr_key][][2][][1]") |> items() == [string(), null()]
   end
 
   test "#get_paths", root do
