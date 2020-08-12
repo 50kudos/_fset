@@ -7,13 +7,12 @@ defmodule FsetWeb.FileComponent do
   def update(assigns, socket) do
     init_ui = Map.merge(assigns.ui, %{tab: 1, parent_path: assigns.f.name})
     file = assigns.file
-    section_sch = File.current_section(file.module)
 
     {:ok,
      socket
      |> assign(:ui, init_ui)
      |> assign(:f, assigns.f)
-     |> assign(:body, Sch.get(section_sch, file.module.current_section_key) |> Sch.sanitize())
+     |> assign(:body, File.current_section_sch(file.module) |> Sch.sanitize())
      |> assign(:name, file.name)
      |> assign(:section, file.module.current_section)}
   end

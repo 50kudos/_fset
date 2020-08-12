@@ -120,7 +120,8 @@
   @apply py-0 border border-gray-700 border-dashed
 }*/
 .sortable-selected > details {
-  @apply bg-indigo-600 bg-opacity-25 border-dashed box-border
+  --bg-opacity: 0.1 !important;
+  @apply bg-indigo-600 border-dashed box-border
 }
 
 details > summary::-webkit-details-marker {

@@ -122,6 +122,12 @@ defmodule Fset.File do
 
   def current_section(%{current_section: s} = module), do: module[s]
 
+  def current_section_sch(module) do
+    module
+    |> current_section()
+    |> Sch.get(module.current_section_key)
+  end
+
   def update_current_section(%{current_section: s} = module, fun) when is_function(fun) do
     Map.update!(module, s, fun)
   end

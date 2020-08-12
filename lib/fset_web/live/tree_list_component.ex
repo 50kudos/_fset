@@ -35,9 +35,10 @@ defmodule FsetWeb.TreeListComponent do
     <nav class="sort-handle" data-path="<%= @f.name %>">
       <details id="expandableSortable__<%= @f.name %>"
         phx-hook="expandableSortable"
-        data-indent="<%= (@ui.level + 1) * 1.25 %>rem" open>
-
-        <summary class="flex" >
+        data-indent="<%= (@ui.level + 1) * 1.25 %>rem"
+        <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>
+      >
+        <summary class="flex flex-col" >
           <%= render_folder_header(assigns) %>
         </summary>
 
@@ -49,7 +50,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_folder_header(%{ui: %{level: _}} = assigns) do
     ~L"""
-    <div class="relative dragover-hl flex flex-wrap items-start w-full <%= if selected?(@f, @ui), do: 'bg-indigo-700 bg-opacity-50 text-gray-100' %>">
+    <div class="relative dragover-hl flex flex-wrap items-start w-full">
       <%= if selected?(@f, @ui, :single) do %>
         <p class="absolute m-1 leading-4 text-gray-900 font-mono text-xs">
           <span class="close-marker cursor-pointer select-none">+</span>
@@ -161,6 +162,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_key_type_pair(assigns) do
     ~L"""
+    <%= #render_doc(assigns) %>
     <div class="flex items-stretch w-full leading-6 <%= if selected?(@f, @ui), do: 'bg-indigo-700 bg-opacity-50 text-gray-100' %>">
       <div
         class="indent"
@@ -188,6 +190,7 @@ defmodule FsetWeb.TreeListComponent do
         <% end %>
       </div>
     </div>
+    <%= #render_doc(assigns) %>
     """
   end
 
@@ -238,7 +241,7 @@ defmodule FsetWeb.TreeListComponent do
   defp render_textarea(assigns) do
     ~L"""
     <textarea type="text" id="autoFocus__<%= @ui.current_path %>"
-      class="filtered px-2 box-border mr-2 min-w-0 h-full w-full max-w-xs self-start text-xs leading-6 bg-gray-800 z-10 shadow-inner text-white"
+      class="filtered px-2 box-border outline-none mr-2 min-w-0 h-full w-full max-w-xs self-start text-xs leading-6 bg-gray-800 z-10 shadow-inner text-white"
       phx-hook="autoFocus"
       phx-blur="rename_key"
       phx-keydown="rename_key"
@@ -344,17 +347,17 @@ defmodule FsetWeb.TreeListComponent do
     cond do
       Sch.array?(Map.get(assigns, :parent), :hetero) ->
         ~L"""
-        <span class="pl-1 break-words max-w-xs text-gray-600"><%= @key %></span>
+        <span class="break-words max-w-xs text-gray-600"><%= @key %></span>
         """
 
       Sch.array?(Map.get(assigns, :parent), :homo) ->
         ~L"""
-        <span class="pl-1 break-words max-w-xs text-gray-600">└</span>
+        <span class="break-words max-w-xs text-gray-600">└</span>
         """
 
       true ->
         ~L"""
-        <span class="pl-1 break-words max-w-xs"><%= @key %></span>
+        <span class="break-words max-w-xs"><%= @key %></span>
         """
     end
   end
@@ -461,6 +464,15 @@ defmodule FsetWeb.TreeListComponent do
         <span class=""><%= read_type(@sch) %></span>
         """
     end
+  end
+
+  defp render_doc(assigns) do
+    ~L"""
+    <div class="w-full text-xs text-orange-500 opacity-75 leading-6" style="padding-left: <%= @ui.level * 1.25 %>rem" onclick="event.preventDefault()">
+      <p><%= Map.get(@sch, "title") %></p>
+      <p><%= Map.get(@sch, "description") %></p>
+    </div>
+    """
   end
 
   defp selected?(f, ui), do: f.name in List.flatten([ui.current_path])

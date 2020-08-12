@@ -28,8 +28,14 @@
             <%= if @current_file.id == file.id do %>
               <li class="">
                 <p class="pl-4 text-sm leading-8 bg-gray-800 bg-opacity-50"><%= file.name %></p>
-                <ul class="pl-8 pt-2 text-xs space-y-1">
+                <ul class="pl-8 pt-2 text-xs space-y-2">
                   <li class="<%= if @current_file.module.current_section == :model, do: "text-indigo-500" %>">MODEL</li>
+                    <ul class="pl-4">
+                      <%= for model <- File.current_section_sch(@current_file.module) |> Sch.order() do %>
+                        <li class="my-1"><%= model %></li>
+                      <% end %>
+                    </ul>
+
                   <li class="<%= if @current_file.module.current_section == :main, do: "text-indigo-500" %>">MAIN</li>
                 </ul>
               </li>
@@ -73,8 +79,6 @@
                 <span class="border-r last:border-r-0 cursor-pointer p-1 hover:bg-indigo-800 hover:text-gray-100 border-gray-900"
                   phx-click="add_model" phx-value-model="<%= higher_type %>"> + <%= higher_type %></span>
               <% end %>
-              <!-- <span class="border-r last:border-r-0 p-1 border-gray-900 text-gray-800"
-                  phx-click="_add_model" phx-value-model="<%=  %>"> + <%= :Union %></span> -->
             </div>
           <% end %>
         <% end %>
