@@ -38,7 +38,8 @@ defmodule FsetWeb.MainLive do
     {:noreply, socket}
   end
 
-  def handle_event("change_type", %{"type" => type}, socket) do
+  def handle_event("change_type", val, socket) do
+    type = Map.get(val, "type") || Map.get(val, "value")
     file = socket.assigns.current_file
     ui = socket.assigns.ui
 

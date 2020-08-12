@@ -2,7 +2,19 @@ import Sortable, { MultiDrag } from "sortablejs"
 
 let Hooks = {}
 
-Hooks.autoFocus = {
+Hooks.focusOnOpen = {
+  mounted() {
+    this.el.addEventListener("toggle", event => {
+      if (event.target.open) { this.focus() }
+    })
+  },
+  focus() {
+    let field = this.el.querySelector("input[autofocus]")
+    field.focus()
+  }
+}
+
+Hooks.textArea = {
   mounted() {
     this.focus()
     this.autoHeight()

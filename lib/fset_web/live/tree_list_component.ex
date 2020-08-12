@@ -162,7 +162,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_key_type_pair(assigns) do
     ~L"""
-    <%= #render_doc(assigns) %>
+    <!-- <% render_doc(assigns) %> -->
     <div class="flex items-stretch w-full leading-6 <%= if selected?(@f, @ui), do: 'bg-indigo-700 bg-opacity-50 text-gray-100' %>">
       <div
         class="indent"
@@ -184,32 +184,36 @@ defmodule FsetWeb.TreeListComponent do
       <% end %>
 
       <div class="flex-1 overflow-hidden text-right" onclick="event.preventDefault()">
-        &nbsp;
-        <%= if selected?(@f, @ui, :single) do %>
+        <%= if selected?(@f, @ui, :single) && @ui.current_edit != @f.name do %>
           <%= render_add_button(assigns) %>
+        <% else %>
+          &nbsp;
         <% end %>
       </div>
     </div>
-    <%= #render_doc(assigns) %>
+    <!-- <% render_doc(assigns) %> -->
     """
   end
 
   defp render_type_options(assigns) do
     ~L"""
     <%= if selected?(@f, @ui, :single) do %>
-      <details class="relative">
+      <details class="relative" phx-hook="focusOnOpen" id="change_type_input">
         <summary class="flex">
           <div class="flex rounded cursor-pointer select-none text-gray-500 text-xs">
             <%= render_type(assigns, :no_prevent) %>
           </div>
         </summary>
         <ul class="details-menu absolute mt-1 z-10 bg-gray-300 text-gray-800 border border-gray-900 rounded text-xs">
-          <%= for type <- File.changable_types() do %>
-            <li class="px-2 py-1 hover:bg-gray-800 hover:text-gray-300 bg-opacity-75 cursor-pointer border-b border-gray-500 last:border-0"
-              phx-click="change_type" phx-value-type="<%= type %>">
-              <%= type %>
-            </li>
-          <% end %>
+          <li><input type="text" autofocus list="changeable_types" phx-keyup="change_type" phx-key="Enter"></li>
+          <datalist id="changeable_types">
+            <%= for type <- File.changable_types() do %>
+              <option class="px-2 py-1 hover:bg-gray-800 hover:text-gray-300 bg-opacity-75 cursor-pointer border-b border-gray-500 last:border-0"
+                value="<%= type %>">
+                <%= type %>
+              </option>
+            <% end %>
+        </datalist>
         </ul>
       </details>
     <% end %>
@@ -242,7 +246,7 @@ defmodule FsetWeb.TreeListComponent do
     ~L"""
     <textarea type="text" id="autoFocus__<%= @ui.current_path %>"
       class="filtered px-2 box-border outline-none mr-2 min-w-0 h-full w-full max-w-xs self-start text-xs leading-6 bg-gray-800 z-10 shadow-inner text-white"
-      phx-hook="autoFocus"
+      phx-hook="textArea"
       phx-blur="rename_key"
       phx-keydown="rename_key"
       phx-key="Enter"
