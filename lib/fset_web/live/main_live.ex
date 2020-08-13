@@ -22,7 +22,8 @@ defmodule FsetWeb.MainLive do
      |> assign(:files, files)
      |> assign(:ui, %{
        current_path: file.module.current_section_key,
-       current_edit: nil
+       current_edit: nil,
+       errors: []
      })}
   end
 
@@ -203,16 +204,43 @@ defmodule FsetWeb.MainLive do
         "Delete" ->
           Process.send_after(self(), :update_schema, 1000)
 
-          module =
-            File.update_current_section(file.module, fn section_sch ->
-              Sch.delete(section_sch, ui.current_path)
+          current_section = File.current_section(file.module)
+
+          # Referential integrity
+
+          referrers =
+            Enum.map(List.wrap(ui.current_path), fn path ->
+              if sch = Sch.get(current_section, path) do
+                Sch.find_path(current_section, fn sch_ ->
+                  if ref = Sch.ref(sch_) do
+                    "#" <> ref = ref
+                    ref == Sch.anchor(sch)
+                  end
+                end)
+              end
             end)
+            |> Enum.reject(fn a -> is_nil(a) || a == "" end)
 
-          new_current_paths = Map.keys(Sch.find_parent(ui.current_path))
+          if Enum.empty?(referrers) do
+            module =
+              File.update_current_section(file.module, fn section_sch ->
+                Sch.delete(section_sch, ui.current_path)
+              end)
 
-          assigns
-          |> put_in([:current_file], %{file | module: module})
-          |> put_in([:ui, :current_path], new_current_paths)
+            new_current_paths = Map.keys(Sch.find_parent(ui.current_path))
+
+            assigns
+            |> put_in([:current_file], %{file | module: module})
+            |> put_in([:ui, :current_path], new_current_paths)
+          else
+            assigns
+            |> put_in([:ui, :errors], [
+              %{
+                type: :reference,
+                payload: %{msg: "Deleting models being referenced!", path: referrers}
+              }
+            ])
+          end
 
         "Escape" ->
           assigns

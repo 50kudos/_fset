@@ -2,6 +2,9 @@
   <section class="flex flex-col h-screen">
     <header class="flex justify-between items-center px-4 h-8 text-sm border-b border-gray-800">
       <span class="text-gray-600"><b>F</b>SET</span>
+      <%= for error <- @ui.errors do %>
+        <span class="text-red-600"><%= error.payload.msg %></span>
+      <% end %>
       <%= if @current_user do %>
         <details>
           <summary class="flex">

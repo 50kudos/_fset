@@ -466,7 +466,7 @@ defmodule FsetWeb.TreeListComponent do
 
       true ->
         ~L"""
-        <span class=""><%= read_type(@sch, @ui) %></span>
+        <span class="<%= error_class(assigns) %>"><%= read_type(@sch, @ui) %></span>
         """
     end
   end
@@ -506,5 +506,19 @@ defmodule FsetWeb.TreeListComponent do
 
   defp text_val_types(ui) do
     File.changable_types() ++ Map.keys(ui.model_names)
+  end
+
+  defp error_class(assigns) do
+    for error <- assigns.ui.errors, reduce: [] do
+      acc ->
+        case error.type do
+          :reference ->
+            if assigns.f.name in error.payload.path, do: ["text-red-600" | acc], else: acc
+
+          _ ->
+            acc
+        end
+    end
+    |> Enum.join(" ")
   end
 end

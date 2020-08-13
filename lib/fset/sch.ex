@@ -165,6 +165,7 @@ defmodule Fset.Sch do
         # TODO: When prefixItem is added (draft-8 patch), add @prefixItems here.
         _k, v1, _v2 -> v1
       end)
+      |> Map.delete(@ref)
     end)
   end
 
@@ -172,6 +173,7 @@ defmodule Fset.Sch do
     update_in(map, access_path(path), fn sch ->
       sch
       |> Map.delete(@type_)
+      |> Map.delete(@ref)
       |> Map.update(@any_of, schs, fn old_schs -> old_schs end)
     end)
   end
