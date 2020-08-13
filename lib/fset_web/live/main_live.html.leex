@@ -30,7 +30,7 @@
                 <p class="pl-4 text-sm leading-8 bg-gray-800 bg-opacity-50"><%= file.name %></p>
                 <ul class="pl-8 pt-2 text-xs space-y-2">
                   <li class="<%= if @current_file.module.current_section == :model, do: "text-indigo-500" %>">MODEL</li>
-                    <ul class="pl-4">
+                    <ul class="pl-4 break-words">
                       <%= for model <- File.current_section_sch(@current_file.module) |> Sch.order() do %>
                         <li class="my-1"><%= model %></li>
                       <% end %>

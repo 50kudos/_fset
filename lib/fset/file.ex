@@ -70,7 +70,7 @@ defmodule Fset.File do
 
   defp put_scheme(file \\ %{}) do
     file
-    |> Map.merge(Sch.all_of([Sch.ref("#" <> @main_anchor), Sch.ref("#" <> @logic_anchor)]))
+    |> Map.merge(Sch.all_of([Sch.ref(@main_anchor), Sch.ref(@logic_anchor)]))
     |> Sch.put_def(@model_key, Sch.anchor(@model_anchor))
     |> Sch.put_def(@main_key, Sch.anchor(@main_anchor))
     |> Sch.put_def(@logic_key, Sch.anchor(@logic_anchor))

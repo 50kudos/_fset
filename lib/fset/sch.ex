@@ -56,6 +56,8 @@ defmodule Fset.Sch do
     end)
   end
 
+  def ref(sch) when is_map(sch), do: Map.get(sch, @ref)
+  def anchor(sch) when is_map(sch), do: Map.get(sch, @anchor)
   def order(sch) when is_map(sch), do: Map.get(sch, @props_order)
   def prop_sch(sch, key) when is_map(sch), do: Map.get(Map.get(sch, @properties), key)
   def items(sch) when is_map(sch), do: Map.get(sch, @items)
@@ -90,7 +92,8 @@ defmodule Fset.Sch do
   def boolean?(sch), do: match?(%{@type_ => @boolean}, sch)
   def null?(sch), do: match?(%{@type_ => @null}, sch)
   def leaf?(sch), do: match?(%{@type_ => _}, sch)
-  def any?(sch), do: sch == %{} || match?(%{@id => _}, sch)
+  def any?(sch), do: sch == %{} || match?(%{@anchor => _}, sch)
+  def ref?(sch), do: match?(%{@ref => _}, sch)
 
   def any_of?(sch), do: match?(%{@any_of => schs} when is_list(schs) and length(schs) > 0, sch)
 
@@ -131,7 +134,7 @@ defmodule Fset.Sch do
   def any_of(schs) when is_list(schs) and length(schs) > 0, do: %{@any_of => schs}
   def one_of(schs) when is_list(schs) and length(schs) > 0, do: %{@one_of => schs}
 
-  def ref("#" <> _ref = pointer) when is_binary(pointer), do: %{@ref => pointer}
+  def ref(pointer) when is_binary(pointer), do: %{@ref => "#" <> pointer}
   def anchor(a) when is_binary(a), do: %{@anchor => a}
   # END Contructor
 
@@ -173,6 +176,14 @@ defmodule Fset.Sch do
     end)
   end
 
+  def change_type(map, path, %{@ref => ref}) do
+    update_in(map, access_path(path), fn sch ->
+      sch
+      |> Map.delete(@type_)
+      |> Map.put(@ref, ref)
+    end)
+  end
+
   def src_item(path, index) when is_binary(path) and is_integer(index) do
     %{"from" => path, "index" => index}
   end
@@ -181,25 +192,25 @@ defmodule Fset.Sch do
     %{"to" => path, "index" => index}
   end
 
-  def put_dst_temp_id(map, dst_indices) do
+  def put_dst_id(map, dst_indices) do
     dst_indices
     |> Enum.group_by(fn %{"to" => dst} -> dst end)
     |> Enum.map_reduce(map, fn {dst, _}, acc ->
-      temp_id = Ecto.UUID.generate()
+      id = Ecto.UUID.generate()
 
       acc =
         update_in(acc, access_path(dst), fn dst_sch ->
-          Map.put(dst_sch, @id, temp_id)
+          Map.put(dst_sch, @id, id)
         end)
 
-      {%{dst => temp_id}, acc}
+      {%{dst => id}, acc}
     end)
   end
 
   def move(map, src_indices, dst_indices)
       when is_list(src_indices) and is_list(dst_indices) and is_map(map) do
     zipped_indices = Enum.zip(src_indices, dst_indices)
-    {temp_ids, map} = put_dst_temp_id(map, dst_indices)
+    {ids, map} = put_dst_id(map, dst_indices)
 
     {popped_zips, remained} =
       zipped_indices
@@ -217,14 +228,10 @@ defmodule Fset.Sch do
     Enum.reduce(put_payloads, remained, fn {dst, raw_schs}, acc ->
       case get(acc, dst) do
         nil ->
-          attempt_put_schs(acc, dst, raw_schs, temp_ids)
+          attempt_put_schs(acc, dst, raw_schs, ids)
 
         _ ->
-          update_in(acc, access_path(dst), fn parent ->
-            parent
-            |> Map.delete(@id)
-            |> put_schs(raw_schs)
-          end)
+          update_in(acc, access_path(dst), fn parent -> put_schs(parent, raw_schs) end)
       end
     end)
   end
@@ -306,20 +313,20 @@ defmodule Fset.Sch do
     |> Enum.map(fn {a, i} -> Map.update!(a, "index", i) end)
   end
 
-  def attempt_put_schs(map, dst, raw_schs, temp_ids) do
-    temp_id = Enum.find_value(temp_ids, fn %{^dst => temp_id} -> temp_id end)
+  def attempt_put_schs(map, dst, raw_schs, ids) do
+    id = Enum.find_value(ids, fn %{^dst => id} -> id end)
 
-    case find_path(map, fn sch -> Map.get(sch, @id) == temp_id end) do
+    case find_path_by_id(map, id) do
       "" ->
         raise "not found sch for #{dst} path"
 
       dst ->
-        update_in(map, access_path(dst), fn parent ->
-          parent
-          |> Map.delete(@id)
-          |> put_schs(raw_schs)
-        end)
+        update_in(map, access_path(dst), fn parent -> put_schs(parent, raw_schs) end)
     end
+  end
+
+  def find_path_by_id(map, id) do
+    find_path(map, fn sch -> Map.get(sch, @id) == id end)
   end
 
   @doc """
@@ -752,7 +759,10 @@ defmodule Fset.Sch do
 
   def sanitize(map) when is_map(map) do
     map
-    |> walk_container(fn sch -> Map.delete(sch, "temp_id") end)
+    |> walk_container(fn sch -> Map.delete(sch, "id") end)
+    |> Fset.Sch.Migrator.remove_id()
+    |> Fset.Sch.Migrator.add_anchor()
+    |> Fset.Sch.Migrator.correct_ref()
   end
 
   def inspect_path(path) do

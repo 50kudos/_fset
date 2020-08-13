@@ -26,6 +26,7 @@ defmodule FsetWeb.TreeListComponent do
       Sch.leaf?(sch) -> render_file(assigns)
       Sch.any_of?(sch) -> render_folder(assigns)
       Sch.any?(sch) -> render_file(assigns)
+      Sch.ref?(sch) -> render_file(assigns)
       true -> raise "Wrong schema structure :: #{inspect(sch)}"
     end
   end
@@ -162,8 +163,8 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_key_type_pair(assigns) do
     ~L"""
-    <!-- <% render_doc(assigns) %> -->
-    <div class="flex items-stretch w-full leading-6 <%= if selected?(@f, @ui), do: 'bg-indigo-700 bg-opacity-50 text-gray-100' %>">
+    <%# render_doc(assigns) %>
+    <div class="flex w-full leading-6 <%= if selected?(@f, @ui), do: 'bg-indigo-700 bg-opacity-50 text-gray-100' %>">
       <div
         class="indent"
         style="padding-left: <%= @ui.level * 1.25 %>rem"
@@ -183,7 +184,7 @@ defmodule FsetWeb.TreeListComponent do
         <% end %>
       <% end %>
 
-      <div class="flex-1 overflow-hidden text-right" onclick="event.preventDefault()">
+      <div class="flex-1 px-1 overflow-hidden text-right" onclick="event.preventDefault()">
         <%= if selected?(@f, @ui, :single) && @ui.current_edit != @f.name do %>
           <%= render_add_button(assigns) %>
         <% else %>
@@ -191,26 +192,26 @@ defmodule FsetWeb.TreeListComponent do
         <% end %>
       </div>
     </div>
-    <!-- <% render_doc(assigns) %> -->
+    <%# render_doc(assigns) %>
     """
   end
 
   defp render_type_options(assigns) do
     ~L"""
     <%= if selected?(@f, @ui, :single) do %>
-      <details class="relative" phx-hook="focusOnOpen" id="change_type_input">
-        <summary class="flex">
-          <div class="flex rounded cursor-pointer select-none text-gray-500 text-xs">
+      <details class="relative min-w-0" phx-hook="focusOnOpen" id="change_type_input">
+        <summary class="block">
+          <div class="break-words rounded cursor-pointer select-none text-gray-500 text-xs">
             <%= render_type(assigns, :no_prevent) %>
           </div>
         </summary>
         <ul class="details-menu absolute mt-1 z-10 bg-gray-300 text-gray-800 border border-gray-900 rounded text-xs">
-          <li><input type="text" autofocus list="changeable_types" phx-keyup="change_type" phx-key="Enter"></li>
+          <li><input type="text" autofocus list="changeable_types" phx-keyup="change_type" phx-key="Enter" style="min-width: 30vw" ></li>
           <datalist id="changeable_types">
-            <%= for type <- File.changable_types() do %>
+            <%= for type_text <- text_val_types(@ui) do %>
               <option class="px-2 py-1 hover:bg-gray-800 hover:text-gray-300 bg-opacity-75 cursor-pointer border-b border-gray-500 last:border-0"
-                value="<%= type %>">
-                <%= type %>
+                value="<%= type_text %>">
+                <%= type_text %>
               </option>
             <% end %>
         </datalist>
@@ -224,17 +225,17 @@ defmodule FsetWeb.TreeListComponent do
     cond do
       Sch.object?(assigns.sch) ->
         ~L"""
-        <span phx-click="add_model" phx-value-model="Record" class="mx-2 px-2 bg-indigo-500 rounded cursor-pointer">+</span>
+        <span phx-click="add_model" phx-value-model="Record" class="px-2 bg-indigo-500 rounded cursor-pointer">+</span>
         """
 
       Sch.array?(assigns.sch) ->
         ~L"""
-        <span phx-click="add_model" phx-value-model="Record" class="mx-2 px-2 bg-indigo-500 rounded cursor-pointer">+</span>
+        <span phx-click="add_model" phx-value-model="Record" class="px-2 bg-indigo-500 rounded cursor-pointer">+</span>
         """
 
       Sch.any_of?(assigns.sch) ->
         ~L"""
-        <span phx-click="add_model" phx-value-model="Record" class="mx-2 px-2 bg-indigo-500 rounded cursor-pointer">+</span>
+        <span phx-click="add_model" phx-value-model="Record" class="px-2 bg-indigo-500 rounded cursor-pointer">+</span>
         """
 
       true ->
@@ -245,7 +246,7 @@ defmodule FsetWeb.TreeListComponent do
   defp render_textarea(assigns) do
     ~L"""
     <textarea type="text" id="autoFocus__<%= @ui.current_path %>"
-      class="filtered px-2 box-border outline-none mr-2 min-w-0 h-full w-full max-w-xs self-start text-xs leading-6 bg-gray-800 z-10 shadow-inner text-white"
+      class="filtered px-2 box-border outline-none mr-2 min-w-0 h-full w-full self-start text-xs leading-6 bg-gray-800 z-10 shadow-inner text-white"
       phx-hook="textArea"
       phx-blur="rename_key"
       phx-keydown="rename_key"
@@ -329,7 +330,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_key_text(%{ui: %{current_path: name}, f: %{name: name}} = assigns) do
     ~L"""
-    <p class="flex"
+    <p class="" style="max-width: 12rem"
       phx-click="edit_sch"
       phx-value-path="<%= @f.name %>"
       onclick="event.preventDefault()">
@@ -340,7 +341,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_key_text(assigns) do
     ~L"""
-    <p class="flex"
+    <p class="" style="max-width: 12rem"
       onclick="event.preventDefault()">
       <%= render_key_text_(assigns) %>
     </p>
@@ -351,24 +352,24 @@ defmodule FsetWeb.TreeListComponent do
     cond do
       Sch.array?(Map.get(assigns, :parent), :hetero) ->
         ~L"""
-        <span class="break-words max-w-xs text-gray-600"><%= @key %></span>
+        <span class="break-words text-gray-600"><%= @key %></span>
         """
 
       Sch.array?(Map.get(assigns, :parent), :homo) ->
         ~L"""
-        <span class="break-words max-w-xs text-gray-600">└</span>
+        <span class="break-words text-gray-600">└</span>
         """
 
       true ->
         ~L"""
-        <span class="break-words max-w-xs"><%= @key %></span>
+        <span class="break-words"><%= @key %></span>
         """
     end
   end
 
   defp render_type(assigns, :no_prevent) do
     ~L"""
-    <p class="text-blue-500 text-sm flex-shrink-0">
+    <p class="text-blue-500 text-sm min-w-0 break-words">
       <%= render_type_(assigns) %>
     </p>
     """
@@ -376,7 +377,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_type(assigns) do
     ~L"""
-    <p class="text-blue-500 text-sm flex-shrink-0" onclick="event.preventDefault()">
+    <p class="text-blue-500 text-sm min-w-0 break-words" onclick="event.preventDefault()">
       <%= render_type_(assigns) %>
     </p>
     """
@@ -401,7 +402,7 @@ defmodule FsetWeb.TreeListComponent do
 
       Sch.array?(assigns.sch, :homo) ->
         ~L"""
-        <span class="cursor-pointer">[<%= read_type(Sch.items(@sch)) %>]</span>
+        <span class="cursor-pointer">[<%= read_type(Sch.items(@sch), @ui) %>]</span>
         """
 
       Sch.array?(assigns.sch, :hetero) ->
@@ -411,7 +412,7 @@ defmodule FsetWeb.TreeListComponent do
 
       Sch.leaf?(assigns.sch) ->
         ~L"""
-        <span class=""><%= read_type(@sch) %></span>
+        <span class=""><%= read_type(@sch, @ui) %></span>
         """
 
       Sch.any_of?(assigns.sch) ->
@@ -421,7 +422,7 @@ defmodule FsetWeb.TreeListComponent do
 
       true ->
         ~L"""
-        <span class=""><%= read_type(@sch) %></span>
+        <span class=""><%= read_type(@sch, @ui) %></span>
         """
     end
   end
@@ -440,7 +441,7 @@ defmodule FsetWeb.TreeListComponent do
 
       Sch.array?(assigns.sch, :homo) ->
         ~L"""
-        <span class="cursor-pointer">[<%= read_type(Sch.items(@sch)) %>]</span>
+        <span class="cursor-pointer">[<%= read_type(Sch.items(@sch), @ui) %>]</span>
         """
 
       Sch.array?(assigns.sch, :hetero) ->
@@ -450,7 +451,7 @@ defmodule FsetWeb.TreeListComponent do
 
       Sch.leaf?(assigns.sch) ->
         ~L"""
-        <span class=""><%= read_type(@sch) %></span>
+        <span class=""><%= read_type(@sch, @ui) %></span>
         """
 
       Sch.any_of?(assigns.sch) ->
@@ -465,7 +466,7 @@ defmodule FsetWeb.TreeListComponent do
 
       true ->
         ~L"""
-        <span class=""><%= read_type(@sch) %></span>
+        <span class=""><%= read_type(@sch, @ui) %></span>
         """
     end
   end
@@ -483,9 +484,11 @@ defmodule FsetWeb.TreeListComponent do
   defp selected?(f, ui, :multi), do: selected?(f, ui) && is_list(ui.current_path)
   defp selected?(f, ui, :single), do: selected?(f, ui) && !is_list(ui.current_path)
 
-  defp read_type(sch) when sch == %{}, do: "any"
+  defp read_type(sch, ui) do
+    ref_type = fn sch ->
+      Enum.find_value(ui.model_names, fn {k, anchor} -> "#" <> anchor == Sch.ref(sch) && k end)
+    end
 
-  defp read_type(sch) do
     cond do
       Sch.object?(sch) -> "record"
       Sch.array?(sch, :homo) -> "list"
@@ -495,6 +498,13 @@ defmodule FsetWeb.TreeListComponent do
       Sch.boolean?(sch) -> "bool"
       Sch.null?(sch) -> "null"
       Sch.any_of?(sch) -> "union"
+      Sch.any?(sch) -> "any"
+      Sch.ref?(sch) -> ref_type.(sch)
+      true -> "please define what type #{inspect(sch)} is"
     end
+  end
+
+  defp text_val_types(ui) do
+    File.changable_types() ++ Map.keys(ui.model_names)
   end
 end

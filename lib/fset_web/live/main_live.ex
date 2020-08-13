@@ -43,7 +43,26 @@ defmodule FsetWeb.MainLive do
     file = socket.assigns.current_file
     ui = socket.assigns.ui
 
-    module = File.update_current_section(file.module, File.change_type_fun(type, ui.current_path))
+    change_type_fun =
+      if type in File.changable_types() do
+        File.change_type_fun(type, ui.current_path)
+      else
+        current_section_sch = File.current_section_sch(file.module)
+
+        anchor =
+          Enum.find_value(
+            Sch.properties(current_section_sch),
+            fn {k, sch} -> k == type && Sch.anchor(sch) end
+          )
+
+        if anchor do
+          fn sch -> Sch.change_type(sch, ui.current_path, Sch.ref(anchor)) end
+        else
+          fn a -> a end
+        end
+      end
+
+    module = File.update_current_section(file.module, change_type_fun)
     socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
 
     Process.send_after(self(), :update_schema, 1000)
