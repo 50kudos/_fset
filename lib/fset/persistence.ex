@@ -158,7 +158,7 @@ defmodule Fset.Persistence do
 
   ## Examples
 
-      iex> create_user_file(user, File.new())
+      iex> create_user_file(user, Module.new())
       {:ok, %UserFile{user_id: 1, file_id: 1}}
   """
   def create_user_file(user, file) do

@@ -1,4 +1,4 @@
-defmodule Fset.File do
+defmodule Fset.Module do
   alias Fset.Sch
   alias Fset.Sch.New
 
@@ -66,11 +66,11 @@ defmodule Fset.File do
   def preserve_keys(), do: [@model_key, @main_key, @logic_key, @var_key]
 
   def new(name \\ nil) do
-    %{name: name || Sch.gen_key("file"), body: put_scheme()}
+    %{name: name || Sch.gen_key("module"), body: put_scheme()}
   end
 
-  defp put_scheme(file \\ %{}) do
-    file
+  defp put_scheme(module \\ %{}) do
+    module
     |> Map.merge(New.all_of([New.ref(@main_anchor), New.ref(@logic_anchor)]))
     |> Sch.put_def(@model_key, New.anchor(@model_anchor))
     |> Sch.put_def(@main_key, New.anchor(@main_anchor))
@@ -78,17 +78,9 @@ defmodule Fset.File do
     |> Sch.put_def(@var_key, %{})
   end
 
-  def wrap(%{id: _, name: name, schema: schema} = file) do
-    %{file | schema: Sch.new(name, schema)}
-  end
-
-  def unwrap(name, sch) do
-    if sch_ = Sch.get(sch, name), do: unwrap(name, sch_), else: sch
-  end
-
-  def locator(namespace, filename, domain \\ "https://fsetapp.com") do
-    Path.join([domain, namespace, filename])
-  end
+  # def locator(namespace, filename, domain \\ "https://fsetapp.com") do
+  #   Path.join([domain, namespace, filename])
+  # end
 
   # """
   # Give a file body.
@@ -102,20 +94,14 @@ defmodule Fset.File do
   #   %{"type": "object", "properties": %{"__MODEL__" => %{}}}
 
   # """
-  defp model_section(file), do: defs_section(file, @model_key)
-  defp main_section(file), do: defs_section(file, @main_key)
-
   defp defs_section(file, section_key) when is_map(file) and is_binary(section_key) do
     Sch.new(section_key, Map.get(Sch.defs(file), section_key))
   end
 
-  def cd_model(%{current_path: _} = file), do: %{file | current_path: @model_key}
-  def cd_main(%{current_path: _} = file), do: %{file | current_path: @main_key}
-
-  def to_module(file) when is_map(file) do
+  def from_schema(sch) when is_map(sch) do
     %{
-      model: model_section(file),
-      main: main_section(file),
+      model: defs_section(sch, @model_key),
+      main: defs_section(sch, @main_key),
       current_section: which_section(@model_key),
       current_section_key: @model_key
     }
@@ -133,8 +119,11 @@ defmodule Fset.File do
     Map.update!(module, s, fun)
   end
 
-  def from_module(%{main: main, model: model}) do
-    # Shouldn't need this, write test and get rid of them.
+  defp unwrap(name, sch) do
+    if sch_ = Sch.get(sch, name), do: unwrap(name, sch_), else: sch
+  end
+
+  def to_schema(%{main: main, model: model}) do
     main = unwrap(@main_key, main)
     model = unwrap(@model_key, model)
 

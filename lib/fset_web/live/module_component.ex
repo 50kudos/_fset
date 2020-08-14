@@ -1,13 +1,13 @@
-defmodule FsetWeb.FileComponent do
+defmodule FsetWeb.ModuleComponent do
   use FsetWeb, :live_component
   alias FsetWeb.TreeListComponent
-  alias Fset.{Sch, File}
+  alias Fset.{Sch, Module}
 
   @impl true
   def update(assigns, socket) do
     init_ui = Map.merge(assigns.ui, %{tab: 1, parent_path: assigns.f.name})
     file = assigns.file
-    current_section_sch = File.current_section_sch(file.module)
+    current_section_sch = Module.current_section_sch(file.module)
 
     {:ok,
      socket

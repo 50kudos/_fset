@@ -1,7 +1,7 @@
 defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
-  alias FsetWeb.{SchComponent, FileComponent}
-  alias Fset.{Accounts, Sch, Persistence, File}
+  alias FsetWeb.{SchComponent, ModuleComponent}
+  alias Fset.{Accounts, Sch, Persistence, Module}
   alias Fset.Sch.New
 
   @impl true
@@ -33,7 +33,9 @@ defmodule FsetWeb.MainLive do
     file = socket.assigns.current_file
     ui = socket.assigns.ui
 
-    module = File.update_current_section(file.module, File.add_model_fun(model, ui.current_path))
+    module =
+      Module.update_current_section(file.module, Module.add_model_fun(model, ui.current_path))
+
     socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
 
     Process.send_after(self(), :update_schema, 1000)
@@ -46,10 +48,10 @@ defmodule FsetWeb.MainLive do
     ui = socket.assigns.ui
 
     change_type_fun =
-      if type in File.changable_types() do
-        File.change_type_fun(type, ui.current_path)
+      if type in Module.changable_types() do
+        Module.change_type_fun(type, ui.current_path)
       else
-        current_section_sch = File.current_section_sch(file.module)
+        current_section_sch = Module.current_section_sch(file.module)
 
         anchor =
           Enum.find_value(
@@ -64,7 +66,7 @@ defmodule FsetWeb.MainLive do
         end
       end
 
-    module = File.update_current_section(file.module, change_type_fun)
+    module = Module.update_current_section(file.module, change_type_fun)
     socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
 
     Process.send_after(self(), :update_schema, 1000)
@@ -89,7 +91,7 @@ defmodule FsetWeb.MainLive do
 
   def handle_event("edit_sch", %{"path" => sch_path}, socket) do
     updated_ui =
-      if socket.assigns.ui.current_path in File.preserve_keys() do
+      if socket.assigns.ui.current_path in Module.preserve_keys() do
         socket.assigns.ui
       else
         socket.assigns.ui
@@ -107,7 +109,7 @@ defmodule FsetWeb.MainLive do
     file = socket.assigns.current_file
 
     module =
-      File.update_current_section(file.module, fn section_sch ->
+      Module.update_current_section(file.module, fn section_sch ->
         Sch.update(section_sch, sch_path, key, value)
       end)
 
@@ -126,7 +128,7 @@ defmodule FsetWeb.MainLive do
     file = socket.assigns.current_file
 
     module =
-      File.update_current_section(file.module, fn section_sch ->
+      Module.update_current_section(file.module, fn section_sch ->
         Sch.rename_key(section_sch, parent_path, old_key, new_key)
       end)
 
@@ -154,14 +156,14 @@ defmodule FsetWeb.MainLive do
       Enum.map(List.wrap(socket.assigns.ui.current_path), fn p -> {p, Ecto.UUID.generate()} end)
 
     module =
-      File.update_current_section(file.module, fn section_sch ->
+      Module.update_current_section(file.module, fn section_sch ->
         for {current_path, ref} <- paths_refs, reduce: section_sch do
           acc -> Sch.update(acc, current_path, "$id", ref)
         end
       end)
 
     module =
-      File.update_current_section(module, fn section_sch ->
+      Module.update_current_section(module, fn section_sch ->
         Sch.move(section_sch, src_indices, dst_indices)
       end)
 
@@ -169,7 +171,7 @@ defmodule FsetWeb.MainLive do
 
     socket =
       update(socket, :ui, fn ui ->
-        section_sch = File.current_section(socket.assigns.current_file.module)
+        section_sch = Module.current_section(socket.assigns.current_file.module)
 
         current_paths =
           for ref <- Keyword.values(paths_refs) do
@@ -186,7 +188,7 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("module_keyup", val, socket) do
-    if socket.assigns.ui.current_path in File.preserve_keys() do
+    if socket.assigns.ui.current_path in Module.preserve_keys() do
       {:noreply, socket}
     else
       updated_assigns = module_keyup(val, socket.assigns)
@@ -205,7 +207,7 @@ defmodule FsetWeb.MainLive do
         "Delete" ->
           Process.send_after(self(), :update_schema, 1000)
 
-          current_section = File.current_section(file.module)
+          current_section = Module.current_section(file.module)
 
           # Referential integrity
 
@@ -224,7 +226,7 @@ defmodule FsetWeb.MainLive do
 
           if Enum.empty?(referrers) do
             module =
-              File.update_current_section(file.module, fn section_sch ->
+              Module.update_current_section(file.module, fn section_sch ->
                 Sch.delete(section_sch, ui.current_path)
               end)
 
@@ -264,8 +266,8 @@ defmodule FsetWeb.MainLive do
   @impl true
   def handle_info(:update_schema, socket) do
     module = socket.assigns.current_file.module
-    module = File.update_current_section(module, &Sch.sanitize/1)
-    file_sch = File.from_module(module)
+    module = Module.update_current_section(module, &Sch.sanitize/1)
+    file_sch = Module.to_schema(module)
 
     Persistence.update_file(socket.assigns.current_file.id, schema: file_sch)
     {:noreply, socket}
@@ -273,7 +275,7 @@ defmodule FsetWeb.MainLive do
 
   defp file_assigns(file_id, user) do
     user_file = Persistence.get_user_file(file_id, user)
-    module = File.to_module(user_file.file.schema)
+    module = Module.from_schema(user_file.file.schema)
 
     user_file.file
     |> Map.from_struct()

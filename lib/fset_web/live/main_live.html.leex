@@ -34,7 +34,7 @@
                 <ul class="pl-8 pt-2 text-xs space-y-2">
                   <li class="<%= if @current_file.module.current_section == :model, do: "text-indigo-500" %>">MODEL</li>
                     <ul class="pl-4 break-words">
-                      <%= for model <- File.current_section_sch(@current_file.module) |> Sch.order() do %>
+                      <%= for model <- Module.current_section_sch(@current_file.module) |> Sch.order() do %>
                         <li class="my-1"><%= model %></li>
                       <% end %>
                     </ul>
@@ -87,12 +87,12 @@
         <% end %>
         </div>
         <div class="stripe-gray min-h-full" phx-window-keyup="module_keyup">
-          <%= live_component @socket, FileComponent, id: f.name, file: @current_file, ui: @ui, f: f %>
+          <%= live_component @socket, ModuleComponent, id: f.name, file: @current_file, ui: @ui, f: f %>
         </div>
       </nav>
       <aside class="w-1/5 p-4 text-sm shadow">
         <%= if !is_list(@ui.current_path) do %>
-          <%= live_component @socket, SchComponent, id: @ui.current_path, sch: Sch.get(File.current_section(@current_file.module), @ui.current_path), ui: @ui %>
+          <%= live_component @socket, SchComponent, id: @ui.current_path, sch: Sch.get(Module.current_section(@current_file.module), @ui.current_path), ui: @ui %>
         <% end %>
       </aside>
     </section>

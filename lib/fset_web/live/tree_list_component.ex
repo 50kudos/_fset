@@ -1,6 +1,6 @@
 defmodule FsetWeb.TreeListComponent do
   use FsetWeb, :live_component
-  alias Fset.{Sch, File}
+  alias Fset.{Sch, Module}
 
   @impl true
   def mount(socket) do
@@ -184,7 +184,7 @@ defmodule FsetWeb.TreeListComponent do
         <% end %>
       <% end %>
 
-      <div class="flex-1 px-1 overflow-hidden text-right" onclick="event.preventDefault()">
+      <div class="flex-1 px-1 text-right" onclick="event.preventDefault()">
         <%= if selected?(@f, @ui, :single) && @ui.current_edit != @f.name do %>
           <%= render_add_button(assigns) %>
         <% else %>
@@ -369,7 +369,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_type(assigns, :no_prevent) do
     ~L"""
-    <p class="text-blue-500 text-sm min-w-0 break-words">
+    <p class="text-blue-500 text-sm break-words" style="min-width: 3rem;">
       <%= render_type_(assigns) %>
     </p>
     """
@@ -377,7 +377,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_type(assigns) do
     ~L"""
-    <p class="text-blue-500 text-sm min-w-0 break-words" onclick="event.preventDefault()">
+    <p class="text-blue-500 text-sm break-words" style="min-width: 3rem;" onclick="event.preventDefault()">
       <%= render_type_(assigns) %>
     </p>
     """
@@ -505,7 +505,7 @@ defmodule FsetWeb.TreeListComponent do
   end
 
   defp text_val_types(ui) do
-    File.changable_types() ++ Map.keys(ui.model_names)
+    Module.changable_types() ++ Map.keys(ui.model_names)
   end
 
   defp error_class(assigns) do

@@ -4,7 +4,7 @@ defmodule FsetWeb.UserRegistrationController do
   alias Fset.Accounts
   alias Fset.Accounts.User
   alias FsetWeb.UserAuth
-  alias Fset.{Persistence, File}
+  alias Fset.{Persistence, Module}
 
   def new(conn, _params) do
     changeset = Accounts.change_user_registration(%User{})
@@ -14,7 +14,7 @@ defmodule FsetWeb.UserRegistrationController do
   def create(conn, %{"user" => user_params}) do
     case Accounts.register_user(user_params) do
       {:ok, user} ->
-        {:ok, user_file} = Persistence.create_user_file(user, File.new())
+        {:ok, user_file} = Persistence.create_user_file(user, Module.new())
         file_path = Routes.main_path(conn, :index, user_file.file_id)
 
         {:ok, _} =
