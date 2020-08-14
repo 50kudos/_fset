@@ -271,35 +271,35 @@ defmodule FsetWeb.TreeListComponent do
     cond do
       Sch.object?(assigns.sch) ->
         ~L"""
-        <span class="text-blue-400 mr-1">record</span>
+        <span class="text-blue-400 mr-2">record</span>
         <%= render_key_text(assigns) %>
         <span class="mx-2">=</span>
         """
 
       Sch.array?(assigns.sch, :hetero) ->
         ~L"""
-        <span class="text-blue-400 mr-1">tuple</span>
+        <span class="text-blue-400 mr-2">tuple</span>
         <%= render_key_text(assigns) %>
         <span class="mx-2">=</span>
         """
 
       Sch.array?(assigns.sch, :homo) ->
         ~L"""
-        <span class="text-blue-400 mr-1">list</span>
+        <span class="text-blue-400 mr-2">list</span>
         <%= render_key_text(assigns) %>
         <span class="mx-2">=</span>
         """
 
       Sch.any_of?(assigns.sch) ->
         ~L"""
-        <span class="text-blue-400 mr-1">union</span>
+        <span class="text-blue-400 mr-2">union</span>
         <%= render_key_text(assigns) %>
         <span class="mx-2">=</span>
         """
 
       true ->
         ~L"""
-        <span class="text-blue-400 mr-1">field</span>
+        <span class="text-blue-400 mr-2">field</span>
         <%= render_key_text(assigns) %>
         <span class="mx-2">:</span>
         """
@@ -362,7 +362,7 @@ defmodule FsetWeb.TreeListComponent do
 
       true ->
         ~L"""
-        <span class="break-words"><%= @key %></span>
+        <span class="break-words"><%= word_break_html(@key) %></span>
         """
     end
   end
@@ -486,7 +486,11 @@ defmodule FsetWeb.TreeListComponent do
 
   defp read_type(sch, ui) do
     ref_type = fn sch ->
-      Enum.find_value(ui.model_names, fn {k, anchor} -> "#" <> anchor == Sch.ref(sch) && k end)
+      Enum.find_value(ui.model_names, fn {k, anchor} ->
+        if "#" <> anchor == Sch.ref(sch) do
+          word_break_html(k)
+        end
+      end)
     end
 
     cond do
@@ -520,5 +524,11 @@ defmodule FsetWeb.TreeListComponent do
         end
     end
     |> Enum.join(" ")
+  end
+
+  defp word_break_html(string) when is_binary(string) do
+    ~r/(?<=::)|(?<=\.)/
+    |> Regex.split(string)
+    |> Enum.intersperse({:safe, "<wbr>"})
   end
 end
