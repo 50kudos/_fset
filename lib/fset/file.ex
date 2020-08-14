@@ -1,5 +1,6 @@
 defmodule Fset.File do
   alias Fset.Sch
+  alias Fset.Sch.New
 
   @moduledoc """
     File is only a thin layer on top of Fset.Sch module. It's an opinioned scheme
@@ -70,10 +71,10 @@ defmodule Fset.File do
 
   defp put_scheme(file \\ %{}) do
     file
-    |> Map.merge(Sch.all_of([Sch.ref(@main_anchor), Sch.ref(@logic_anchor)]))
-    |> Sch.put_def(@model_key, Sch.anchor(@model_anchor))
-    |> Sch.put_def(@main_key, Sch.anchor(@main_anchor))
-    |> Sch.put_def(@logic_key, Sch.anchor(@logic_anchor))
+    |> Map.merge(New.all_of([New.ref(@main_anchor), New.ref(@logic_anchor)]))
+    |> Sch.put_def(@model_key, New.anchor(@model_anchor))
+    |> Sch.put_def(@main_key, New.anchor(@main_anchor))
+    |> Sch.put_def(@logic_key, New.anchor(@logic_anchor))
     |> Sch.put_def(@var_key, %{})
   end
 
@@ -148,19 +149,19 @@ defmodule Fset.File do
   def add_model_fun(model, path) do
     case model do
       "Record" ->
-        fn sch -> Sch.put(sch, path, Sch.gen_key(), Sch.string(), 0) end
+        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.string(), 0) end
 
       "Field" ->
-        fn sch -> Sch.put(sch, path, Sch.gen_key(), Sch.string(), 0) end
+        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.string(), 0) end
 
       "List" ->
-        fn sch -> Sch.put(sch, path, Sch.gen_key(), Sch.array(:homo), 0) end
+        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.array(:homo), 0) end
 
       "Tuple" ->
-        fn sch -> Sch.put(sch, path, Sch.gen_key(), Sch.array(:hetero), 0) end
+        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.array(:hetero), 0) end
 
       "Union" ->
-        union = Sch.any_of([Sch.object(), Sch.array(), Sch.string()])
+        union = New.any_of([New.object(), New.array(), New.string()])
         fn sch -> Sch.put(sch, path, Sch.gen_key(), union, 0) end
 
       _ ->
@@ -170,16 +171,16 @@ defmodule Fset.File do
 
   defp change_type_fun_table(path) do
     [
-      {"record", fn sch -> Sch.change_type(sch, path, Sch.object()) end},
-      {"list", fn sch -> Sch.change_type(sch, path, Sch.array(:homo)) end},
-      {"tuple", fn sch -> Sch.change_type(sch, path, Sch.array(:hetero)) end},
-      {"string", fn sch -> Sch.change_type(sch, path, Sch.string()) end},
-      {"bool", fn sch -> Sch.change_type(sch, path, Sch.boolean()) end},
-      {"number", fn sch -> Sch.change_type(sch, path, Sch.number()) end},
-      {"null", fn sch -> Sch.change_type(sch, path, Sch.null()) end},
+      {"record", fn sch -> Sch.change_type(sch, path, New.object()) end},
+      {"list", fn sch -> Sch.change_type(sch, path, New.array(:homo)) end},
+      {"tuple", fn sch -> Sch.change_type(sch, path, New.array(:hetero)) end},
+      {"string", fn sch -> Sch.change_type(sch, path, New.string()) end},
+      {"bool", fn sch -> Sch.change_type(sch, path, New.boolean()) end},
+      {"number", fn sch -> Sch.change_type(sch, path, New.number()) end},
+      {"null", fn sch -> Sch.change_type(sch, path, New.null()) end},
       {"union",
        fn sch ->
-         Sch.change_type(sch, path, Sch.any_of([Sch.object(), Sch.array(), Sch.string()]))
+         Sch.change_type(sch, path, New.any_of([New.object(), New.array(), New.string()]))
        end}
     ]
   end

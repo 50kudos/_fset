@@ -2,6 +2,7 @@ defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
   alias FsetWeb.{SchComponent, FileComponent}
   alias Fset.{Accounts, Sch, Persistence, File}
+  alias Fset.Sch.New
 
   @impl true
   def mount(params, session, socket) do
@@ -57,7 +58,7 @@ defmodule FsetWeb.MainLive do
           )
 
         if anchor do
-          fn sch -> Sch.change_type(sch, ui.current_path, Sch.ref(anchor)) end
+          fn sch -> Sch.change_type(sch, ui.current_path, New.ref(anchor)) end
         else
           fn a -> a end
         end

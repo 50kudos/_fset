@@ -471,14 +471,14 @@ defmodule FsetWeb.TreeListComponent do
     end
   end
 
-  defp render_doc(assigns) do
-    ~L"""
-    <div class="w-full text-xs text-orange-500 opacity-75 leading-6" style="padding-left: <%= @ui.level * 1.25 %>rem" onclick="event.preventDefault()">
-      <p><%= Map.get(@sch, "title") %></p>
-      <p><%= Map.get(@sch, "description") %></p>
-    </div>
-    """
-  end
+  # defp render_doc(assigns) do
+  #   ~L"""
+  #   <div class="w-full text-xs text-orange-500 opacity-75 leading-6" style="padding-left: <%= @uiÍ.level * 1.25 %>rem" onclick="event.preventDefault()">
+  #     <p><%= Map.get(@sch, "title") %></p>
+  #     <p><%= Map.get(@sch, "description") %></p>
+  #   </div>
+  #   """
+  # endÍ
 
   defp selected?(f, ui), do: f.name in List.flatten([ui.current_path])
   defp selected?(f, ui, :multi), do: selected?(f, ui) && is_list(ui.current_path)

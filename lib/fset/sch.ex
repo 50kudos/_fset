@@ -1,61 +1,7 @@
 defmodule Fset.Sch do
-  # Changing keyword name MUST only be done by a dedicate transform process.
-  # Because during that process, it will "stop the world", and transform safely.
-  # The same mechanism can be used to compress schema by shrinking internal string.
-
-  # JSON Schema draft 2019-09
-  #
-  # Core
-  @id "$id"
-  @ref "$ref"
-  @defs "$defs"
-  @anchor "$anchor"
-
-  # Validation
-  @type_ "type"
-
-  @object "object"
-  @array "array"
-  @string "string"
-  @boolean "boolean"
-  @number "number"
-  @null "null"
-
-  @types [@string, @number, @boolean, @object, @array, @null]
-
-  # Applicator
-  @properties "properties"
-  @items "items"
-
-  @all_of "allOf"
-  @any_of "anyOf"
-  @one_of "oneOf"
-
-  # Internal keywords. Can be opted-in/out when export schema.
-  @props_order "order"
+  use Fset.Sch.Vocab
 
   # Accessor
-  def read(sch) when is_map(sch) do
-    Enum.reduce(sch, sch, fn
-      {@type_, type}, acc ->
-        type_map = %{
-          @object => :object,
-          @array => :array,
-          @string => :string,
-          @boolean => :boolean,
-          @number => :number,
-          @null => :null
-        }
-
-        acc
-        |> Map.delete(@type_)
-        |> Map.put(:type, Map.get(type_map, type))
-
-      _, acc ->
-        acc
-    end)
-  end
-
   def ref(sch) when is_map(sch), do: Map.get(sch, @ref)
   def anchor(sch) when is_map(sch), do: Map.get(sch, @anchor)
   def order(sch) when is_map(sch), do: Map.get(sch, @props_order)
@@ -95,7 +41,8 @@ defmodule Fset.Sch do
   def any?(sch), do: sch == %{} || match?(%{@anchor => _}, sch)
   def ref?(sch), do: match?(%{@ref => _}, sch)
 
-  def any_of?(sch), do: match?(%{@any_of => schs} when is_list(schs) and length(schs) > 0, sch)
+  def any_of?(sch),
+    do: match?(%{@any_of => schs} when is_list(schs) and length(schs) > 0, sch)
 
   @doc """
   schema with a wrapper name. When a schema is created, we can then use this wrapper
@@ -118,25 +65,6 @@ defmodule Fset.Sch do
       @props_order => [root_key]
     }
   end
-
-  # Contructor
-  def object(), do: %{@type_ => @object, @props_order => [], @properties => %{}}
-  def array(), do: %{@type_ => @array, @items => %{}}
-  def array(:homo), do: array()
-  def array(:hetero), do: %{@type_ => @array, @items => [string()]}
-  def string(), do: %{@type_ => @string}
-  def number(), do: %{@type_ => @number}
-  def boolean(), do: %{@type_ => @boolean}
-  def null(), do: %{@type_ => @null}
-  def any(), do: %{}
-
-  def all_of(schs) when is_list(schs) and length(schs) > 0, do: %{@all_of => schs}
-  def any_of(schs) when is_list(schs) and length(schs) > 0, do: %{@any_of => schs}
-  def one_of(schs) when is_list(schs) and length(schs) > 0, do: %{@one_of => schs}
-
-  def ref(pointer) when is_binary(pointer), do: %{@ref => "#" <> pointer}
-  def anchor(a) when is_binary(a), do: %{@anchor => a}
-  # END Contructor
 
   def get(map, path) when is_map(map) and is_binary(path) do
     get_in(map, access_path(path))
