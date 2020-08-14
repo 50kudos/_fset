@@ -46,6 +46,7 @@ defmodule FsetWeb.SchComponent do
       Sch.number?(assigns.sch) -> render_number(assigns)
       Sch.boolean?(assigns.sch) -> {:safe, []}
       Sch.null?(assigns.sch) -> {:safe, []}
+      Sch.const?(assigns.sch) -> render_const(assigns)
       true -> {:safe, []}
     end
   end
@@ -148,6 +149,20 @@ defmodule FsetWeb.SchComponent do
         <p class="p-1 text-xs text-gray-600">MultipleOf</p>
         <input type="range" phx-blur="update_sch" phx-value-key="multipleOf" value="<%= Map.get(@sch, ~s(multipleOf)) %>" min="0">
       </label>
+    """
+  end
+
+  defp render_const(assigns) do
+    ~L"""
+    <label class="block mb-2 bg-transparent">
+      <p class="p-1 text-xs text-gray-600">Json Value</p>
+      <textarea type="text" class="p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full" rows="2"
+        phx-blur="update_sch"
+        phx-value-key="const">
+
+        <%= Jason.encode_to_iodata!(Sch.const(@sch)) %>
+      </textarea>
+    </label>
     """
   end
 

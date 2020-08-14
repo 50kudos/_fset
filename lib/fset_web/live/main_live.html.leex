@@ -25,7 +25,7 @@
       <% end %>
     </header>
     <section class="flex flex-grow overflow-scroll">
-      <aside class="w-1/5 flex flex-col text-gray-500 shadow">
+      <aside class="w-1/5 flex flex-col text-gray-500 shadow bg-dark-gray">
         <ul>
           <%= for file <- @files do %>
             <%= if @current_file.id == file.id do %>
@@ -72,7 +72,7 @@
           </div>
         </div>
       </aside>
-      <nav class="w-3/5 overflow-scroll shadow">
+      <nav class="w-3/5 overflow-scroll shadow-xl">
         <div class="flex items-center text-xs h-8 bg-gray-900 sticky top-0 z-10 border-b border-gray-800">
         <%= if !is_list(@ui.current_path) do %>
           <%= if @ui.current_path == f.name do %>
@@ -86,11 +86,11 @@
           <% end %>
         <% end %>
         </div>
-        <div class="stripe-gray min-h-full" phx-window-keyup="module_keyup">
+        <div class="min-h-full" phx-window-keyup="module_keyup">
           <%= live_component @socket, ModuleComponent, id: f.name, file: @current_file, ui: @ui, f: f %>
         </div>
       </nav>
-      <aside class="w-1/5 p-4 text-sm shadow">
+      <aside class="w-1/5 p-4 text-sm shadow bg-dark-gray">
         <%= if !is_list(@ui.current_path) do %>
           <%= live_component @socket, SchComponent, id: @ui.current_path, sch: Sch.get(Module.current_section(@current_file.module), @ui.current_path), ui: @ui %>
         <% end %>

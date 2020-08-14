@@ -10,11 +10,10 @@ defmodule Fset.Sch do
   def properties(sch) when is_map(sch), do: Map.get(sch, @properties)
   def defs(sch) when is_map(sch), do: Map.get(sch, @defs)
   def any_of(sch) when is_map(sch), do: Map.get(sch, @any_of)
+  def const(sch) when is_map(sch), do: Map.get(sch, @const)
   # END Accessor
 
-  defp props(), do: Access.key(@properties, %{})
-  defp defs(), do: Access.key(@defs, %{})
-
+  # Matcher
   def object?(sch),
     do: match?(%{@type_ => @object}, sch)
 
@@ -33,16 +32,18 @@ defmodule Fset.Sch do
   def array?(sch, :hetero),
     do: match?(%{@type_ => @array, @items => items} when is_list(items), sch)
 
+  def any_of?(sch),
+    do: match?(%{@any_of => schs} when is_list(schs) and length(schs) > 0, sch)
+
   def string?(sch), do: match?(%{@type_ => @string}, sch)
   def number?(sch), do: match?(%{@type_ => @number}, sch)
   def boolean?(sch), do: match?(%{@type_ => @boolean}, sch)
   def null?(sch), do: match?(%{@type_ => @null}, sch)
   def leaf?(sch), do: match?(%{@type_ => _}, sch)
-  def any?(sch), do: sch == %{} || match?(%{@anchor => _}, sch)
+  def any?(sch), do: sch == %{} || (match?(%{@anchor => _}, sch) && (!ref?(sch) || const?(sch)))
   def ref?(sch), do: match?(%{@ref => _}, sch)
-
-  def any_of?(sch),
-    do: match?(%{@any_of => schs} when is_list(schs) and length(schs) > 0, sch)
+  def const?(sch), do: match?(%{@const => _}, sch)
+  # END Matcher
 
   @doc """
   schema with a wrapper name. When a schema is created, we can then use this wrapper
@@ -80,7 +81,7 @@ defmodule Fset.Sch do
   end
 
   def put_def(map, key, sch) when is_binary(key) and is_map(sch) do
-    update_in(map, [defs()], fn defs ->
+    update_in(map, [Access.key(@defs, %{})], fn defs ->
       Map.update(defs, key, sch, fn def_sch -> Map.merge(def_sch, sch) end)
     end)
   end
@@ -93,24 +94,35 @@ defmodule Fset.Sch do
         # TODO: When prefixItem is added (draft-8 patch), add @prefixItems here.
         _k, v1, _v2 -> v1
       end)
-      |> Map.delete(@ref)
+      |> case do
+        %{@type_ => @object} = sch -> Map.take(sch, [@properties, @anchor])
+        %{@type_ => @array} = sch -> Map.take(sch, [@items, @anchor])
+        sch -> sch
+      end
     end)
   end
 
   def change_type(map, path, %{@any_of => schs}) when is_list(schs) and length(schs) > 0 do
     update_in(map, access_path(path), fn sch ->
       sch
-      |> Map.delete(@type_)
-      |> Map.delete(@ref)
       |> Map.update(@any_of, schs, fn old_schs -> old_schs end)
+      |> Map.take([@any_of, @anchor])
     end)
   end
 
   def change_type(map, path, %{@ref => ref}) do
     update_in(map, access_path(path), fn sch ->
       sch
-      |> Map.delete(@type_)
       |> Map.put(@ref, ref)
+      |> Map.take([@ref, @anchor])
+    end)
+  end
+
+  def change_type(map, path, %{@const => const}) do
+    update_in(map, access_path(path), fn sch ->
+      sch
+      |> Map.put(@const, const)
+      |> Map.take([@const, @anchor])
     end)
   end
 
@@ -540,7 +552,7 @@ defmodule Fset.Sch do
 
   def update(map, path, key, val) when is_binary(key) do
     cond do
-      key in ~w(title description $id) and is_binary(val) ->
+      key in ["title", "description", @id] and is_binary(val) ->
         update_in(map, access_path(path), fn parent ->
           Map.put(parent, key, val)
         end)
@@ -604,6 +616,13 @@ defmodule Fset.Sch do
 
   defp update(%{@type_ => _} = parent, _key, _val), do: parent
 
+  defp update(%{@const => _} = parent, _key, val) do
+    case Jason.decode(val) do
+      {:ok, val} -> Map.put(parent, @const, val)
+      _ -> parent
+    end
+  end
+
   defp positive_int(val) when is_binary(val) do
     if String.match?(val, ~r/\d+/), do: max(0, String.to_integer(val))
   end
@@ -644,7 +663,7 @@ defmodule Fset.Sch do
   def access_path(path) when is_map(path) or is_list(path) do
     Enum.reduce(path, [], fn
       {k, v}, acc ->
-        access_path(v) ++ [k | [props() | acc]]
+        access_path(v) ++ [k | [Access.key(@properties, %{}) | acc]]
 
       %{} = map, acc ->
         [{index, v}] = Map.to_list(map)
@@ -689,10 +708,12 @@ defmodule Fset.Sch do
 
   def sanitize(map) when is_map(map) do
     map
-    |> walk_container(fn sch -> Map.delete(sch, "id") end)
-    |> Fset.Sch.Migrator.remove_id()
-    |> Fset.Sch.Migrator.add_anchor()
-    |> Fset.Sch.Migrator.correct_ref()
+    # |> walk_container(fn sch ->
+    #   sch
+    #   |> Fset.Sch.Migrator.remove_id()
+    #   |> Fset.Sch.Migrator.add_anchor()
+    #   |> Fset.Sch.Migrator.correct_ref()
+    # end)
   end
 
   def inspect_path(path) do

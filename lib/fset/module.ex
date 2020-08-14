@@ -138,19 +138,19 @@ defmodule Fset.Module do
   def add_model_fun(model, path) do
     case model do
       "Record" ->
-        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.string(), 0) end
+        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.object(anchor: true), 0) end
 
       "Field" ->
-        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.string(), 0) end
+        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.string(anchor: true), 0) end
 
       "List" ->
-        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.array(:homo), 0) end
+        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.array(:homo, anchor: true), 0) end
 
       "Tuple" ->
-        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.array(:hetero), 0) end
+        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.array(:hetero, anchor: true), 0) end
 
       "Union" ->
-        union = New.any_of([New.object(), New.array(), New.string()])
+        union = New.any_of([New.object(), New.array(), New.string()], anchor: true)
         fn sch -> Sch.put(sch, path, Sch.gen_key(), union, 0) end
 
       _ ->
@@ -170,7 +170,8 @@ defmodule Fset.Module do
       {"union",
        fn sch ->
          Sch.change_type(sch, path, New.any_of([New.object(), New.array(), New.string()]))
-       end}
+       end},
+      {"value", fn sch -> Sch.change_type(sch, path, New.const()) end}
     ]
   end
 

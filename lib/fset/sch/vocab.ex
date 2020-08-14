@@ -22,6 +22,7 @@ defmodule Fset.Sch.Vocab do
       @boolean "boolean"
       @number "number"
       @null "null"
+      @const "const"
 
       # Applicator
       @properties "properties"

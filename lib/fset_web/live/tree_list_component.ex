@@ -27,7 +27,8 @@ defmodule FsetWeb.TreeListComponent do
       Sch.any_of?(sch) -> render_folder(assigns)
       Sch.any?(sch) -> render_file(assigns)
       Sch.ref?(sch) -> render_file(assigns)
-      true -> raise "Wrong schema structure :: #{inspect(sch)}"
+      Sch.const?(sch) -> render_file(assigns)
+      true -> raise "Undefine render function for :: #{inspect(sch)}"
     end
   end
 
@@ -164,7 +165,7 @@ defmodule FsetWeb.TreeListComponent do
   defp render_key_type_pair(assigns) do
     ~L"""
     <%# render_doc(assigns) %>
-    <div class="flex w-full leading-6 <%= if selected?(@f, @ui), do: 'bg-indigo-700 bg-opacity-50 text-gray-100' %>">
+    <div class="flex w-full leading-6 <%= if selected?(@f, @ui), do: 'bg-indigo-700 bg-opacity-25' %>">
       <div
         class="indent"
         style="padding-left: <%= @ui.level * 1.25 %>rem"
@@ -267,6 +268,7 @@ defmodule FsetWeb.TreeListComponent do
     """
   end
 
+  # Top/root level model. Level does not start at 0 but specified tab.
   defp render_key_(%{ui: %{level: l, tab: t}} = assigns) when l == t do
     cond do
       Sch.object?(assigns.sch) ->
@@ -328,6 +330,7 @@ defmodule FsetWeb.TreeListComponent do
     end
   end
 
+  # Current or selected path
   defp render_key_text(%{ui: %{current_path: name}, f: %{name: name}} = assigns) do
     ~L"""
     <p class="" style="max-width: 12rem"
@@ -383,6 +386,7 @@ defmodule FsetWeb.TreeListComponent do
     """
   end
 
+  # Top/root level model. Level does not start at 0 but specified tab.
   defp render_type_(%{ui: %{level: l, tab: t}} = assigns) when l == t do
     cond do
       Sch.object?(assigns.sch, :empty) ->
@@ -429,6 +433,11 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_type_(assigns) do
     cond do
+      Sch.object?(assigns.sch, :empty) ->
+        ~L"""
+        <span class="self-center cursor-pointer text-sm select-none text-blue-500">{any}</span>
+        """
+
       Sch.object?(assigns.sch) ->
         ~L"""
         <span class="self-center cursor-pointer text-sm select-none text-blue-500">{  }</span>
@@ -484,7 +493,7 @@ defmodule FsetWeb.TreeListComponent do
   defp selected?(f, ui, :multi), do: selected?(f, ui) && is_list(ui.current_path)
   defp selected?(f, ui, :single), do: selected?(f, ui) && !is_list(ui.current_path)
 
-  defp read_type(sch, ui) do
+  defp read_type(sch, ui) when is_map(sch) do
     ref_type = fn sch ->
       Enum.find_value(ui.model_names, fn {k, anchor} ->
         if "#" <> anchor == Sch.ref(sch) do
@@ -504,6 +513,7 @@ defmodule FsetWeb.TreeListComponent do
       Sch.any_of?(sch) -> "union"
       Sch.any?(sch) -> "any"
       Sch.ref?(sch) -> ref_type.(sch)
+      Sch.const?(sch) -> const_type(sch)
       true -> "please define what type #{inspect(sch)} is"
     end
   end
@@ -530,5 +540,15 @@ defmodule FsetWeb.TreeListComponent do
     ~r/(?<=::)|(?<=\.)/
     |> Regex.split(string)
     |> Enum.intersperse({:safe, "<wbr>"})
+  end
+
+  defp const_type(sch) do
+    const = Sch.const(sch)
+
+    if is_map(const) || is_list(const) do
+      "value"
+    else
+      {:safe, "<span class='text-green-700'>#{Jason.encode_to_iodata!(Sch.const(sch))}</span>"}
+    end
   end
 end
