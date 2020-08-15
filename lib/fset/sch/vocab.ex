@@ -18,9 +18,17 @@ defmodule Fset.Sch.Vocab do
       @type_ "type"
       @object "object"
       @array "array"
+
       @string "string"
-      @boolean "boolean"
+      @min_length "minLength"
+      @max_length "maxLength"
+
       @number "number"
+      @multiple_of "multipleOf"
+      @maximum "maximum"
+      @minimum "minimum"
+
+      @boolean "boolean"
       @null "null"
       @const "const"
 
@@ -30,6 +38,9 @@ defmodule Fset.Sch.Vocab do
       @all_of "allOf"
       @any_of "anyOf"
       @one_of "oneOf"
+
+      # Meta-data
+      @examples "examples"
 
       # Custom
       @props_order "order"

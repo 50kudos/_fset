@@ -6,7 +6,10 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def mount(params, session, socket) do
-    if connected?(socket), do: Phoenix.PubSub.subscribe(Fset.PubSub, "sch_update")
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(Fset.PubSub, "sch_update")
+      :timer.send_interval(1000, self(), :tick)
+    end
 
     # File by id
     current_user = session["current_user_id"] && Accounts.get_user!(session["current_user_id"])
@@ -74,6 +77,9 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("select_sch", %{"paths" => sch_path}, socket) do
+    file = socket.assigns.current_file
+    module = Module.update_current_section(file.module, &Sch.sanitize/1)
+
     sch_path =
       case sch_path do
         [] -> socket.assigns.ui.current_path
@@ -82,11 +88,13 @@ defmodule FsetWeb.MainLive do
       end
 
     {:noreply,
-     update(socket, :ui, fn ui ->
+     socket
+     |> update(:ui, fn ui ->
        ui
        |> Map.put(:current_path, sch_path)
        |> Map.put(:current_edit, nil)
-     end)}
+     end)
+     |> update(:current_file, fn _ -> %{file | module: module} end)}
   end
 
   def handle_event("edit_sch", %{"path" => sch_path}, socket) do
@@ -270,6 +278,13 @@ defmodule FsetWeb.MainLive do
     file_sch = Module.to_schema(module)
 
     Persistence.update_file(socket.assigns.current_file.id, schema: file_sch)
+    {:noreply, socket}
+  end
+
+  def handle_info(:tick, socket) do
+    file = socket.assigns.current_file
+    module = Module.update_current_section(file.module, &Sch.sanitize/1)
+    socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
     {:noreply, socket}
   end
 

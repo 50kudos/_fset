@@ -11,6 +11,13 @@ defmodule Fset.Sch do
   def defs(sch) when is_map(sch), do: Map.get(sch, @defs)
   def any_of(sch) when is_map(sch), do: Map.get(sch, @any_of)
   def const(sch) when is_map(sch), do: Map.get(sch, @const)
+  def examples(sch) when is_map(sch), do: Map.get(sch, @examples, [])
+
+  def example(sch) do
+    example = Enum.take_random(examples(sch), 1)
+    if(example == [], do: [], else: hd(example))
+  end
+
   # END Accessor
 
   # Matcher
@@ -708,12 +715,14 @@ defmodule Fset.Sch do
 
   def sanitize(map) when is_map(map) do
     map
-    # |> walk_container(fn sch ->
-    #   sch
-    #   |> Fset.Sch.Migrator.remove_id()
-    #   |> Fset.Sch.Migrator.add_anchor()
-    #   |> Fset.Sch.Migrator.correct_ref()
-    # end)
+    |> walk_container(fn sch ->
+      sch
+      |> Fset.Sch.Migrator.compute_examples()
+
+      # |> Fset.Sch.Migrator.remove_id()
+      # |> Fset.Sch.Migrator.add_anchor()
+      # |> Fset.Sch.Migrator.correct_ref()
+    end)
   end
 
   def inspect_path(path) do

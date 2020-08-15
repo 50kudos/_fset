@@ -372,7 +372,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_type(assigns, :no_prevent) do
     ~L"""
-    <p class="text-blue-500 text-sm break-words" style="min-width: 3rem;">
+    <p class="text-blue-500 text-sm break-words flex-shrink-0">
       <%= render_type_(assigns) %>
     </p>
     """
@@ -380,7 +380,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_type(assigns) do
     ~L"""
-    <p class="text-blue-500 text-sm break-words" style="min-width: 3rem;" onclick="event.preventDefault()">
+    <p class="text-blue-500 text-sm break-words flex-shrink-0" onclick="event.preventDefault()">
       <%= render_type_(assigns) %>
     </p>
     """

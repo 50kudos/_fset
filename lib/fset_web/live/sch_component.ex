@@ -24,6 +24,7 @@ defmodule FsetWeb.SchComponent do
         <textarea type="text" phx-blur="update_sch" phx-value-key="description" rows="2" class="p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"><%= Map.get(@sch, "description") %></textarea>
       </label>
       <%= render_sch(assigns) %>
+      <%= render_examples(assigns) %>
     </article>
     """
   end
@@ -33,7 +34,7 @@ defmodule FsetWeb.SchComponent do
     socket =
       socket
       |> assign(:ui, assigns.ui)
-      |> assign(:sch, assigns.sch || %{})
+      |> assign(:sch, assigns.sch)
 
     {:ok, socket}
   end
@@ -86,9 +87,9 @@ defmodule FsetWeb.SchComponent do
           value="<%= Map.get(@sch, ~s(minItems), 0) %>"
           class="flex-1 min-w-0 h-6 p-1 bg-transparent text-center shadow"
           id="updateSch__minItem_<%= @ui.current_path %>">
-      <span class="flex-1 text-center text-blue-500"><</span>
+      <span class="flex-1 text-center text-blue-500">≤</span>
       <span class="flex-1 text-center text-blue-500">N</span>
-      <span class="flex-1 text-center text-blue-500"><</span>
+      <span class="flex-1 text-center text-blue-500">≤</span>
       <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
         phx-hook="updateSch"
         phx-value-key="maxItems"
@@ -147,7 +148,11 @@ defmodule FsetWeb.SchComponent do
       </label>
       <label class="block mb-2 bg-transparent">
         <p class="p-1 text-xs text-gray-600">MultipleOf</p>
-        <input type="range" phx-blur="update_sch" phx-value-key="multipleOf" value="<%= Map.get(@sch, ~s(multipleOf)) %>" min="0">
+        <form oninput="result.value=current_multiple_of.value">
+          <input id="current_multiple_of" name="current_multiple_of" type="range" phx-blur="update_sch" phx-value-key="multipleOf" value="<%= Map.get(@sch, ~s(multipleOf)) %>" min="<%= Map.get(@sch, ~s(minimum), 0) %>" max="<%= Map.get(@sch, ~s(maximum), 0) %>">
+          <output name="result" for="current_multiple_of"><%= Map.get(@sch, ~s(multipleOf)) %></output>
+        </form>
+
       </label>
     """
   end
@@ -162,6 +167,19 @@ defmodule FsetWeb.SchComponent do
 
         <%= Jason.encode_to_iodata!(Sch.const(@sch)) %>
       </textarea>
+    </label>
+    """
+  end
+
+  defp render_examples(assigns) do
+    ~L"""
+    <label class="block mt-4 mb-2 bg-transparent">
+      <p class="p-1 text-xs text-gray-600">JSON Examples</p>
+      <pre class="flex flex-col text-xs">
+        <%= for example <- Sch.examples(@sch) do %>
+          <code class="m-2"><%= Jason.encode_to_iodata!(example, pretty: true) %></code>
+        <% end %>
+      </pre>
     </label>
     """
   end

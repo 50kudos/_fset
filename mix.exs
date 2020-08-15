@@ -50,7 +50,8 @@ defmodule Fset.MixProject do
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
       {:cloak_ecto, "~> 1.0.1"},
-      {:phx_gen_auth, "~> 0.4.0", only: [:dev], runtime: false}
+      {:phx_gen_auth, "~> 0.4.0", only: [:dev], runtime: false},
+      {:stream_data, "~> 0.4"}
     ]
   end
 
