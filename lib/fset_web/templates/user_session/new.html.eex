@@ -1,27 +1,37 @@
-<h1>Log in</h1>
+<section class="md:w-1/4 min-h-screen mx-auto flex flex-col justify-center">
+  <h1 class="text-lg text-gray-600 px-1">Log in</h1>
+  <%= form_for @conn, Routes.user_session_path(@conn, :create), [as: :user, class: "my-1"], fn f -> %>
+    <article class="flex flex-col px-6 py-10 border border-gray-900 shadow-lg bg-dark-gray">
+      <%= if @error_message do %>
+        <div class="text-red-500 mb-4">
+          <p><%= @error_message %></p>
+        </div>
+      <% end %>
 
-<%= form_for @conn, Routes.user_session_path(@conn, :create), [as: :user], fn f -> %>
-  <%= if @error_message do %>
-    <div class="alert alert-danger">
-      <p><%= @error_message %></p>
-    </div>
+      <%= label class: "my-2" do %>
+        <p class="mb-1">Email</p>
+        <%= email_input f, :email, required: true, class: "w-full h-10 bg-gray-800 rounded px-2" %>
+      <% end %>
+
+      <%= label class: "my-2" do %>
+        <p class="mb-1">Password</p>
+        <%= password_input f, :password, required: true, class: "w-full h-10 bg-gray-800 rounded px-2" %>
+      <% end %>
+
+      <%= label class: "my-2 flex items-center text-xs" do %>
+        <%= checkbox f, :remember_me, class: "mr-2" %>
+        <span class="text-gray-500 select-none">Keep me logged in for 60 days</span>
+      <% end %>
+
+      <div class="text-center mt-12">
+        <%= submit "Log in", class: "w-full py-2 border rounded border-indigo-600 text-gray-200 font-medium bg-indigo-500 hover:bg-indigo-600" %>
+      </div>
+    </article>
   <% end %>
-
-  <%= label f, :email %>
-  <%= email_input f, :email, required: true %>
-
-  <%= label f, :password %>
-  <%= password_input f, :password, required: true %>
-
-  <%= label f, :remember_me, "Keep me logged in for 60 days" %>
-  <%= checkbox f, :remember_me %>
-
-  <div>
-    <%= submit "Log in" %>
-  </div>
-<% end %>
-
-<p>
-  <%= link "Register", to: Routes.user_registration_path(@conn, :new) %> |
-  <%= link "Forgot your password?", to: Routes.user_reset_password_path(@conn, :new) %>
-</p>
+  <footer>
+    <p class="text-sm text-gray-600 px-1">
+      <%= link "Register", to: Routes.user_registration_path(@conn, :new), class: "hover:text-gray-100" %> |
+      <%= link "Forgot your password?", to: Routes.user_reset_password_path(@conn, :new), class: "hover:text-gray-100" %>
+    </p>
+  </footer>
+</section>
