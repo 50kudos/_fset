@@ -47,9 +47,17 @@ defmodule Fset.Sch do
   def boolean?(sch), do: match?(%{@type_ => @boolean}, sch)
   def null?(sch), do: match?(%{@type_ => @null}, sch)
   def leaf?(sch), do: match?(%{@type_ => _}, sch)
-  def any?(sch), do: sch == %{} || (match?(%{@anchor => _}, sch) && (!ref?(sch) || const?(sch)))
   def ref?(sch), do: match?(%{@ref => _}, sch)
   def const?(sch), do: match?(%{@const => _}, sch)
+
+  def any?(sch) do
+    Enum.all?([
+      !ref?(sch),
+      !const?(sch),
+      !leaf?(sch)
+    ])
+  end
+
   # END Matcher
 
   @doc """

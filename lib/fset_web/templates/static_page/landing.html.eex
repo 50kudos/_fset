@@ -1,1 +1,2 @@
+<%= render FsetWeb.StaticPageView, "_simple_bg.html", assigns %>
 <%= render FsetWeb.UserSessionView, "new.html", assigns %>

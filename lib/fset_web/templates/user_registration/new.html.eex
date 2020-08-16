@@ -1,4 +1,5 @@
-<section class="md:w-1/4 min-h-screen mx-auto flex flex-col justify-center">
+<%= render FsetWeb.StaticPageView, "_simple_bg.html", assigns %>
+<section class="lg:w-1/4 md:w-1/2 min-h-screen mx-auto flex flex-col justify-center">
   <h1 class="text-lg text-gray-600 px-1">Register</h1>
   <%= form_for @changeset, Routes.user_registration_path(@conn, :create), [class: "my-1"], fn f -> %>
     <article class="flex flex-col px-6 py-10 border border-gray-900 shadow-lg bg-dark-gray">

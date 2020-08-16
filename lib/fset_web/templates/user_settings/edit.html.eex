@@ -1,6 +1,7 @@
+<%= render FsetWeb.StaticPageView, "_simple_bg.html", assigns %>
 <h1 class="mt-16 text-xl text-center text-gray-600">Settings</h1>
 
-<section class="md:w-1/4 min-h-screen mx-auto flex flex-col justify-center">
+<section class="lg:w-1/4 md:w-1/2 min-h-screen mx-auto flex flex-col justify-center">
   <h1 class="text-lg text-gray-500 px-1">Change e-mail</h1>
   <%= form_for @email_changeset, Routes.user_settings_path(@conn, :update_email), [class: "my-2"], fn f -> %>
     <article class="flex flex-col px-6 py-10 border border-gray-900 shadow-lg bg-dark-gray">
@@ -23,7 +24,7 @@
   <% end %>
 </section>
 
-<section class="md:w-1/4 min-h-screen mx-auto flex flex-col justify-center">
+<section class="lg:w-1/4 md:w-1/2 min-h-screen mx-auto flex flex-col justify-center">
   <h1 class="text-lg text-gray-500 px-1">Change password</h1>
   <%= form_for @password_changeset, Routes.user_settings_path(@conn, :update_password), [class: "my-2"], fn f -> %>
     <article class="flex flex-col px-6 py-10 border border-gray-900 shadow-lg bg-dark-gray">
