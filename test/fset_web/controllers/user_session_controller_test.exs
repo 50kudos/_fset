@@ -61,7 +61,7 @@ defmodule FsetWeb.UserSessionControllerTest do
         })
 
       response = html_response(conn, 200)
-      assert response =~ "<h1>Log in</h1>"
+      assert response =~ "Log in"
       assert response =~ "Invalid e-mail or password"
     end
   end
