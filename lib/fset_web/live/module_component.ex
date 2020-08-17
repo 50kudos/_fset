@@ -36,10 +36,9 @@ defmodule FsetWeb.ModuleComponent do
 
   defp render_model(assigns) do
     ~L"""
-    <div id="expandableSortable__<%= @f.name %>" phx-hook="expandableSortable" data-group="body" data-path="<%= @f.name %>"
+    <div id="moveable__<%= @f.name %>" phx-hook="moveable" data-group="body" data-path="<%= @f.name %>"
       data-current-paths="<%= Jason.encode!(List.wrap(@ui.current_path)) %>"
-      phx-capture-click="select_sch" phx-value-paths="<%= @f.name %>" class="grid grid-cols-fit py-6 h-full row-gap-6" id="expandableSortable__<%= @f.name %>">
-      <span class="hidden border-box"></span>
+      phx-capture-click="select_sch" phx-value-paths="<%= @f.name %>" class="grid grid-cols-fit py-6 h-full row-gap-6">
       <%= for key <- Sch.order(@body) do %>
         <%= for f0 <- inputs_for(@f, key) do %>
           <%= live_component(@socket, TreeListComponent,

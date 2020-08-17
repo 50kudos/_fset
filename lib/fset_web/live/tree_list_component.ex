@@ -36,16 +36,17 @@ defmodule FsetWeb.TreeListComponent do
   defp render_folder(assigns) do
     ~L"""
     <nav class="sort-handle" data-path="<%= @f.name %>">
-      <details id="expandableSortable__<%= @f.name %>"
-        phx-hook="expandableSortable"
-        data-indent="<%= (@ui.level + 1) * 1.25 %>rem"
-        <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>
-      >
+      <details phx-hook="openable" id="openable__<%= @f.name %>" <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>>
         <summary class="flex flex-col" >
           <%= render_folder_header(assigns) %>
         </summary>
+        <article
+          id="moveable__<%= @f.name %>"
+          phx-hook="moveable"
+          data-indent="<%= (@ui.level + 1) * 1.25 %>rem">
 
-        <%= render_itself(assigns) %>
+          <%= render_itself(assigns) %>
+        </article>
       </details>
     </nav>
     """

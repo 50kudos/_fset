@@ -1,18 +1,39 @@
 import Sortable, { MultiDrag } from "sortablejs"
 
 let Hooks = {}
+let Utils = {}
+
+Utils.onDetailsTagState = {
+  mount(storeEl) {
+    let detailsTag = storeEl.el.closest("details")
+    if (detailsTag) {
+      storeEl.expand = detailsTag.open
+      detailsTag.addEventListener("toggle", event => {
+        storeEl.expand = event.target.open
+      })
+    }
+  },
+  update(storeEl) {
+    let detailsTag = storeEl.el.closest("details")
+    if (detailsTag) { detailsTag.open = storeEl.expand }
+  }
+}
+
+Hooks.openable = {
+  mounted() { Utils.onDetailsTagState.mount(this) },
+  updated() { Utils.onDetailsTagState.update(this) },
+}
 
 Hooks.focusOnOpen = {
   mounted() {
-    this.el.expand = this.el.open
+    Utils.onDetailsTagState.mount(this)
 
-    this.el.addEventListener("toggle", event => {
+    this.el.closest("details").addEventListener("toggle", event => {
       if (event.target.open) { this.focusFirstInput() }
-      this.el.expand = event.target.open
     })
   },
   updated() {
-    this.el.open = this.el.expand
+    Utils.onDetailsTagState.update(this)
   },
   focusFirstInput() {
     let field = this.el.querySelector("input[autofocus]")
@@ -58,14 +79,11 @@ Hooks.updateSch = {
   }
 }
 
-Hooks.expandableSortable = {
+Hooks.moveable = {
   mounted() {
-    this.el.expand = this.el.open
-    this.el.addEventListener("toggle", event => this.el.expand = event.target.open)
     this.setupSortable()
   },
   updated() {
-    this.el.open = this.el.expand
     this.setupSortable()
     this.selectCurrentItems()
   },
@@ -82,8 +100,11 @@ Hooks.expandableSortable = {
     document.querySelectorAll(this.highlightClass).forEach(a => a.classList.remove(...this.heighlightStyle))
   },
   highlightBoxHeader(box) {
-    let boxHeader = box.querySelector(this.highlightClass)
-    boxHeader.classList.add(...this.heighlightStyle)
+    let boxHeader = box.closest(this.itemClass)
+    if (boxHeader) {
+      boxHeader = boxHeader.querySelector(this.highlightClass)
+      boxHeader.classList.add(...this.heighlightStyle)
+    }
   },
   setItemIndent(item, box) {
     let indentEl = item.querySelector(this.indentClass)
@@ -101,7 +122,7 @@ Hooks.expandableSortable = {
 
       JSON.parse(currentPaths).forEach(currentPath => {
         let item = root.querySelector("[data-path='" + currentPath + "']") || root
-        let itemBox = Sortable.utils.closest(item, "[phx-hook='expandableSortable']")
+        let itemBox = Sortable.utils.closest(item, "[phx-hook='moveable']")
 
         item.from = itemBox
         item.multiDragKeyDown = false
@@ -113,11 +134,11 @@ Hooks.expandableSortable = {
     // Frontend needs to use 1 based index due to technical limitation that we use <summary>
     // tag as first child so that draghover can insert right after it, otherwise we could not
     // drag it right after a list header as a first child (visually).
-    let newIndexItem = [{ to: this.itemPath(drop.to), index: drop.newIndex - 1 }]
-    let oldIndexItem = [{ from: this.itemPath(drop.from), index: drop.oldIndex - 1 }]
+    let newIndexItem = [{ to: this.itemPath(drop.to), index: drop.newIndex }]
+    let oldIndexItem = [{ from: this.itemPath(drop.from), index: drop.oldIndex }]
 
-    let oldIndexItems = drop.oldIndicies.map(a => { return { from: this.itemPath(a.multiDragElement.from), index: a.index - 1 } })
-    let newIndexItems = drop.newIndicies.map(a => { return { to: this.itemPath(drop.to), index: a.index - 1 } })
+    let oldIndexItems = drop.oldIndicies.map(a => { return { from: this.itemPath(a.multiDragElement.from), index: a.index } })
+    let newIndexItems = drop.newIndicies.map(a => { return { to: this.itemPath(drop.to), index: a.index } })
 
     return {
       oldIndices: drop.oldIndicies.length == 0 ? oldIndexItem : oldIndexItems,
