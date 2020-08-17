@@ -4,11 +4,17 @@ let Hooks = {}
 
 Hooks.focusOnOpen = {
   mounted() {
+    this.el.expand = this.el.open
+
     this.el.addEventListener("toggle", event => {
-      if (event.target.open) { this.focus() }
+      if (event.target.open) { this.focusFirstInput() }
+      this.el.expand = event.target.open
     })
   },
-  focus() {
+  updated() {
+    this.el.open = this.el.expand
+  },
+  focusFirstInput() {
     let field = this.el.querySelector("input[autofocus]")
     field.focus()
   }

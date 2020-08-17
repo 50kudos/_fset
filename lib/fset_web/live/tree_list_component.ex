@@ -14,6 +14,7 @@ defmodule FsetWeb.TreeListComponent do
     {:ok,
      socket
      |> assign(parent_assigns)
+     |> update(:sch, fn sch -> Map.delete(sch, "examples") end)
      |> update(:ui, fn ui -> Map.put_new(ui, :level, ui.tab) end)
      |> update(:ui, fn ui -> Map.put_new(ui, :parent_path, parent_assigns.f.name) end)}
   end
@@ -483,8 +484,8 @@ defmodule FsetWeb.TreeListComponent do
   # defp render_doc(assigns) do
   #   ~L"""
   #   <div class="w-full text-xs text-orange-500 opacity-75 leading-6" style="padding-left: <%= @uiÍ.level * 1.25 %>rem" onclick="event.preventDefault()">
-  #     <p><%= Map.get(@sch, "title") %></p>
-  #     <p><%= Map.get(@sch, "description") %></p>
+  #     <p><%= Sch.title(@sch) %></p>
+  #     <p><%= Sch.description(@sch) %></p>
   #   </div>
   #   """
   # endÍ

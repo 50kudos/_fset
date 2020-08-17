@@ -8,7 +8,7 @@ defmodule FsetWeb.MainLive do
   def mount(params, session, socket) do
     if connected?(socket) do
       Phoenix.PubSub.subscribe(Fset.PubSub, "sch_update")
-      :timer.send_interval(1000, self(), :tick)
+      # :timer.send_interval(1000, self(), :tick)
     end
 
     # File by id
@@ -111,7 +111,8 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("update_sch", params, socket) do
-    %{"key" => key, "value" => value} = params
+    %{"key" => key} = params
+    value = Map.get(params, "value")
     sch_path = socket.assigns.ui.current_path
 
     file = socket.assigns.current_file
@@ -238,7 +239,7 @@ defmodule FsetWeb.MainLive do
                 Sch.delete(section_sch, ui.current_path)
               end)
 
-            new_current_paths = Map.keys(Sch.find_parent(ui.current_path))
+            new_current_paths = Map.keys(Sch.find_parents(ui.current_path))
 
             assigns
             |> put_in([:current_file], %{file | module: module})
@@ -286,6 +287,15 @@ defmodule FsetWeb.MainLive do
     module = Module.update_current_section(file.module, &Sch.sanitize/1)
     socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
     {:noreply, socket}
+  end
+
+  defp get_sch(current_file, ui) do
+    Module.current_section_sch(current_file.module, ui.current_path)
+  end
+
+  defp get_parent(current_file, ui) do
+    parent_path = Sch.find_parent(ui.current_path).path
+    Module.current_section_sch(current_file.module, parent_path)
   end
 
   defp file_assigns(file_id, user) do

@@ -15,8 +15,9 @@ defmodule Fset.Sch.Vocab do
       @anchor "$anchor"
 
       # Validation
-      @type_ "type"
       @object "object"
+      @required "required"
+
       @array "array"
 
       @string "string"
@@ -28,9 +29,10 @@ defmodule Fset.Sch.Vocab do
       @maximum "maximum"
       @minimum "minimum"
 
+      @type_ "type"
+      @const "const"
       @boolean "boolean"
       @null "null"
-      @const "const"
 
       # Applicator
       @properties "properties"
@@ -41,6 +43,8 @@ defmodule Fset.Sch.Vocab do
 
       # Meta-data
       @examples "examples"
+      @title "title"
+      @description "description"
 
       # Custom
       @props_order "order"

@@ -93,7 +93,7 @@
       </nav>
       <aside class="w-2/6 overflow-scroll p-4 text-sm shadow bg-dark-gray">
         <%= if !is_list(@ui.current_path) do %>
-          <%= live_component @socket, SchComponent, id: @ui.current_path, sch: Sch.get(Module.current_section(@current_file.module), @ui.current_path), ui: @ui %>
+          <%= live_component @socket, SchComponent, id: @ui.current_path, sch: get_sch(@current_file, @ui), parent: get_parent(@current_file, @ui), ui: @ui, root?: f.name == Sch.find_parent(@ui.current_path).path %>
         <% end %>
       </aside>
     </section>

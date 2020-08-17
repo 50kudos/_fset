@@ -2,13 +2,16 @@ defmodule Fset.Sch do
   use Fset.Sch.Vocab
 
   # Accessor
+  def title(sch) when is_map(sch), do: Map.get(sch, @title)
+  def description(sch) when is_map(sch), do: Map.get(sch, @description)
+
   def ref(sch) when is_map(sch), do: Map.get(sch, @ref)
+  def defs(sch) when is_map(sch), do: Map.get(sch, @defs)
   def anchor(sch) when is_map(sch), do: Map.get(sch, @anchor)
-  def order(sch) when is_map(sch), do: Map.get(sch, @props_order)
-  def prop_sch(sch, key) when is_map(sch), do: Map.get(Map.get(sch, @properties), key)
   def items(sch) when is_map(sch), do: Map.get(sch, @items)
   def properties(sch) when is_map(sch), do: Map.get(sch, @properties)
-  def defs(sch) when is_map(sch), do: Map.get(sch, @defs)
+  def prop_sch(sch, key) when is_map(sch), do: Map.get(properties(sch), key)
+  def required(sch) when is_map(sch), do: Map.get(sch, @required, [])
   def any_of(sch) when is_map(sch), do: Map.get(sch, @any_of)
   def const(sch) when is_map(sch), do: Map.get(sch, @const)
   def examples(sch) when is_map(sch), do: Map.get(sch, @examples, [])
@@ -18,6 +21,7 @@ defmodule Fset.Sch do
     if(example == [], do: [], else: hd(example))
   end
 
+  def order(sch) when is_map(sch), do: Map.get(sch, @props_order)
   # END Accessor
 
   # Matcher
@@ -255,7 +259,7 @@ defmodule Fset.Sch do
   end
 
   def delete(map, paths) when is_binary(paths) or is_list(paths) do
-    parent_paths_children_keys = find_parent(paths)
+    parent_paths_children_keys = find_parents(paths)
 
     for {parent_path, children_keys} <- parent_paths_children_keys, reduce: map do
       acc -> pop_schs(acc, parent_path, children_keys) |> elem(1)
@@ -417,20 +421,20 @@ defmodule Fset.Sch do
   end
 
   # This only works with path style produced by Plug.Conn.Query
-  def find_parent(paths) when is_list(paths) or is_binary(paths) do
+  def find_parents(paths) when is_list(paths) or is_binary(paths) do
     paths
     |> List.wrap()
-    |> Enum.map(fn path -> find_parent_(path) end)
-    |> Enum.group_by(& &1.parent_path, & &1.child_key)
+    |> Enum.map(fn path -> find_parent(path) end)
+    |> Enum.group_by(& &1.path, & &1.child_key)
   end
 
-  defp find_parent_(path) when is_binary(path) do
+  def find_parent(path) when is_binary(path) do
     case path_tokens = split_path(path) do
       [] ->
-        %{parent_path: path, child_key: nil}
+        %{path: path, child_key: nil}
 
       [p] ->
-        %{parent_path: p, child_key: nil}
+        %{path: p, child_key: nil}
 
       _ ->
         [leaf | parent] = Enum.reverse(path_tokens)
@@ -448,7 +452,7 @@ defmodule Fset.Sch do
               acc <> path
           end
 
-        %{parent_path: parent, child_key: leaf}
+        %{path: parent, child_key: leaf}
     end
   end
 
@@ -567,13 +571,42 @@ defmodule Fset.Sch do
 
   def update(map, path, key, val) when is_binary(key) do
     cond do
-      key in ["title", "description", @id] and is_binary(val) ->
+      key in [@title, @description, @id] and is_binary(val) ->
         update_in(map, access_path(path), fn parent ->
           Map.put(parent, key, val)
         end)
 
+      key == @required ->
+        parent = find_parent(path)
+
+        update_in(map, access_path(parent.path), fn
+          %{@type_ => @object} = object ->
+            cond do
+              # Previous value is false
+              val in ["false"] ->
+                Map.update(object, key, [], fn required ->
+                  Enum.uniq([parent.child_key | required])
+                end)
+
+              # Previous value is true (unchecked input have no value set; i.e. nil)
+              val in [nil] ->
+                Map.update(object, key, [], fn required ->
+                  List.delete(required, parent.child_key)
+                end)
+
+              true ->
+                object
+            end
+
+          object ->
+            object
+        end)
+
       is_binary(key) ->
         update_in(map, access_path(path), fn parent -> update(parent, key, val) end)
+
+      true ->
+        map
     end
   end
 

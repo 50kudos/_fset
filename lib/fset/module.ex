@@ -109,10 +109,10 @@ defmodule Fset.Module do
 
   def current_section(%{current_section: s} = module), do: module[s]
 
-  def current_section_sch(module) do
+  def current_section_sch(module, path \\ nil) do
     module
     |> current_section()
-    |> Sch.get(module.current_section_key)
+    |> Sch.get(path || module.current_section_key)
   end
 
   def update_current_section(%{current_section: s} = module, fun) when is_function(fun) do

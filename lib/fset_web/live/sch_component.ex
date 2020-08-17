@@ -15,13 +15,14 @@ defmodule FsetWeb.SchComponent do
           <a href="data:application/json,<%= Jason.encode!(@sch, html_safe: true) %>" target="_blank" class="underline cursor-pointer">open</a>
         </dd>
       </dl>
+      <%= render_required(assigns) %>
       <label class="block mb-2 bg-transparent">
         <p class="p-1 text-xs text-gray-600">Title</p>
-        <textarea type="text" phx-blur="update_sch" phx-value-key="title" rows="2" class="p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"><%= Map.get(@sch, "title") %></textarea>
+        <textarea type="text" phx-blur="update_sch" phx-value-key="title" rows="2" class="p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"><%= Sch.title(@sch) %></textarea>
       </label>
       <label class="block mb-2 bg-transparent">
         <p class="p-1 text-xs text-gray-600">Description</p>
-        <textarea type="text" phx-blur="update_sch" phx-value-key="description" rows="2" class="p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"><%= Map.get(@sch, "description") %></textarea>
+        <textarea type="text" phx-blur="update_sch" phx-value-key="description" rows="2" class="p-1 border border-gray-800 border-t-0 bg-transparent shadow w-full"><%= Sch.description(@sch) %></textarea>
       </label>
       <%= render_sch(assigns) %>
       <%= render_examples(assigns) %>
@@ -31,10 +32,7 @@ defmodule FsetWeb.SchComponent do
 
   @impl true
   def update(assigns, socket) do
-    socket =
-      socket
-      |> assign(:ui, assigns.ui)
-      |> assign(:sch, assigns.sch)
+    socket = assign(socket, Map.take(assigns, [:ui, :sch, :parent, :root?]))
 
     {:ok, socket}
   end
@@ -182,6 +180,25 @@ defmodule FsetWeb.SchComponent do
       </pre>
     </label>
     """
+  end
+
+  defp render_required(assigns) do
+    ~L"""
+    <%= if Sch.object?(@parent) && !@root? do %>
+      <label class="flex items-center mb-2 bg-transparent">
+        <input type="checkbox" phx-click="update_sch" phx-value-key="required" value="<%= checked?(@parent, @ui) %>" class="mr-1" <%= checked?(@parent, @ui) && "checked" %>>
+        <p class="p-1 text-xs text-gray-600 select-none">Required</p>
+      </label>
+    <% end %>
+    """
+  end
+
+  defp checked?(parent, ui) do
+    sch_key(ui) in Sch.required(parent)
+  end
+
+  defp sch_key(ui) do
+    Sch.find_parent(ui.current_path).child_key
   end
 
   @impl true
