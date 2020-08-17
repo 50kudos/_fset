@@ -1,4 +1,4 @@
-defmodule Fset.Emap do
+defmodule Fset.Utils do
   @moduledoc """
   Provide extra functions to Map module
   """
@@ -9,5 +9,11 @@ defmodule Fset.Emap do
     else
       Map.put(map, key, val)
     end
+  end
+
+  def word_break_html(string) when is_binary(string) do
+    ~r/(?<=::)|(?<=\.)/
+    |> Regex.split(string)
+    |> Enum.intersperse({:safe, "<wbr>"})
   end
 end

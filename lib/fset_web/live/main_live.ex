@@ -1,7 +1,7 @@
 defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
   alias FsetWeb.{SchComponent, ModuleComponent}
-  alias Fset.{Accounts, Sch, Persistence, Module}
+  alias Fset.{Accounts, Sch, Persistence, Module, Utils}
   alias Fset.Sch.New
 
   @impl true

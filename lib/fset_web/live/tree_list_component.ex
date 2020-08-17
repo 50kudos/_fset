@@ -1,6 +1,6 @@
 defmodule FsetWeb.TreeListComponent do
   use FsetWeb, :live_component
-  alias Fset.{Sch, Module}
+  alias Fset.{Sch, Module, Utils}
 
   @impl true
   def mount(socket) do
@@ -366,7 +366,7 @@ defmodule FsetWeb.TreeListComponent do
 
       true ->
         ~L"""
-        <span class="break-words"><%= word_break_html(@key) %></span>
+        <span class="break-words"><%= Utils.word_break_html(@key) %></span>
         """
     end
   end
@@ -498,7 +498,7 @@ defmodule FsetWeb.TreeListComponent do
     ref_type = fn sch ->
       Enum.find_value(ui.model_names, fn {k, anchor} ->
         if "#" <> anchor == Sch.ref(sch) do
-          word_break_html(k)
+          Utils.word_break_html(k)
         end
       end)
     end
@@ -535,12 +535,6 @@ defmodule FsetWeb.TreeListComponent do
         end
     end
     |> Enum.join(" ")
-  end
-
-  defp word_break_html(string) when is_binary(string) do
-    ~r/(?<=::)|(?<=\.)/
-    |> Regex.split(string)
-    |> Enum.intersperse({:safe, "<wbr>"})
   end
 
   defp const_type(sch) do

@@ -131,9 +131,7 @@
   /* > * { @apply hidden } */
   @apply h-full py-0 border border-green-600 border-dashed -my-px
 }
-
 /* version 2 */
-
 /*.sortable-ghost {
   @apply py-0 border border-gray-700 border-dashed
 }*/
@@ -170,7 +168,16 @@ input[type=number]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-
 input[type=number] {
   -moz-appearance:textfield;
 }
+
+/*
+[contenteditable=true] {
+  margin-bottom: -2px;
+  @apply border-b-2 border-green-500
+}
+[contenteditable=true]:focus {
+  @apply outline-none
+}
+*/
