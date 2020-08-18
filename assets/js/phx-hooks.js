@@ -1,4 +1,7 @@
 import Sortable, { MultiDrag } from "sortablejs"
+import hljs from 'highlight.js/lib/core';
+import json from 'highlight.js/lib/languages/json';
+import 'highlight.js/styles/agate.css';
 
 let Hooks = {}
 let Utils = {}
@@ -16,6 +19,16 @@ Utils.onDetailsTagState = {
   update(storeEl) {
     let detailsTag = storeEl.el.closest("details")
     if (detailsTag) { detailsTag.open = storeEl.expand }
+  }
+}
+
+hljs.registerLanguage('json', json);
+Hooks.syntaxHighlight = {
+  mounted() {
+    hljs.highlightBlock(this.el)
+  },
+  updated() {
+    hljs.highlightBlock(this.el)
   }
 }
 
@@ -127,6 +140,10 @@ Hooks.moveable = {
         item.from = itemBox
         item.multiDragKeyDown = false
         Sortable.utils.select(item)
+
+        if (root.dataset.path != item.dataset.path) {
+          item.scrollIntoView({ behavior: "smooth", block: "center" })
+        }
       })
     }
   },

@@ -36,7 +36,7 @@
                   <li class="ml-2 <%= if @current_file.module.current_section == :model, do: "text-indigo-500" %>">MODEL</li>
                     <ul class="break-words divide-y divide-gray-800">
                       <%= for model <- Module.current_section_sch(@current_file.module) |> Sch.order() do %>
-                        <li class="px-2 py-1"><%= Utils.word_break_html(model) %></li>
+                        <li class="px-2 py-1 cursor-pointer hover:bg-gray-800 <%= if @ui.current_path == input_name(f.name, model), do: "bg-gray-800"%>" phx-click="select_sch" phx-value-paths="<%= input_name(f.name, model) %>"><%= Utils.word_break_html(model) %></li>
                       <% end %>
                     </ul>
 

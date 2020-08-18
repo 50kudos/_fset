@@ -175,7 +175,7 @@ defmodule FsetWeb.SchComponent do
       <p class="p-1 text-xs text-gray-600">JSON Examples</p>
       <pre class="flex flex-col text-xs">
         <%= for example <- Sch.examples(@sch) do %>
-          <code class="m-2"><%= Jason.encode_to_iodata!(example, pretty: true) %></code>
+          <code id="json_output" style="background: transparent" class="m-2 json" phx-hook="syntaxHighlight"><%= Jason.encode_to_iodata!(example, pretty: true) %></code>
         <% end %>
       </pre>
     </label>
