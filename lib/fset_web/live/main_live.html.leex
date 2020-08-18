@@ -27,19 +27,13 @@
     </header>
     <section class="flex flex-grow overflow-scroll">
       <aside class="w-1/6 flex flex-col text-gray-500 shadow bg-dark-gray">
-        <ul class="overflow-scroll">
+        <ul class="overflow-scroll space-y-4 divide-y divide-gray-900">
           <%= for file <- @files do %>
             <%= if @current_file.id == file.id do %>
-              <li class="">
-                <p class="pl-2 text-sm leading-8 bg-gray-800 bg-opacity-50"><%= file.name %></p>
+              <li class="text-sm">
+                <p class="pl-2 leading-8 bg-gray-800 bg-opacity-50"><%= file.name %></p>
                 <ul class="pt-2 text-xs space-y-2">
                   <li class="ml-2 <%= if @current_file.module.current_section == :model, do: "text-indigo-500" %>">MODEL</li>
-                    <ul class="break-words divide-y divide-gray-800">
-                      <%= for model <- Module.current_section_sch(@current_file.module) |> Sch.order() do %>
-                        <li class="px-2 py-1 cursor-pointer hover:bg-gray-800 <%= if @ui.current_path == input_name(f.name, model), do: "bg-gray-800"%>" phx-click="select_sch" phx-value-paths="<%= input_name(f.name, model) %>"><%= Utils.word_break_html(model) %></li>
-                      <% end %>
-                    </ul>
-
                   <li class="ml-2 <%= if @current_file.module.current_section == :main, do: "text-indigo-500" %>">MAIN</li>
                 </ul>
               </li>
@@ -51,9 +45,18 @@
               <% end %>
             <% end %>
           <% end %>
-          </ul>
+          <li class="text-sm p-2">
+            <p class="mb-1 text-gray-600">New model: </p>
+            <div class="grid grid-cols-2 gap-px text-gray-400 text-xs">
+              <%= for higher_type <- [:Record, :Field, :List, :Tuple, :Union] do %>
+                <button class="text-left px-2 py-1 hover:bg-indigo-800 hover:text-gray-100 border border-gray-800"
+                  phx-click="add_model" phx-value-model="<%= higher_type %>"> + <%= higher_type %></button>
+              <% end %>
+            </div>
+          </li>
+        </ul>
         <span class="flex-1"></span>
-        <div class="px-4">
+        <div class="px-4 py-2 border-t-2 border-gray-800 bg-gray-900">
           <h5>Storage</h4>
           <div class="my-1">
             <label for="disk" class="block my-1">
@@ -74,18 +77,16 @@
         </div>
       </aside>
       <nav class="w-3/6 overflow-scroll shadow-xl">
-        <div class="flex items-center text-xs h-8 bg-gray-900 sticky top-0 z-10 border-b border-gray-800">
-        <%= if !is_list(@ui.current_path) do %>
-          <%= if @ui.current_path == f.name do %>
-            <p class="mx-5 text-gray-600">Add model : </p>
-            <div class="grid grid-cols-5 text-center text-gray-400">
-              <%= for higher_type <- [:Record, :Field, :List, :Tuple, :Union] do %>
-                <span class="border-r last:border-r-0 cursor-pointer p-1 hover:bg-indigo-800 hover:text-gray-100 border-gray-900"
-                  phx-click="add_model" phx-value-model="<%= higher_type %>"> + <%= higher_type %></span>
-              <% end %>
+        <div class="text-xs px-2 h-8 bg-gray-900 sticky top-0 z-10 border-b border-gray-800">
+          <%= if selected_count = selected_count(@ui, f) do %>
+            <div class="flex items-center h-full space-x-2">
+              <button phx-click="escape" class="text-gray-600 hover:text-gray-300" title="Deselect">&times;</button>
+              <span>selected <%= selected_count %></span>
+              <button class="flex-1"></button>
+              <button phx-click="delete" class="text-red-500 hover:text-red-600">delete</button>
             </div>
+
           <% end %>
-        <% end %>
         </div>
         <div class="min-h-full" phx-window-keyup="module_keyup">
           <%= live_component @socket, ModuleComponent, id: f.name, file: @current_file, ui: @ui, f: f %>

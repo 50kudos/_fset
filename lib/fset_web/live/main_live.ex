@@ -1,7 +1,7 @@
 defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
   alias FsetWeb.{SchComponent, ModuleComponent}
-  alias Fset.{Accounts, Sch, Persistence, Module, Utils}
+  alias Fset.{Accounts, Sch, Persistence, Module}
   alias Fset.Sch.New
 
   @impl true
@@ -34,10 +34,13 @@ defmodule FsetWeb.MainLive do
   @impl true
   def handle_event("add_model", %{"model" => model}, socket) do
     file = socket.assigns.current_file
-    ui = socket.assigns.ui
+    # ui = socket.assigns.ui
 
     module =
-      Module.update_current_section(file.module, Module.add_model_fun(model, ui.current_path))
+      Module.update_current_section(
+        file.module,
+        Module.add_model_fun(model, file.module.current_section_key)
+      )
 
     socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
 
@@ -196,6 +199,14 @@ defmodule FsetWeb.MainLive do
     {:noreply, socket}
   end
 
+  def handle_event("escape", _val, socket) do
+    handle_event("module_keyup", %{"key" => "Escape"}, socket)
+  end
+
+  def handle_event("delete", _val, socket) do
+    handle_event("module_keyup", %{"key" => "Delete"}, socket)
+  end
+
   def handle_event("module_keyup", val, socket) do
     if socket.assigns.ui.current_path in Module.preserve_keys() do
       {:noreply, socket}
@@ -306,6 +317,11 @@ defmodule FsetWeb.MainLive do
     |> Map.from_struct()
     |> Map.put(:module, module)
     |> Map.put(:bytes, Persistence.term_size(module))
+  end
+
+  defp selected_count(ui, f) do
+    length = length(List.wrap(ui.current_path) -- [f.name])
+    if length < 1, do: false, else: length
   end
 
   defp percent(byte_size, :per_mb, quota) do

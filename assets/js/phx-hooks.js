@@ -142,7 +142,7 @@ Hooks.moveable = {
         Sortable.utils.select(item)
 
         if (root.dataset.path != item.dataset.path) {
-          item.scrollIntoView({ behavior: "smooth", block: "center" })
+          // item.scrollIntoView({ behavior: "smooth", block: "center" })
         }
       })
     }

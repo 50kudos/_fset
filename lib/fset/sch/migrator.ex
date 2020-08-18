@@ -78,7 +78,7 @@ defmodule Fset.Sch.Migrator do
         Map.put(sch, @examples, ["any"])
 
       Sch.ref?(sch) ->
-        Map.put(sch, @examples, ["N/A"])
+        Map.put(sch, @examples, [Sch.ref(sch)])
 
       Sch.const?(sch) ->
         Map.put(sch, @examples, [Sch.const(sch)])
