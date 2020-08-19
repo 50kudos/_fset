@@ -51,7 +51,8 @@ defmodule Fset.MixProject do
       {:plug_cowboy, "~> 2.0"},
       {:cloak_ecto, "~> 1.0.1"},
       {:phx_gen_auth, "~> 0.4.0", only: [:dev], runtime: false},
-      {:stream_data, "~> 0.4"}
+      {:stream_data, "~> 0.4"},
+      {:randex, "~> 0.4"}
     ]
   end
 

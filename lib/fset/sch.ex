@@ -2,18 +2,38 @@ defmodule Fset.Sch do
   use Fset.Sch.Vocab
 
   # Accessor
-  def title(sch) when is_map(sch), do: Map.get(sch, @title)
-  def description(sch) when is_map(sch), do: Map.get(sch, @description)
-
+  ## Core
   def ref(sch) when is_map(sch), do: Map.get(sch, @ref)
   def defs(sch) when is_map(sch), do: Map.get(sch, @defs)
   def anchor(sch) when is_map(sch), do: Map.get(sch, @anchor)
+
+  ## Validation
+  ### object
+  def min_properties(sch) when is_map(sch), do: Map.get(sch, @min_properties)
+  def max_properties(sch) when is_map(sch), do: Map.get(sch, @max_properties)
+  def required(sch) when is_map(sch), do: Map.get(sch, @required, [])
+  ### array
+  def min_items(sch) when is_map(sch), do: Map.get(sch, @min_items)
+  def max_items(sch) when is_map(sch), do: Map.get(sch, @max_items)
+  ### string
+  def min_length(sch) when is_map(sch), do: Map.get(sch, @min_length)
+  def max_length(sch) when is_map(sch), do: Map.get(sch, @max_length)
+  def pattern(sch) when is_map(sch), do: Map.get(sch, @pattern)
+  ### number
+  def minimum(sch) when is_map(sch), do: Map.get(sch, @minimum)
+  def maximum(sch) when is_map(sch), do: Map.get(sch, @maximum)
+  def multiple_of(sch) when is_map(sch), do: Map.get(sch, @multiple_of)
+  ## typed
+  def const(sch) when is_map(sch), do: Map.get(sch, @const)
+
+  ## Applicator
   def items(sch) when is_map(sch), do: Map.get(sch, @items)
   def properties(sch) when is_map(sch), do: Map.get(sch, @properties)
-  def prop_sch(sch, key) when is_map(sch), do: Map.get(properties(sch), key)
-  def required(sch) when is_map(sch), do: Map.get(sch, @required, [])
   def any_of(sch) when is_map(sch), do: Map.get(sch, @any_of)
-  def const(sch) when is_map(sch), do: Map.get(sch, @const)
+
+  ## Metadata
+  def title(sch) when is_map(sch), do: Map.get(sch, @title)
+  def description(sch) when is_map(sch), do: Map.get(sch, @description)
   def examples(sch) when is_map(sch), do: Map.get(sch, @examples, [])
 
   def example(sch) do
@@ -21,6 +41,10 @@ defmodule Fset.Sch do
     if(example == [], do: [], else: hd(example))
   end
 
+  # Helper
+  def prop_sch(sch, key) when is_map(sch), do: Map.get(properties(sch), key)
+
+  ## Custom
   def order(sch) when is_map(sch), do: Map.get(sch, @props_order)
   # END Accessor
 
@@ -610,15 +634,19 @@ defmodule Fset.Sch do
     end
   end
 
-  defp positive_int_keys(),
-    do:
-      ~w(maxProperties minProperties maxItems minItems maxLength minLength maximum minimum multipleOf)
+  defp positive_int_keys() do
+    object = [@max_properties, @min_properties]
+    array = [@max_items, @min_items]
+    string = [@max_length, @min_length]
+    number = [@maximum, @minimum, @multiple_of]
+    object ++ array ++ string ++ number
+  end
 
   defp update(%{@type_ => @object} = parent, key, val) do
     val = if key in positive_int_keys(), do: positive_int(val), else: val
 
     cond do
-      key in ~w(maxProperties minProperties) && val ->
+      key in [@max_properties, @min_properties] && val ->
         Map.put(parent, key, val)
 
       true ->
@@ -638,15 +666,51 @@ defmodule Fset.Sch do
     end
   end
 
-  defp update(%{@type_ => @string} = parent, key, val) do
-    val = if key in positive_int_keys(), do: positive_int(val), else: val
-
+  defp update(%{@type_ => @string} = sch, key, val) do
     cond do
-      key in ~w(maxLength minLength) && val ->
-        Map.put(parent, key, val)
+      key in [@max_length, @min_length] ->
+        val = positive_int(val)
+        sch = Map.put(sch, key, val)
+        min = Map.get(sch, @min_length)
+        max = Map.get(sch, @max_length)
+
+        case {min, max} do
+          {nil, nil} ->
+            sch
+            |> Map.delete(@min_length)
+            |> Map.delete(@max_length)
+
+          {min, nil} ->
+            sch
+            |> Map.put(@min_length, min)
+            |> Map.delete(@max_length)
+
+          {nil, max} ->
+            sch
+            |> Map.delete(@min_length)
+            |> Map.put(@max_length, max)
+
+          {min, max} when min <= max ->
+            sch
+            |> Map.put(@min_length, min)
+            |> Map.put(@max_length, max)
+
+          {min, max} when min > max ->
+            sch
+            |> Map.put(@min_length, max)
+            |> Map.put(@max_length, max)
+        end
+
+      key in [@pattern] && is_binary(val) ->
+        val = String.trim(val)
+
+        case Regex.compile(val) do
+          {:ok, _regex} -> Map.put(sch, key, val)
+          {:error, _error} -> Map.delete(sch, key)
+        end
 
       true ->
-        parent
+        sch
     end
   end
 
@@ -672,7 +736,7 @@ defmodule Fset.Sch do
   end
 
   defp positive_int(val) when is_binary(val) do
-    if String.match?(val, ~r/\d+/), do: max(0, String.to_integer(val))
+    if String.match?(val, ~r/\d+/), do: max(0, String.to_integer(val)), else: nil
   end
 
   defp positive_int(val), do: val

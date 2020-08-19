@@ -55,10 +55,29 @@ defmodule Fset.Sch.Migrator do
       Sch.leaf?(sch) ->
         cond do
           Sch.string?(sch) ->
-            min = Map.get(sch, @min_length, 0)
-            max = Map.get(sch, @max_length, 500)
-            string_data = StreamData.string(:alphanumeric, length: min..max)
-            Map.put(sch, @examples, Enum.take(string_data, 3))
+            min = Map.get(sch, @min_length)
+            max = Map.get(sch, @max_length)
+
+            if regex = Sch.pattern(sch) do
+              string_data =
+                Regex.compile!(regex)
+                |> Randex.stream()
+                |> Enum.take(3)
+                |> Enum.map(fn s -> String.slice(s, 0..(max || -1)) end)
+
+              Map.put(sch, @examples, string_data)
+            else
+              length =
+                case {min, max} do
+                  {nil, nil} -> []
+                  {min, nil} -> [min_length: min]
+                  {nil, max} -> [max_length: max]
+                  {min, max} -> [length: min..max]
+                end
+
+              string_data = StreamData.string(:alphanumeric, length)
+              Map.put(sch, @examples, Enum.take(string_data, 3))
+            end
 
           Sch.number?(sch) ->
             min = Map.get(sch, @minimum, 0)

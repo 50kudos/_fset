@@ -16,13 +16,18 @@ defmodule Fset.Sch.Vocab do
 
       # Validation
       @object "object"
+      @max_properties "maxProperties"
+      @min_properties "minProperties"
       @required "required"
 
       @array "array"
+      @max_items "maxItems"
+      @min_items "minItems"
 
       @string "string"
       @min_length "minLength"
       @max_length "maxLength"
+      @pattern "pattern"
 
       @number "number"
       @multiple_of "multipleOf"
