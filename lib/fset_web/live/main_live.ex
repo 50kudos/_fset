@@ -32,14 +32,19 @@ defmodule FsetWeb.MainLive do
   end
 
   @impl true
-  def handle_event("add_model", %{"model" => model}, socket) do
+  def handle_event("add_field", %{"field" => field}, socket) do
+    add_path = socket.assigns.ui.current_path
+    handle_event("add_model", %{"model" => field, "path" => add_path}, socket)
+  end
+
+  def handle_event("add_model", %{"model" => model} = val, socket) do
     file = socket.assigns.current_file
-    # ui = socket.assigns.ui
+    add_path = Map.get(val, "path", file.module.current_section_key)
 
     module =
       Module.update_current_section(
         file.module,
-        Module.add_model_fun(model, file.module.current_section_key)
+        Module.add_model_fun(model, add_path)
       )
 
     socket = update(socket, :current_file, fn _ -> %{file | module: module} end)

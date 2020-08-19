@@ -106,7 +106,7 @@ Hooks.moveable = {
   // User defined functions and properties
   itemClass: ".sort-handle",
   highlightClass: ".dragover-hl",
-  heighlightStyle: ["bg-indigo-800", "bg-opacity-25"],
+  heighlightStyle: ["bg-indigo-700", "bg-opacity-25"],
   indentClass: ".indent",
 
   resetHighLight() {
@@ -222,6 +222,14 @@ Hooks.moveable = {
           })
           exceptItselfItems.forEach(item => item.parentNode && Sortable.utils.deselect(item))
           evt.items = evt.items.filter(item => !exceptItselfItems.includes(item))
+        }
+
+        // Remove add_field buttons on multi-select, otherwise they do not look good.
+        if (evt.items.length > 1) {
+          evt.items.forEach(a => {
+            let btn = a.querySelector("[phx-click='add_field']")
+            btn && btn.remove()
+          })
         }
 
         // PushEvent only when necessary

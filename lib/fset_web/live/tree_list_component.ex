@@ -35,7 +35,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_folder(assigns) do
     ~L"""
-    <nav class="sort-handle" data-path="<%= @f.name %>">
+    <nav class="sort-handle <%= if selected?(@f, @ui), do: 'sortable-selected' %>" data-path="<%= @f.name %>">
       <details phx-hook="openable" id="openable__<%= @f.name %>" <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>>
         <summary class="flex flex-col" >
           <%= render_folder_header(assigns) %>
@@ -158,7 +158,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_file(assigns) do
     ~L"""
-    <nav class="sort-handle" data-path="<%= @f.name %>">
+    <nav class="sort-handle <%= if selected?(@f, @ui), do: 'sortable-selected' %>" data-path="<%= @f.name %>">
       <%= render_key_type_pair(assigns) %>
     </nav>
     """
@@ -167,7 +167,7 @@ defmodule FsetWeb.TreeListComponent do
   defp render_key_type_pair(assigns) do
     ~L"""
     <%# render_doc(assigns) %>
-    <div class="flex w-full leading-6 <%= if selected?(@f, @ui), do: 'bg-indigo-700 bg-opacity-25' %>">
+    <div class="flex w-full leading-6">
       <div
         class="indent"
         style="padding-left: <%= @ui.level * 1.25 %>rem"
@@ -188,8 +188,10 @@ defmodule FsetWeb.TreeListComponent do
       <% end %>
 
       <div class="flex-1 px-1 text-right" onclick="event.preventDefault()">
-        <%= if selected?(@f, @ui, :single) && @ui.current_edit != @f.name do %>
+        <div class="<%= if selected?(@f, @ui, :multi), do: 'hidden' %>">
           <%= render_add_button(assigns) %>
+        </div>
+        <% if selected?(@f, @ui, :single) do %>
         <% else %>
           &nbsp;
         <% end %>
@@ -228,17 +230,17 @@ defmodule FsetWeb.TreeListComponent do
     cond do
       Sch.object?(assigns.sch) ->
         ~L"""
-        <span phx-click="add_model" phx-value-model="Record" class="px-2 bg-indigo-500 rounded cursor-pointer">+</span>
+        <span phx-click="add_field" phx-value-field="Record" class="px-2 bg-indigo-500 rounded cursor-pointer">+</span>
         """
 
       Sch.array?(assigns.sch) ->
         ~L"""
-        <span phx-click="add_model" phx-value-model="Record" class="px-2 bg-indigo-500 rounded cursor-pointer">+</span>
+        <span phx-click="add_field" phx-value-field="Record" class="px-2 bg-indigo-500 rounded cursor-pointer">+</span>
         """
 
       Sch.any_of?(assigns.sch) ->
         ~L"""
-        <span phx-click="add_model" phx-value-model="Record" class="px-2 bg-indigo-500 rounded cursor-pointer">+</span>
+        <span phx-click="add_field" phx-value-field="Record" class="px-2 bg-indigo-500 rounded cursor-pointer">+</span>
         """
 
       true ->

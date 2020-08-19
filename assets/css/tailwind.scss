@@ -8,11 +8,9 @@
 .grid-cols-fit {
   grid-template-columns: repeat(auto-fit, minmax(430px, 1fr));
 }
-
 .grid-cols-fit > * {
   @apply border-r border-gray-900;
 }
-
 .break-words {
   overflow-wrap: break-word;
   word-wrap: break-word;
