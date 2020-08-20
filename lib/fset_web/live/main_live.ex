@@ -196,6 +196,7 @@ defmodule FsetWeb.MainLive do
           end
 
         current_paths = Enum.filter(current_paths, fn p -> p != "" end)
+        current_paths = if length(current_paths) == 1, do: hd(current_paths), else: current_paths
         # current_paths = Sch.get_paths(section_sch, dst_indices)
         Map.put(ui, :current_path, current_paths)
       end)

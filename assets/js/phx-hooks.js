@@ -108,6 +108,7 @@ Hooks.moveable = {
   highlightClass: ".dragover-hl",
   heighlightStyle: ["bg-indigo-700", "bg-opacity-25"],
   indentClass: ".indent",
+  cursorLoadingStyle: "phx-click-loading",
 
   resetHighLight() {
     document.querySelectorAll(this.highlightClass).forEach(a => a.classList.remove(...this.heighlightStyle))
@@ -184,6 +185,7 @@ Hooks.moveable = {
       revertOnSpill: true,
 
       onEnd: (evt) => {
+        this.el.classList.add(this.cursorLoadingStyle)
         this.pushEvent("move", this.movedItems(evt))
         evt.items.forEach(item => this.setItemIndent(item, evt.to))
         this.resetHighLight()
