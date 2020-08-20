@@ -14,8 +14,8 @@ defmodule Fset.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: Fset.PubSub},
       # Start the Endpoint (http/https)
-      FsetWeb.Endpoint,
-      Fset.Vault
+      FsetWeb.Endpoint
+      # Fset.Vault
       # Start a worker by calling: Fset.Worker.start_link(arg)
       # {Fset.Worker, arg}
     ]
