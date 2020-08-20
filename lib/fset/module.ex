@@ -72,7 +72,7 @@ defmodule Fset.Module do
   defp put_scheme(module \\ %{}) do
     module
     |> Map.merge(New.all_of([New.ref(@main_anchor), New.ref(@logic_anchor)]))
-    |> Sch.put_def(@model_key, New.anchor(@model_anchor))
+    |> Sch.put_def(@model_key, New.object(anchor: @model_anchor))
     |> Sch.put_def(@main_key, New.anchor(@main_anchor))
     |> Sch.put_def(@logic_key, New.anchor(@logic_anchor))
     |> Sch.put_def(@var_key, %{})
@@ -94,8 +94,16 @@ defmodule Fset.Module do
   #   %{"type": "object", "properties": %{"__MODEL__" => %{}}}
 
   # """
-  defp defs_section(file, section_key) when is_map(file) and is_binary(section_key) do
-    Sch.new(section_key, Map.get(Sch.defs(file), section_key))
+  defp defs_section(root_sch, section_key) when is_map(root_sch) and is_binary(section_key) do
+    section_sch = Map.get(Sch.defs(root_sch), section_key)
+
+    section_sch =
+      case section_key do
+        @model_key -> Map.merge(New.object(), section_sch)
+        @main_key -> section_sch
+      end
+
+    Sch.new(section_key, section_sch)
   end
 
   def from_schema(sch) when is_map(sch) do

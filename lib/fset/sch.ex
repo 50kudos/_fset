@@ -45,7 +45,7 @@ defmodule Fset.Sch do
   def prop_sch(sch, key) when is_map(sch), do: Map.get(properties(sch), key)
 
   ## Custom
-  def order(sch) when is_map(sch), do: Map.get(sch, @props_order)
+  def order(sch) when is_map(sch), do: Map.get(sch, @props_order, [])
   # END Accessor
 
   # Matcher

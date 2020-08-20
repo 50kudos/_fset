@@ -40,11 +40,13 @@ defmodule Fset.Sch.New do
   defp put_opts(sch, opts) when is_map(sch) and is_list(opts) do
     Enum.reduce(opts, sch, fn
       {:anchor, true}, acc -> put_anchor(acc)
+      {:anchor, a}, acc when is_binary(a) -> put_anchor(acc)
       {_opt, _val}, acc -> acc
     end)
   end
 
-  defp put_anchor(sch) do
-    Map.put_new(sch, "$anchor", "a_" <> Ecto.UUID.generate())
+  defp put_anchor(sch, a \\ nil) do
+    anchor = a || Ecto.UUID.generate()
+    Map.put_new(sch, "$anchor", "a_" <> anchor)
   end
 end
