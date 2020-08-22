@@ -14,7 +14,7 @@ import "../css/app.scss"
 //
 import "phoenix_html"
 import { Socket } from "phoenix"
-import NProgress from "nprogress"
+import topbar from "topbar"
 import { LiveSocket } from "phoenix_live_view"
 import phxHooks from "./phx-hooks"
 import "./menu"
@@ -27,8 +27,11 @@ let liveSocket = new LiveSocket("/live", Socket, {
 })
 
 // Show progress bar on live navigation and form submits
-window.addEventListener("phx:page-loading-start", info => NProgress.start())
-window.addEventListener("phx:page-loading-stop", info => NProgress.done())
+let indigo500 = "rgba(102, 126, 234, 1)"
+let indigo700 = "rgba(102, 126, 234, 1)"
+topbar.config({ barColors: [indigo500, indigo700] })
+window.addEventListener("phx:page-loading-start", info => topbar.show())
+window.addEventListener("phx:page-loading-stop", info => topbar.hide())
 
 // connect if there are any LiveViews on the page
 liveSocket.connect()
