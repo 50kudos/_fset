@@ -24,6 +24,7 @@ RUN npm --prefix ./assets ci --progress=false --no-audit --loglevel=error
 
 COPY priv priv
 COPY assets assets
+ENV NODE_ENV=production
 RUN npm run --prefix ./assets deploy
 RUN mix phx.digest
 
