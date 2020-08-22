@@ -22,16 +22,14 @@ RUN mix do deps.get, deps.compile
 COPY assets/package.json assets/package-lock.json ./assets/
 RUN npm --prefix ./assets ci --progress=false --no-audit --loglevel=error
 
+ENV NODE_ENV=production
+COPY lib lib
 COPY priv priv
 COPY assets assets
-ENV NODE_ENV=production
 RUN npm run --prefix ./assets deploy
 RUN mix phx.digest
 
 # compile and build release
-COPY lib lib
-# uncomment COPY if rel/ exists
-# COPY rel rel
 RUN mix do compile, release
 
 # prepare release image

@@ -2,8 +2,8 @@ const purgecss = require('@fullhuman/postcss-purgecss')({
 
   // Specify the paths to all of the template files in your project
   content: [
-    '../lib/fset_web/live/*.ex',
-    '../**/*.leex',
+    '../lib/fset_web/live/*.{leex,ex}',
+    '../lib/fset_web/templates/**/*.{leex,eex}',
     './js/phx-hooks.js'
   ],
 
