@@ -1,27 +1,24 @@
 defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
   alias FsetWeb.{SchComponent, ModuleComponent}
-  alias Fset.{Accounts, Sch, Persistence, Module}
+  alias Fset.{Sch, Persistence, Module}
   alias Fset.Sch.New
 
   @impl true
   def mount(params, session, socket) do
     if connected?(socket) do
       Phoenix.PubSub.subscribe(Fset.PubSub, "sch_update")
-      # :timer.send_interval(1000, self(), :tick)
     end
 
-    # File by id
-    current_user = session["current_user_id"] && Accounts.get_user!(session["current_user_id"])
-    file = file_assigns(params["file_id"], current_user)
+    user_files = Fset.Persistence.get_user_files(session["current_user_id"])
 
-    # List of files
-    user_files = Fset.Persistence.get_user_files(current_user.id)
     files = Enum.map(user_files, &Map.take(&1.file, [:id, :name]))
+    user_file = Enum.find(user_files, fn user_file -> user_file.file.id == params["file_id"] end)
+    file = file_assigns(user_file.file)
 
     {:ok,
      socket
-     |> assign_new(:current_user, fn -> current_user end)
+     |> assign_new(:current_user, fn -> user_file.user end)
      |> assign(:current_file, file)
      |> assign(:files, files)
      |> assign(:ui, %{
@@ -285,8 +282,9 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def handle_params(%{"file_id" => file_id}, _url, socket) do
-    {:noreply,
-     update(socket, :current_file, fn _ -> file_assigns(file_id, socket.assigns.current_user) end)}
+    user_file = Persistence.get_user_file(file_id, socket.assigns.current_user)
+
+    {:noreply, assign(socket, :current_file, file_assigns(user_file.file))}
   end
 
   @impl true
@@ -295,14 +293,16 @@ defmodule FsetWeb.MainLive do
     module = Module.update_current_section(module, &Sch.sanitize/1)
     file_sch = Module.to_schema(module)
 
-    Persistence.update_file(socket.assigns.current_file.id, schema: file_sch)
-    {:noreply, socket}
-  end
+    file = Persistence.update_file(socket.assigns.current_file.id, schema: file_sch)
+    module = Module.from_schema(file.schema)
 
-  def handle_info(:tick, socket) do
-    file = socket.assigns.current_file
-    module = Module.update_current_section(file.module, &Sch.sanitize/1)
-    socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
+    file =
+      file
+      |> Map.from_struct()
+      |> Map.put(:module, module)
+      |> Map.put(:bytes, Persistence.term_size(module))
+
+    socket = assign(socket, :current_file, file)
     {:noreply, socket}
   end
 
@@ -315,11 +315,10 @@ defmodule FsetWeb.MainLive do
     Module.current_section_sch(current_file.module, parent_path)
   end
 
-  defp file_assigns(file_id, user) do
-    user_file = Persistence.get_user_file(file_id, user)
-    module = Module.from_schema(user_file.file.schema)
+  defp file_assigns(file) do
+    module = Module.from_schema(file.schema)
 
-    user_file.file
+    file
     |> Map.from_struct()
     |> Map.put(:module, module)
     |> Map.put(:bytes, Persistence.term_size(module))

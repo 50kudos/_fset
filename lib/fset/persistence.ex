@@ -137,7 +137,7 @@ defmodule Fset.Persistence do
   def get_user_file(file_id, user) do
     UserFile
     |> Repo.get_by!(file_id: file_id, user_id: user.id)
-    |> Repo.preload(:file)
+    |> Repo.preload([:file, :user])
   end
 
   @doc """
@@ -150,7 +150,7 @@ defmodule Fset.Persistence do
   """
   def get_user_files(user_id) do
     Repo.all(from uf in UserFile, where: uf.user_id == ^user_id)
-    |> Repo.preload(:file)
+    |> Repo.preload([:file, :user])
   end
 
   @doc """
