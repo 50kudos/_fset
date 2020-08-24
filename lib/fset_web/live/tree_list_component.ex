@@ -174,17 +174,12 @@ defmodule FsetWeb.TreeListComponent do
         onclick="event.preventDefault()">
       </div>
 
-      <%= if @ui.current_edit == @f.name && is_binary(@key) do %>
-        <%= render_textarea(assigns) %>
-        <%= render_type(assigns) %>
+      <%= if selected?(@f, @ui, :single) do %>
+        <%= render_key(assigns) %>
+        <%= render_type_options(assigns) %>
       <% else %>
-        <%= if selected?(@f, @ui, :single) do %>
-          <%= render_key(assigns) %>
-          <%= render_type_options(assigns) %>
-        <% else %>
-          <%= render_key(assigns) %>
-          <%= render_type(assigns) %>
-        <% end %>
+        <%= render_key(assigns) %>
+        <%= render_type(assigns) %>
       <% end %>
 
       <div class="flex-1 px-1 text-right" onclick="event.preventDefault()">
@@ -251,7 +246,7 @@ defmodule FsetWeb.TreeListComponent do
   defp render_textarea(assigns) do
     ~L"""
     <textarea type="text" id="autoFocus__<%= @ui.current_path %>"
-      class="filtered px-2 box-border outline-none mr-2 min-w-0 h-full w-full self-start text-xs leading-6 bg-gray-800 z-10 shadow-inner text-white"
+      class="filtered block px-2 box-border outline-none mr-2 min-w-0 h-full self-start text-xs leading-6 bg-gray-800 z-10 shadow-inner text-white"
       phx-hook="textArea"
       phx-blur="rename_key"
       phx-keydown="rename_key"
@@ -265,7 +260,7 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_key(assigns) do
     ~L"""
-    <div class="flex items-baseline text-sm"
+    <div class="flex items-start text-sm"
       onclick="event.preventDefault()">
       <%= render_key_(assigns) %>
     </div>
@@ -341,7 +336,11 @@ defmodule FsetWeb.TreeListComponent do
       phx-click="edit_sch"
       phx-value-path="<%= @f.name %>"
       onclick="event.preventDefault()">
-      <%= render_key_text_(assigns) %>
+      <%= if @ui.current_edit == @f.name && is_binary(@key) do %>
+        <%= render_textarea(assigns) %>
+      <% else %>
+        <%= render_key_text_(assigns) %>
+      <% end %>
     </p>
     """
   end

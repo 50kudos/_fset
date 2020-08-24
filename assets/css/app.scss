@@ -37,6 +37,7 @@
   @apply bg-indigo-700 bg-opacity-25
 }
 
+textarea { resize: none; }
 details > summary::-webkit-details-marker {
   display: none;
 }

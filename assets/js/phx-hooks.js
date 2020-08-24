@@ -67,7 +67,7 @@ Hooks.textArea = {
     let field = this.el
     field.focus()
     field.selectionStart = field.selectionEnd = field.value.length
-    field.select()
+    // field.select()
   },
   autoHeight() {
     let setHeight = () => {
