@@ -38,7 +38,7 @@
                 </ul>
               </li>
             <% else %>
-              <%= live_patch to: Routes.main_path(@socket, :index, file.id), replace: false do %>
+              <%= live_redirect to: Routes.main_path(@socket, :index, file.id) do %>
                 <li class="pl-4 text-sm leading-8 bg-gray-800 bg-opacity-50">
                   <%= file.name %>
                 </li>

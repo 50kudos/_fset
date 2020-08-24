@@ -14,6 +14,7 @@ defmodule Fset.Persistence.File do
   @doc false
   def changeset(file, attrs) do
     file
+    |> change()
     |> cast(attrs, [:schema, :name])
     |> validate_required([:schema])
     |> unique_constraint(:name)

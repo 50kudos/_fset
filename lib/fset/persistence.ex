@@ -135,9 +135,14 @@ defmodule Fset.Persistence do
       %UserFile{}
   """
   def get_user_file(file_id, user) do
-    UserFile
-    |> Repo.get_by!(file_id: file_id, user_id: user.id)
-    |> Repo.preload([:file, :user])
+    query =
+      from uf in UserFile,
+        where: uf.file_id == ^file_id and uf.user_id == ^user.id,
+        join: f in assoc(uf, :file),
+        join: u in assoc(uf, :user),
+        preload: [file: f, user: u]
+
+    Repo.one!(query)
   end
 
   @doc """
@@ -149,8 +154,14 @@ defmodule Fset.Persistence do
       [%UserFile{}]
   """
   def get_user_files(user_id) do
-    Repo.all(from uf in UserFile, where: uf.user_id == ^user_id)
-    |> Repo.preload([:file, :user])
+    query =
+      from uf in UserFile,
+        where: uf.user_id == ^user_id,
+        join: f in assoc(uf, :file),
+        join: u in assoc(uf, :user),
+        preload: [file: f, user: u]
+
+    Repo.all(query)
   end
 
   @doc """
@@ -176,9 +187,8 @@ defmodule Fset.Persistence do
       iex> update_file(1, schema: %{})
       %File{}
   """
-  def update_file(file_id, attrs) do
-    File
-    |> Repo.get!(file_id)
+  def replace_file(file, attrs) do
+    file
     |> File.changeset(Enum.into(attrs, %{}))
     |> Repo.update!()
   end

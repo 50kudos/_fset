@@ -634,6 +634,10 @@ defmodule Fset.Sch do
     end
   end
 
+  def merge(map1, map2) when is_map(map1) and is_map(map2) do
+    map2
+  end
+
   defp positive_int_keys() do
     object = [@max_properties, @min_properties]
     array = [@max_items, @min_items]

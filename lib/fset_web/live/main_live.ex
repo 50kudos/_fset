@@ -281,19 +281,16 @@ defmodule FsetWeb.MainLive do
   end
 
   @impl true
-  def handle_params(%{"file_id" => file_id}, _url, socket) do
-    user_file = Persistence.get_user_file(file_id, socket.assigns.current_user)
-
-    {:noreply, assign(socket, :current_file, file_assigns(user_file.file))}
-  end
-
-  @impl true
   def handle_info(:update_schema, socket) do
-    module = socket.assigns.current_file.module
-    module = Module.update_current_section(module, &Sch.sanitize/1)
-    file_sch = Module.to_schema(module)
+    file = socket.assigns.current_file
+    user = socket.assigns.current_user
+    user_file = Persistence.get_user_file(file.id, user)
 
-    file = Persistence.update_file(socket.assigns.current_file.id, schema: file_sch)
+    current_schema = Module.to_schema(file.module)
+    existing_schema = user_file.file.schema
+    updated_schema = Sch.merge(existing_schema, current_schema)
+
+    file = Persistence.replace_file(user_file.file, schema: updated_schema)
     module = Module.from_schema(file.schema)
 
     file =
