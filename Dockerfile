@@ -48,4 +48,5 @@ COPY --from=build /app/_build/prod/rel/fset ./
 ENV HOME=/app
 ENV PORT=8080
 
+CMD ["bin/fset", "Fset.Release.migrate"]
 CMD ["bin/fset", "start"]
