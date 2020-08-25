@@ -7,7 +7,7 @@ defmodule FsetWeb.MainLive do
   @impl true
   def mount(params, session, socket) do
     if connected?(socket) do
-      Phoenix.PubSub.subscribe(Fset.PubSub, "sch_update")
+      Phoenix.PubSub.subscribe(Fset.PubSub, "sch_update:" <> params["file_id"])
     end
 
     user_files = Fset.Persistence.get_user_files(session["current_user_id"])
@@ -46,7 +46,7 @@ defmodule FsetWeb.MainLive do
 
     socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
 
-    Process.send_after(self(), :update_schema, 1000)
+    async_update_schema()
     {:noreply, socket}
   end
 
@@ -77,7 +77,7 @@ defmodule FsetWeb.MainLive do
     module = Module.update_current_section(file.module, change_type_fun)
     socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
 
-    Process.send_after(self(), :update_schema, 1000)
+    async_update_schema()
     {:noreply, socket}
   end
 
@@ -129,7 +129,7 @@ defmodule FsetWeb.MainLive do
 
     socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
 
-    Process.send_after(self(), :update_schema, 1000)
+    async_update_schema()
     {:noreply, socket}
   end
 
@@ -157,7 +157,7 @@ defmodule FsetWeb.MainLive do
         |> Map.put(:current_edit, nil)
       end)
 
-    Process.send_after(self(), :update_schema, 1000)
+    async_update_schema()
     {:noreply, socket}
   end
 
@@ -198,7 +198,7 @@ defmodule FsetWeb.MainLive do
         Map.put(ui, :current_path, current_paths)
       end)
 
-    Process.send_after(self(), :update_schema, 1000)
+    async_update_schema()
     {:noreply, socket}
   end
 
@@ -228,7 +228,7 @@ defmodule FsetWeb.MainLive do
     assigns =
       case key do
         "Delete" ->
-          Process.send_after(self(), :update_schema, 1000)
+          async_update_schema()
 
           current_section = Module.current_section(file.module)
 
@@ -288,7 +288,7 @@ defmodule FsetWeb.MainLive do
 
     current_schema = Module.to_schema(file.module)
     existing_schema = user_file.file.schema
-    updated_schema = Sch.merge(existing_schema, current_schema)
+    updated_schema = Sch.merge(existing_schema, current_schema) |> Sch.sanitize()
 
     file = Persistence.replace_file(user_file.file, schema: updated_schema)
     module = Module.from_schema(file.schema)
@@ -300,7 +300,16 @@ defmodule FsetWeb.MainLive do
       |> Map.put(:bytes, Persistence.term_size(module))
 
     socket = assign(socket, :current_file, file)
+    Phoenix.PubSub.broadcast_from!(Fset.PubSub, self(), "sch_update:" <> file.id, file)
     {:noreply, socket}
+  end
+
+  def handle_info(file, socket) do
+    {:noreply, assign(socket, :current_file, file)}
+  end
+
+  defp async_update_schema() do
+    Process.send_after(self(), :update_schema, Enum.random(200..300))
   end
 
   defp get_sch(current_file, ui) do
