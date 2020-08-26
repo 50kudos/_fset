@@ -30,6 +30,7 @@ RUN npm run --prefix ./assets deploy
 RUN mix phx.digest
 
 # compile and build release
+COPY rel rel
 RUN mix do compile, release
 
 # prepare release image
@@ -48,5 +49,5 @@ COPY --from=build /app/_build/prod/rel/fset ./
 ENV HOME=/app
 ENV PORT=8080
 
-CMD ["bin/fset", "Fset.Release.migrate"]
+CMD ["bin/fset", "eval", "Fset.Release.migrate"]
 CMD ["bin/fset", "start"]

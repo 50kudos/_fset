@@ -15,6 +15,7 @@ defmodule Fset.Application do
       {Phoenix.PubSub, name: Fset.PubSub},
       # Start the Endpoint (http/https)
       FsetWeb.Endpoint
+      # {Cluster.Supervisor, [topo, [name: Fset.ClusterSupervisor]]}
       # Fset.Vault
       # Start a worker by calling: Fset.Worker.start_link(arg)
       # {Fset.Worker, arg}

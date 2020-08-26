@@ -52,7 +52,8 @@ defmodule Fset.MixProject do
       {:cloak_ecto, "~> 1.0.1"},
       {:phx_gen_auth, "~> 0.4.0", only: [:dev], runtime: false},
       {:stream_data, "~> 0.4"},
-      {:randex, "~> 0.4"}
+      {:randex, "~> 0.4"},
+      {:libcluster, "~> 3.2"}
     ]
   end
 
