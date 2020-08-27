@@ -63,7 +63,7 @@
               <p class="text-xs">Internal (of 1 MB quota):</p>
               <progress id="disk" max="100" value="<%= percent(@current_file.bytes, :per_mb, 1) %>" class="h-1 w-full"></progress>
               <p>
-                <span class="text-xs"><%= (@current_file.bytes / 1024) |> Float.round(2) %> KB</span>
+                <span class="text-xs"><%= (@current_file.bytes / 1024 / 1024) |> Float.round(2) %> MB</span>
                 <span>·</span>
                 <span class="text-xs"><%= percent(@current_file.bytes, :per_mb, 1) %>%</span>
               </p>

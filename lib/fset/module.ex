@@ -1,6 +1,7 @@
 defmodule Fset.Module do
   alias Fset.Sch
   alias Fset.Sch.New
+  alias Fset.Module.Encode
 
   @moduledoc """
     File is only a thin layer on top of Fset.Sch module. It's an opinioned scheme
@@ -65,11 +66,7 @@ defmodule Fset.Module do
 
   def preserve_keys(), do: [@model_key, @main_key, @logic_key, @var_key]
 
-  def new(name \\ nil) do
-    %{name: name || Sch.gen_key("module"), body: put_scheme()}
-  end
-
-  defp put_scheme(module \\ %{}) do
+  def new_sch(module \\ %{}) do
     module
     |> Map.merge(New.all_of([New.ref(@main_anchor), New.ref(@logic_anchor)]))
     |> Sch.put_def(@model_key, New.object(anchor: @model_anchor))
@@ -77,6 +74,8 @@ defmodule Fset.Module do
     |> Sch.put_def(@logic_key, New.anchor(@logic_anchor))
     |> Sch.put_def(@var_key, %{})
   end
+
+  def encode_sch(sch), do: Encode.from_json_schema(sch)
 
   # def locator(namespace, filename, domain \\ "https://fsetapp.com") do
   #   Path.join([domain, namespace, filename])
@@ -135,13 +134,26 @@ defmodule Fset.Module do
     main = unwrap(@main_key, main)
     model = unwrap(@model_key, model)
 
-    put_scheme()
+    new_sch()
     |> Sch.put_def(@model_key, model)
     |> Sch.put_def(@main_key, main)
   end
 
   def which_section(@main_key), do: :main
   def which_section(@model_key), do: :model
+
+  def put_model(module_sch, defs_props) when is_map(defs_props) do
+    module = from_schema(module_sch)
+
+    module =
+      update_current_section(module, fn section_sch ->
+        for {k, sch} <- defs_props, reduce: section_sch do
+          acc -> Sch.put(acc, @model_key, k, sch, -1)
+        end
+      end)
+
+    to_schema(module)
+  end
 
   def add_model_fun(model, path) do
     case model do

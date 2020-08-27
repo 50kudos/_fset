@@ -16,4 +16,10 @@ defmodule Fset.Utils do
     |> Regex.split(string)
     |> Enum.intersperse({:safe, "<wbr>"})
   end
+
+  def aws_specs_sch() do
+    Path.expand("../../test/support/fixtures/all-spec.json", __DIR__)
+    |> File.read!()
+    |> Jason.decode!()
+  end
 end

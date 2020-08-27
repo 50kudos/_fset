@@ -111,12 +111,12 @@ defmodule FsetWeb.TreeListComponent do
 
   defp render_object(assigns) do
     ~L"""
-    <%= for key <- Sch.order(@sch) do %>
+    <%= for key <- (Sch.order(@sch) ++ Map.keys(Sch.properties(@sch) || %{})) |> Enum.uniq() do %>
       <%= for f0 <- inputs_for(@f, key) do %>
         <%= live_component(@socket, __MODULE__,
           id: f0.name,
           key: key,
-          sch: Sch.prop_sch(@sch, key),
+          sch: if(is_map(Sch.prop_sch(@sch, key)), do: Sch.prop_sch(@sch, key), else: %{}),
           parent: @sch,
           ui: %{@ui | level: @ui.level + 1, parent_path: @f.name},
           f: f0
@@ -132,7 +132,7 @@ defmodule FsetWeb.TreeListComponent do
       <%= live_component(@socket, __MODULE__,
         id: f0.name,
         key: f0.index,
-        sch: f0.data,
+        sch: if(is_map(f0.data), do: f0.data, else: %{}),
         parent: @sch,
         ui: %{@ui | level: @ui.level + 1, parent_path: @f.name},
         f: f0
@@ -147,7 +147,7 @@ defmodule FsetWeb.TreeListComponent do
       <%= live_component(@socket, __MODULE__,
         id: f0.name,
         key: "",
-        sch: f0.data,
+        sch: if(is_map(f0.data), do: f0.data, else: %{}),
         parent: @sch,
         ui: %{@ui | level: @ui.level + 1, parent_path: @f.name},
         f: f0
@@ -515,7 +515,7 @@ defmodule FsetWeb.TreeListComponent do
       Sch.null?(sch) -> "null"
       Sch.any_of?(sch) -> "union"
       Sch.any?(sch) -> "any"
-      Sch.ref?(sch) -> ref_type.(sch)
+      Sch.ref?(sch) -> "ref_type.(sch)"
       Sch.const?(sch) -> const_type(sch)
       true -> "please define what type #{inspect(sch)} is"
     end

@@ -6,7 +6,7 @@ defmodule Fset.Persistence do
   import Ecto.Query, warn: false
   alias Fset.Repo
 
-  alias Fset.Persistence.{UserFile, File, OauthToken}
+  alias Fset.Persistence.{UserFile, File, User, OauthToken}
 
   @doc """
   Returns the list of oauth_tokens.
@@ -111,7 +111,7 @@ defmodule Fset.Persistence do
       10
   """
   def term_size(term) do
-    :erts_debug.size(term)
+    :erlang.external_size(term)
   end
 
   @doc """
@@ -159,7 +159,7 @@ defmodule Fset.Persistence do
         where: uf.user_id == ^user_id,
         join: f in assoc(uf, :file),
         join: u in assoc(uf, :user),
-        preload: [file: f, user: u]
+        select: %{file: f, user: u}
 
     Repo.all(query)
   end
@@ -172,9 +172,9 @@ defmodule Fset.Persistence do
       iex> create_user_file(user, Module.new())
       {:ok, %UserFile{user_id: 1, file_id: 1}}
   """
-  def create_user_file(user, file) do
+  def create_user_file(user, attrs) do
     Repo.transaction(fn ->
-      file = Repo.insert!(File.changeset(%File{}, %{schema: file.body, name: file.name}))
+      file = Repo.insert!(File.changeset(%File{}, attrs))
       Repo.insert!(UserFile.changeset(%UserFile{}, %{user_id: user.id, file_id: file.id}))
     end)
   end

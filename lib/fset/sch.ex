@@ -4,7 +4,7 @@ defmodule Fset.Sch do
   # Accessor
   ## Core
   def ref(sch) when is_map(sch), do: Map.get(sch, @ref)
-  def defs(sch) when is_map(sch), do: Map.get(sch, @defs)
+  def defs(sch) when is_map(sch), do: Map.get(sch, @defs) || Map.get(sch, @definitions)
   def anchor(sch) when is_map(sch), do: Map.get(sch, @anchor)
 
   ## Validation
@@ -824,14 +824,14 @@ defmodule Fset.Sch do
 
   def sanitize(map) when is_map(map) do
     map
-    |> walk_container(fn sch ->
-      sch
-      |> Fset.Sch.Migrator.compute_examples()
+    # |> walk_container(fn sch ->
+    #   sch
+    #   |> Fset.Sch.Migrator.compute_examples()
 
-      # |> Fset.Sch.Migrator.remove_id()
-      # |> Fset.Sch.Migrator.add_anchor()
-      # |> Fset.Sch.Migrator.correct_ref()
-    end)
+    #   # |> Fset.Sch.Migrator.remove_id()
+    #   # |> Fset.Sch.Migrator.add_anchor()
+    #   # |> Fset.Sch.Migrator.correct_ref()
+    # end)
   end
 
   def inspect_path(path) do

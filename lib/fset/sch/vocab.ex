@@ -56,6 +56,9 @@ defmodule Fset.Sch.Vocab do
 
       # Combination
       @types [@object, @array, @string, @boolean, @number, @null]
+
+      # Older versions
+      @definitions "definitions"
     end
   end
 end
