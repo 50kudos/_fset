@@ -56,28 +56,10 @@
           </li>
         </ul>
         <span class="flex-1"></span>
-        <div class="px-4 py-2 border-t-2 border-gray-800 bg-gray-900">
-          <h5>Storage</h4>
-          <div class="my-1">
-            <label for="disk" class="block my-1">
-              <p class="text-xs">Internal (of 1 MB quota):</p>
-              <progress id="disk" max="100" value="<%= percent(@current_file.bytes, :per_mb, 1) %>" class="h-1 w-full"></progress>
-              <p>
-                <span class="text-xs"><%= (@current_file.bytes / 1024 / 1024) |> Float.round(2) %> MB</span>
-                <span>·</span>
-                <span class="text-xs"><%= percent(@current_file.bytes, :per_mb, 1) %>%</span>
-              </p>
-            </label>
-          </div>
-          <hr class="border-gray-800 border-opacity-50">
-          <div class="mt-2 text-xs">
-            <p>External:</p>
-            <a href="/auth/github" class="inline-block my-2 px-2 py-1 border border-gray-700 rounded self-end text-gray-500 hover:text-gray-400">Connect Github</a>
-          </div>
-        </div>
+        <%=# render_storage(assigns) %>
       </aside>
-      <nav class="w-3/6 overflow-scroll shadow-xl">
-        <div class="text-xs px-2 h-8 bg-gray-900 sticky top-0 z-10 border-b border-gray-800">
+      <nav class="w-3/6 overflow-scroll">
+        <div class="text-xs px-2 h-8 bg-dark-gray sticky top-0 z-10">
           <%= if selected_count = selected_count(@ui, f) do %>
             <div class="flex items-center h-full space-x-2">
               <button phx-click="escape" class="text-gray-600 hover:text-gray-300" title="Deselect">&times;</button>
@@ -92,7 +74,7 @@
           <%= live_component @socket, ModuleComponent, id: f.name, file: @current_file, ui: @ui, f: f %>
         </div>
       </nav>
-      <aside class="w-2/6 overflow-scroll p-4 text-sm shadow bg-dark-gray">
+      <aside class="w-2/6 overflow-scroll p-4 text-sm">
         <%= if !is_list(@ui.current_path) do %>
           <%= live_component @socket, SchComponent, id: @ui.current_path, sch: get_sch(@current_file, @ui), parent: get_parent(@current_file, @ui), ui: @ui, root?: f.name == Sch.find_parent(@ui.current_path).path %>
         <% end %>

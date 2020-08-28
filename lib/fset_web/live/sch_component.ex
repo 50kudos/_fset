@@ -18,11 +18,19 @@ defmodule FsetWeb.SchComponent do
       <%= render_required(assigns) %>
       <label class="block border border-gray-800">
         <p class="px-2 py-1 text-xs text-gray-600">Title</p>
-        <textarea type="text" phx-blur="update_sch" phx-value-key="title" rows="2" class="block px-2 py-1 bg-gray-900 shadow w-full"><%= Sch.title(@sch) %></textarea>
+        <textarea type="text" class="block px-2 py-1 bg-gray-900 shadow w-full"
+          phx-blur="update_sch"
+          phx-value-key="title"
+          rows="2"
+          spellcheck="false"><%= Sch.title(@sch) %></textarea>
       </label>
       <label class="block border border-gray-800">
         <p class="px-2 py-1 text-xs text-gray-600">Description</p>
-        <textarea type="text" phx-blur="update_sch" phx-value-key="description" rows="2" class="block px-2 py-1 bg-gray-900 shadow w-full"><%= Sch.description(@sch) %></textarea>
+        <textarea type="text" class="block px-2 py-1 bg-gray-900 shadow w-full"
+          phx-blur="update_sch"
+          phx-value-key="description"
+          rows="2"
+          spellcheck="false"><%= Sch.description(@sch) %></textarea>
       </label>
       <%= render_sch(assigns) %>
       <%= render_examples(assigns) %>

@@ -339,4 +339,28 @@ defmodule FsetWeb.MainLive do
     quota_byte = quota * (1024 * 1024)
     Float.floor(byte_size / quota_byte * 100, 2)
   end
+
+  def render_storage(assigns) do
+    ~L"""
+    <div class="px-4 py-2 border-t-2 border-gray-800 bg-gray-900">
+      <h5>Storage</h4>
+      <div class="my-1">
+        <label for="disk" class="block my-1">
+          <p class="text-xs">Internal (of 1 MB quota):</p>
+          <progress id="disk" max="100" value="<%= percent(@current_file.bytes, :per_mb, 1) %>" class="h-1 w-full"></progress>
+          <p>
+            <span class="text-xs"><%= (@current_file.bytes / 1024 / 1024) |> Float.round(2) %> MB</span>
+            <span>·</span>
+            <span class="text-xs"><%= percent(@current_file.bytes, :per_mb, 1) %>%</span>
+          </p>
+        </label>
+      </div>
+      <hr class="border-gray-800 border-opacity-50">
+      <div class="mt-2 text-xs">
+        <p>External:</p>
+        <a href="/auth/github" class="inline-block my-2 px-2 py-1 border border-gray-700 rounded self-end text-gray-500 hover:text-gray-400">Connect Github</a>
+      </div>
+    </div>
+    """
+  end
 end

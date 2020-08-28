@@ -254,6 +254,8 @@ defmodule FsetWeb.TreeListComponent do
       phx-value-parent_path="<%= @ui.parent_path %>"
       phx-value-old_key="<%= @key %>"
       rows="1"
+      onkeydown="event.preventDefault()"
+      spellcheck="false"
       ><%= @key %></textarea>
     """
   end
@@ -364,6 +366,11 @@ defmodule FsetWeb.TreeListComponent do
       Sch.array?(Map.get(assigns, :parent), :homo) ->
         ~L"""
         <span class="break-words text-gray-600">└</span>
+        """
+
+      assigns.ui.level == assigns.ui.tab ->
+        ~L"""
+        <span class="break-words text-teal-500"><%= Utils.word_break_html(@key) %></span>
         """
 
       true ->

@@ -138,8 +138,8 @@ defmodule Fset.Sch do
         _k, v1, _v2 -> v1
       end)
       |> case do
-        %{@type_ => @object} = sch -> Map.take(sch, [@properties, @anchor])
-        %{@type_ => @array} = sch -> Map.take(sch, [@items, @anchor])
+        %{@type_ => @object} = sch -> Map.take(sch, [@type_, @properties, @props_order, @anchor])
+        %{@type_ => @array} = sch -> Map.take(sch, [@type_, @items, @props_order, @anchor])
         sch -> sch
       end
     end)
