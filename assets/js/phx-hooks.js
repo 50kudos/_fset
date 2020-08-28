@@ -54,8 +54,11 @@ Hooks.focusOnOpen = {
   }
 }
 
-Hooks.textArea = {
+Hooks.renameable = {
   mounted() {
+    this.el.addEventListener("keydown", e => {
+      if (e.code == "Enter") { e.preventDefault() }
+    })
     this.focus()
     this.autoHeight()
   },
