@@ -1,6 +1,6 @@
 defmodule FsetWeb.ModuleComponent do
   use FsetWeb, :live_component
-  alias FsetWeb.TreeListComponent
+  alias FsetWeb.ModelComponent
   alias Fset.{Sch, Module}
 
   @impl true
@@ -42,7 +42,7 @@ defmodule FsetWeb.ModuleComponent do
       phx-capture-click="select_sch" phx-value-paths="<%= @f.name %>" class="grid grid-cols-fit py-6 h-full row-gap-6">
       <%= for key <- @models do %>
         <%= for f0 <- inputs_for(@f, key) do %>
-          <%= live_component(@socket, TreeListComponent,
+          <%= live_component(@socket, ModelComponent,
             id: f0.name,
             key: key,
             sch: Sch.prop_sch(@body, key),
@@ -59,7 +59,7 @@ defmodule FsetWeb.ModuleComponent do
   defp render_main(assigns) do
     ~L"""
     <main>
-      <%= live_component(@socket, TreeListComponent,
+      <%= live_component(@socket, ModelComponent,
         id: @f.name,
         key: @f.name,
         sch: @body,

@@ -1,4 +1,4 @@
-defmodule FsetWeb.TreeListComponent do
+defmodule FsetWeb.ModelComponent do
   use FsetWeb, :live_component
   alias Fset.{Sch, Module, Utils}
 
