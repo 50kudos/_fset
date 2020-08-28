@@ -18,7 +18,13 @@ defmodule Fset.Utils do
   end
 
   def aws_specs_sch() do
-    Path.expand("../../test/support/fixtures/all-spec.json", __DIR__)
+    Path.expand("../../test/support/fixtures/sch_samples/all-spec.json", __DIR__)
+    |> File.read!()
+    |> Jason.decode!()
+  end
+
+  def github_action_sch() do
+    Path.expand("../../test/support/fixtures/sch_samples/github-action.json", __DIR__)
     |> File.read!()
     |> Jason.decode!()
   end

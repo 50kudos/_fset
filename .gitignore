@@ -35,4 +35,4 @@ npm-debug.log
 .elixir_ls
 .env
 docs/
-test/support/fixtures/all-spec.json
+test/support/fixtures/sch_samples/
