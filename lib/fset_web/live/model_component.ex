@@ -415,7 +415,7 @@ defmodule FsetWeb.ModelComponent do
 
       Sch.array?(assigns.sch, :homo) ->
         ~L"""
-        <span class="cursor-pointer">[<%= read_type(Sch.items(@sch), @ui) %>]</span>
+        <span class="cursor-pointer flex">[<%= read_type(Sch.items(@sch), @ui) %>]</span>
         """
 
       Sch.array?(assigns.sch, :hetero) ->
@@ -459,7 +459,7 @@ defmodule FsetWeb.ModelComponent do
 
       Sch.array?(assigns.sch, :homo) ->
         ~L"""
-        <span class="cursor-pointer">[<%= read_type(Sch.items(@sch), @ui) %>]</span>
+        <span class="cursor-pointer flex">[<%= read_type(Sch.items(@sch), @ui) %>]</span>
         """
 
       Sch.array?(assigns.sch, :hetero) ->
@@ -503,14 +503,6 @@ defmodule FsetWeb.ModelComponent do
   defp selected?(f, ui, :single), do: selected?(f, ui) && !is_list(ui.current_path)
 
   defp read_type(sch, ui) when is_map(sch) do
-    ref_type = fn sch ->
-      Enum.find_value(ui.model_names, fn {k, anchor} ->
-        if "#" <> anchor == Sch.ref(sch) do
-          Utils.word_break_html(k)
-        end
-      end)
-    end
-
     cond do
       Sch.object?(sch) -> "record"
       Sch.array?(sch, :homo) -> "list"
@@ -521,7 +513,7 @@ defmodule FsetWeb.ModelComponent do
       Sch.null?(sch) -> "null"
       Sch.any_of?(sch) -> "union"
       Sch.any?(sch) -> "any"
-      Sch.ref?(sch) -> "ref_type.(sch)"
+      Sch.ref?(sch) -> ref_type(sch, ui)
       Sch.const?(sch) -> const_type(sch)
       true -> "please define what type #{inspect(sch)} is"
     end
@@ -553,5 +545,19 @@ defmodule FsetWeb.ModelComponent do
     else
       {:safe, "<span class='text-green-700'>#{Jason.encode_to_iodata!(Sch.const(sch))}</span>"}
     end
+  end
+
+  defp ref_type(nil, _), do: "#invalid_type"
+
+  defp ref_type(sch, ui) do
+    Enum.find_value(ui.model_names, fn {k, anchor} ->
+      if "#" <> anchor == Sch.ref(sch) do
+        assigns = %{k: k}
+
+        ~L"""
+        <span class='text-teal-500'><%= Utils.word_break_html(k) %></span>
+        """
+      end
+    end)
   end
 end

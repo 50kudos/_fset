@@ -15,7 +15,9 @@ defmodule FsetWeb.ModuleComponent do
      |> update(:ui, fn ui ->
        model_names =
          for k <- Sch.order(current_section_sch), reduce: %{} do
-           acc -> Map.put(acc, k, Sch.anchor(Sch.prop_sch(current_section_sch, k)))
+           acc ->
+             model_sch = Sch.prop_sch(current_section_sch, k)
+             Map.put(acc, k, Sch.anchor(model_sch))
          end
 
        Map.put(ui, :model_names, model_names)

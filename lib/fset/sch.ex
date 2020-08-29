@@ -326,8 +326,17 @@ defmodule Fset.Sch do
     |> Enum.join()
   end
 
-  defp find_path_by(%{@type_ => @object} = map, fun) when is_function(fun) do
-    Enum.reduce_while(properties(map), [], fn {k, sch}, acc ->
+  defp find_path_by(%{@type_ => @object, @properties => props}, fun)
+       when is_function(fun) do
+    Enum.reduce_while(props, [], fn {k, sch}, acc ->
+      path = ["[#{k}]" | acc]
+      find_path_by_(sch, fun, path)
+    end)
+  end
+
+  defp find_path_by(%{@type_ => @object, @patternProperties => props}, fun)
+       when is_function(fun) do
+    Enum.reduce_while(props, [], fn {k, sch}, acc ->
       path = ["[#{k}]" | acc]
       find_path_by_(sch, fun, path)
     end)
@@ -789,11 +798,20 @@ defmodule Fset.Sch do
 
   def walk_container(map, fun) when is_map(map) and is_function(fun) do
     case map do
-      %{@type_ => @object} ->
-        for {k, sch} <- properties(map), reduce: map do
+      %{@type_ => @object, @properties => properties} ->
+        for {k, sch} <- properties, reduce: map do
           acc ->
             acc
             |> Map.update(@properties, %{}, fn props ->
+              Map.put(props, k, walk_container(sch, fun))
+            end)
+        end
+
+      %{@type_ => @object, @patternProperties => pattern_roperties} ->
+        for {k, sch} <- pattern_roperties, reduce: map do
+          acc ->
+            acc
+            |> Map.update(@patternProperties, %{}, fn props ->
               Map.put(props, k, walk_container(sch, fun))
             end)
         end
@@ -824,14 +842,14 @@ defmodule Fset.Sch do
 
   def sanitize(map) when is_map(map) do
     map
-    # |> walk_container(fn sch ->
-    #   sch
-    #   |> Fset.Sch.Migrator.compute_examples()
+    |> walk_container(fn sch ->
+      sch
 
-    #   # |> Fset.Sch.Migrator.remove_id()
-    #   # |> Fset.Sch.Migrator.add_anchor()
-    #   # |> Fset.Sch.Migrator.correct_ref()
-    # end)
+      #   |> Fset.Sch.Migrator.compute_examples()
+      #   |> Fset.Sch.Migrator.remove_id()
+      #   |> Fset.Sch.Migrator.add_anchor()
+      #   |> Fset.Sch.Migrator.correct_ref()
+    end)
   end
 
   def inspect_path(path) do

@@ -1,4 +1,6 @@
 defmodule Fset.Module do
+  use Fset.Module.Vocab
+
   alias Fset.Sch
   alias Fset.Sch.New
   alias Fset.Module.Encode
@@ -35,6 +37,7 @@ defmodule Fset.Module do
     4. __LOGIC__ is where all inter-model conditions happen.
       This keyword only allows logical operation (and, or, xor). Operands must be
       in form of $ref to things under __VAR__ definition.
+    5. These anchors are unique with $id as a base URI
 
     ## Reasoning
     __MODEL__, __LOGIC__, and __VAR__ are always object type. We could put things under
@@ -54,15 +57,6 @@ defmodule Fset.Module do
     $anchor works like export in module system. Whatever we want to expose, we give it $anchor.
     It is also used as local reference.
   """
-
-  @model_key "__MODEL__"
-  @main_key "__MAIN__"
-  @logic_key "__LOGIC__"
-  @var_key "__VAR__"
-
-  @model_anchor "MODEL"
-  @main_anchor "MAIN"
-  @logic_anchor "LOGIC"
 
   def preserve_keys(), do: [@model_key, @main_key, @logic_key, @var_key]
 
@@ -158,19 +152,23 @@ defmodule Fset.Module do
   def add_model_fun(model, path) do
     case model do
       "Record" ->
-        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.object(anchor: true), 0) end
+        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.object(anchor_prefix: "model"), 0) end
 
       "Field" ->
-        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.string(anchor: true), 0) end
+        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.string(anchor_prefix: "model"), 0) end
 
       "List" ->
-        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.array(:homo, anchor: true), 0) end
+        fn sch ->
+          Sch.put(sch, path, Sch.gen_key(), New.array(:homo, anchor_prefix: "model"), 0)
+        end
 
       "Tuple" ->
-        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.array(:hetero, anchor: true), 0) end
+        fn sch ->
+          Sch.put(sch, path, Sch.gen_key(), New.array(:hetero, anchor_prefix: "model"), 0)
+        end
 
       "Union" ->
-        union = New.any_of([New.object(), New.array(), New.string()], anchor: true)
+        union = New.any_of([New.object(), New.array(), New.string()], anchor_prefix: "model")
         fn sch -> Sch.put(sch, path, Sch.gen_key(), union, 0) end
 
       _ ->

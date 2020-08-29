@@ -41,6 +41,7 @@ defmodule Fset.Sch.Vocab do
 
       # Applicator
       @properties "properties"
+      @patternProperties "patternProperties"
       @items "items"
       @all_of "allOf"
       @any_of "anyOf"
