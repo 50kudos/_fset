@@ -66,37 +66,6 @@ defmodule FsetWeb.ModelComponent do
     """
   end
 
-  # defp render_inline_type(%{sch: sch} = assigns) do
-  #   cond do
-  #     Sch.object?(sch) ->
-  #       ~L"""
-  #       <div class="flex items-center ml-1 border border-blue-900 rounded leading-snug">
-  #         <%= for {k, sch_} <- Sch.properties(sch) do %>
-  #           <p class="px-1 border-r last:border-r-0 border-blue-900">
-  #             <span class=""><%= k %></span>
-  #             <span class="">:</span>
-  #             <span class="text-blue-500"><%=read_type(sch_) %></span>
-  #           </p>
-  #         <% end %>
-  #       </div>
-  #       """
-
-  #     Sch.array?(sch, :hetero) ->
-  #       ~L"""
-  #       <div class="flex items-center ml-1 border border-blue-900 rounded leading-snug">
-  #         <%= for sch_ <- Sch.items(sch) do %>
-  #           <p class="px-1 border-r last:border-r-0 border-blue-900">
-  #             <span class="text-blue-500"><%=read_type(sch_) %></span>
-  #           </p>
-  #         <% end %>
-  #       </div>
-  #       """
-
-  #     true ->
-  #       ~L""
-  #   end
-  # end
-
   defp render_itself(%{ui: %{level: l, limit: limit}} = assigns) when l == limit, do: ~L""
 
   defp render_itself(assigns) do

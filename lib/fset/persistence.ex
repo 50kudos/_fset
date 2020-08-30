@@ -6,7 +6,7 @@ defmodule Fset.Persistence do
   import Ecto.Query, warn: false
   alias Fset.Repo
 
-  alias Fset.Persistence.{UserFile, File, User, OauthToken}
+  alias Fset.Persistence.{UserFile, File, OauthToken}
 
   @doc """
   Returns the list of oauth_tokens.
