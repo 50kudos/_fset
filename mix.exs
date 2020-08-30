@@ -10,7 +10,16 @@ defmodule Fset.MixProject do
       compilers: [:phoenix, :gettext] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+
+      # Docs
+      name: "Fset",
+      source_url: "https://github.com/50kudos/fset",
+      homepage_url: "https://fsetapp.com",
+      docs: [
+        main: "Fset"
+        # extras: ["README.md"]
+      ]
     ]
   end
 
@@ -53,7 +62,8 @@ defmodule Fset.MixProject do
       {:phx_gen_auth, "~> 0.4.0", only: [:dev], runtime: false},
       {:stream_data, "~> 0.4"},
       {:randex, "~> 0.4"},
-      {:libcluster, "~> 3.2"}
+      {:libcluster, "~> 3.2"},
+      {:ex_doc, "~> 0.22", only: :dev, runtime: false}
     ]
   end
 
