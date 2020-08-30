@@ -36,4 +36,26 @@ defmodule Fset.ModuleTest do
              model_schs: [%{@defs => %{"a" => %{}}}, %{@defs => %{"b" => %{}}}]
            }
   end
+
+  test "#to_files", %{nodefs: nodefs, defs: defs} do
+    jsch = Map.merge(nodefs, defs)
+    imported = encode(jsch, defs_per_file: 1)
+    [main_file | model_files] = to_files(imported)
+
+    assert String.starts_with?(main_file.name, "main_")
+    assert main_file.type == "main"
+    assert main_file.schema == nodefs
+
+    for model_file <- model_files do
+      assert String.starts_with?(model_file.name, "model_")
+      assert model_file.type == "model"
+    end
+
+    assert length(model_files) == 2
+
+    assert Enum.map(model_files, & &1.schema) == [
+             %{@defs => %{"a" => %{}}},
+             %{@defs => %{"b" => %{}}}
+           ]
+  end
 end
