@@ -21,6 +21,8 @@ defmodule Fset.Sch.New do
   def null(opts \\ []), do: put_opts(%{@type_ => @null}, opts)
   def any(opts \\ []), do: put_opts(%{}, opts)
   def const(opts \\ []), do: put_opts(%{@const => nil}, opts)
+  # Just for tests, we shouldn't need this.
+  def type(t, opts \\ []) when is_list(t), do: put_opts(%{@type_ => t}, opts)
 
   def all_of(schs, opts \\ []) when is_list(schs) and length(schs) > 0,
     do: put_opts(%{@all_of => schs}, opts)

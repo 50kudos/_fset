@@ -26,6 +26,7 @@ defmodule Fset.Sch do
   def multiple_of(sch) when is_map(sch), do: Map.get(sch, @multiple_of)
   ## typed
   def const(sch) when is_map(sch), do: Map.get(sch, @const)
+  def type(sch) when is_map(sch), do: Map.get(sch, @type_)
 
   ## Applicator
   def items(sch) when is_map(sch), do: Map.get(sch, @items)
@@ -76,6 +77,7 @@ defmodule Fset.Sch do
   def boolean?(sch), do: match?(%{@type_ => @boolean}, sch)
   def null?(sch), do: match?(%{@type_ => @null}, sch)
   def leaf?(sch), do: match?(%{@type_ => _}, sch)
+  def leaf?(sch, :multi), do: match?(%{@type_ => types} when is_list(types), sch)
   def ref?(sch), do: match?(%{@ref => _}, sch)
   def const?(sch), do: match?(%{@const => _}, sch)
 
@@ -152,7 +154,7 @@ defmodule Fset.Sch do
       end)
       |> case do
         %{@type_ => @object} = sch -> Map.take(sch, [@type_, @properties, @props_order, @anchor])
-        %{@type_ => @array} = sch -> Map.take(sch, [@type_, @items, @props_order, @anchor])
+        %{@type_ => @array} = sch -> Map.take(sch, [@type_, @items, @anchor])
         sch -> sch
       end
     end)
@@ -180,6 +182,53 @@ defmodule Fset.Sch do
       |> Map.put(@const, const)
       |> Map.take([@const, @anchor])
     end)
+  end
+
+  def expand_multi_types(%{@type_ => types} = map) when is_list(types) do
+    {types, map} = Map.pop(map, @type_)
+
+    {typed_schs, no_types} =
+      types
+      |> Enum.filter(fn t -> t in @types end)
+      |> Enum.map(fn t -> %{@type_ => t} end)
+      |> Enum.map_reduce(map, fn
+        %{@type_ => @object} = sch, acc ->
+          object_keywords = [
+            @properties,
+            @patternProperties,
+            @props_order,
+            @max_properties,
+            @min_properties,
+            @required
+          ]
+
+          {took, remained} = Map.split(map, object_keywords)
+          {Map.merge(sch, took), Map.merge(acc, remained)}
+
+        %{@type_ => @array} = sch, acc ->
+          array_keywords = [@items, @max_items, @min_items]
+          {took, remained} = Map.split(map, array_keywords)
+
+          {Map.merge(sch, took), Map.merge(acc, remained)}
+
+        %{@type_ => @string} = sch, acc ->
+          string_keywords = [@min_length, @max_length, @pattern]
+          {took, remained} = Map.split(map, string_keywords)
+          {Map.merge(sch, took), Map.merge(acc, remained)}
+
+        %{@type_ => @number} = sch, acc ->
+          number_keywords = [@multiple_of, @maximum, @minimum]
+          {took, remained} = Map.split(map, number_keywords)
+          {Map.merge(sch, took), Map.merge(acc, remained)}
+
+        %{@type_ => @boolean} = sch, acc ->
+          {sch, acc}
+
+        %{@type_ => @null} = sch, acc ->
+          {sch, acc}
+      end)
+
+    Map.merge(no_types, %{@any_of => typed_schs})
   end
 
   def src_item(path, index) when is_binary(path) and is_integer(index) do

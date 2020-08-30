@@ -29,6 +29,11 @@ defmodule Fset.Module2.Encode do
   defp encode(sch, acc \\ %{})
 
   defp encode(sch, _acc) do
-    sch
+    Sch.walk_container(sch, fn sch_ ->
+      cond do
+        Sch.leaf?(sch_, :multi) -> Sch.expand_multi_types(sch_)
+        true -> sch_
+      end
+    end)
   end
 end

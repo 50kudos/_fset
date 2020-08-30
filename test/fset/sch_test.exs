@@ -338,4 +338,17 @@ defmodule Fset.SchTest do
     assert get(root, "root[a]") |> items() == New.string()
     assert get(root, "root[b]") |> items() == New.string()
   end
+
+  test "#expand_multi_types" do
+    root = new("root", %{})
+    schs = [New.array(), New.object(), New.string()]
+    root = Enum.reduce(schs, root, &Map.merge/2)
+    root = Map.merge(root, New.type(Enum.map(schs, &type/1)))
+
+    any_of_schs = any_of(expand_multi_types(root))
+    assert length(any_of_schs) == 3
+    assert array?(Enum.at(any_of_schs, 0))
+    assert object?(Enum.at(any_of_schs, 1))
+    assert string?(Enum.at(any_of_schs, 2))
+  end
 end
