@@ -3,6 +3,7 @@ defmodule Fset.Sch do
 
   # Accessor
   ## Core
+  def id(sch) when is_map(sch), do: Map.get(sch, @id)
   def ref(sch) when is_map(sch), do: Map.get(sch, @ref)
   def defs(sch) when is_map(sch), do: Map.get(sch, @defs) || Map.get(sch, @definitions)
   def anchor(sch) when is_map(sch), do: Map.get(sch, @anchor)
@@ -127,6 +128,18 @@ defmodule Fset.Sch do
     update_in(map, [Access.key(@defs, %{})], fn defs ->
       Map.update(defs, key, sch, fn def_sch -> Map.merge(def_sch, sch) end)
     end)
+  end
+
+  def put_defs(map, defs) when is_map(map), do: Map.put(map, @defs, defs)
+
+  def pop_defs(sch) when is_map(sch) do
+    case Map.pop(sch, @defs) do
+      {nil, sch} ->
+        Map.pop(sch, @definitions)
+
+      {defs, sch} ->
+        {defs, sch}
+    end
   end
 
   def change_type(map, path, %{@type_ => type} = new_sch) when type in @types do

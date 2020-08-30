@@ -3,7 +3,6 @@ defmodule Fset.Module do
 
   alias Fset.Sch
   alias Fset.Sch.New
-  alias Fset.Module.Encode
 
   @moduledoc """
     File is only a thin layer on top of Fset.Sch module. It's an opinioned scheme
@@ -68,8 +67,6 @@ defmodule Fset.Module do
     |> Sch.put_def(@logic_key, New.anchor(@logic_anchor))
     |> Sch.put_def(@var_key, %{})
   end
-
-  def encode_sch(sch), do: Encode.from_json_schema(sch)
 
   # def locator(namespace, filename, domain \\ "https://fsetapp.com") do
   #   Path.join([domain, namespace, filename])
