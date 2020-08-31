@@ -11,7 +11,7 @@ defmodule Fset.Module2.Encode do
         Sch.put_defs(%{}, defs_chuck)
       end
 
-    %{main: main, model_schs: model_schs}
+    %{main_sch: main, model_schs: model_schs}
   end
 
   defp chunk_defs(nil, _), do: []
