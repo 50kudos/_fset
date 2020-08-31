@@ -3,6 +3,7 @@ defmodule Fset.ProjectTest do
   use Fset.Sch.Vocab
   alias Fset.Module2
   import Fset.Project
+  import Fset.AccountsFixtures
 
   setup do
     files =
@@ -20,5 +21,14 @@ defmodule Fset.ProjectTest do
     {:ok, project} = create(files)
 
     assert length(project.schs) == 3
+  end
+
+  test "#create_with_user", %{files: files} do
+    user = user_fixture()
+    {:ok, project} = create_with_user(files, user.id)
+    project = Fset.Repo.preload(project, :users)
+
+    assert length(project.schs) == 3
+    assert Enum.map(project.users, & &1.id) == [user.id]
   end
 end

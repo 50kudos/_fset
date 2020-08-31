@@ -8,6 +8,10 @@ defmodule Fset.Project.Root do
     has_one :main_sch, Fset.Project.File, where: [type: "main"], foreign_key: :project_id
     has_many :model_schs, Fset.Project.File, where: [type: "model"], foreign_key: :project_id
 
+    many_to_many :users, Fset.Project.User,
+      join_through: Fset.Project.ProjectUser,
+      join_keys: [project_id: :id, user_id: :id]
+
     timestamps()
   end
 
