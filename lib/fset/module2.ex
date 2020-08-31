@@ -1,6 +1,6 @@
 defmodule Fset.Module2 do
   alias Fset.Module2.{Encode, Project}
-  alias Fset.Sch
+  alias Fset.Utils
   alias Fset.Repo
 
   def encode(map, opts \\ []) do
@@ -9,7 +9,7 @@ defmodule Fset.Module2 do
 
   def to_files(%{main_sch: main, model_schs: models}) when is_map(main) and is_list(models) do
     main_file = %{
-      name: Sch.gen_key("main"),
+      name: Utils.gen_key("main"),
       type: "main",
       schema: main
     }
@@ -17,7 +17,7 @@ defmodule Fset.Module2 do
     model_files =
       Enum.map(models, fn model ->
         %{
-          name: Sch.gen_key("model"),
+          name: Utils.gen_key("model"),
           type: "model",
           schema: model
         }
@@ -28,7 +28,7 @@ defmodule Fset.Module2 do
 
   def create_project(files) when is_list(files) do
     %Project{}
-    |> Project.changeset(%{name: Sch.gen_key("project"), schs: files})
+    |> Project.changeset(%{name: Utils.gen_key("project"), schs: files})
     |> Repo.insert()
   end
 end

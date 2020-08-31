@@ -3,6 +3,7 @@ defmodule Fset.Module do
 
   alias Fset.Sch
   alias Fset.Sch.New
+  alias Fset.Utils
 
   @moduledoc """
     File is only a thin layer on top of Fset.Sch module. It's an opinioned scheme
@@ -149,24 +150,24 @@ defmodule Fset.Module do
   def add_model_fun(model, path) do
     case model do
       "Record" ->
-        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.object(anchor_prefix: "model"), 0) end
+        fn sch -> Sch.put(sch, path, Utils.gen_key(), New.object(anchor_prefix: "model"), 0) end
 
       "Field" ->
-        fn sch -> Sch.put(sch, path, Sch.gen_key(), New.string(anchor_prefix: "model"), 0) end
+        fn sch -> Sch.put(sch, path, Utils.gen_key(), New.string(anchor_prefix: "model"), 0) end
 
       "List" ->
         fn sch ->
-          Sch.put(sch, path, Sch.gen_key(), New.array(:homo, anchor_prefix: "model"), 0)
+          Sch.put(sch, path, Utils.gen_key(), New.array(:homo, anchor_prefix: "model"), 0)
         end
 
       "Tuple" ->
         fn sch ->
-          Sch.put(sch, path, Sch.gen_key(), New.array(:hetero, anchor_prefix: "model"), 0)
+          Sch.put(sch, path, Utils.gen_key(), New.array(:hetero, anchor_prefix: "model"), 0)
         end
 
       "Union" ->
         union = New.any_of([New.object(), New.array(), New.string()], anchor_prefix: "model")
-        fn sch -> Sch.put(sch, path, Sch.gen_key(), union, 0) end
+        fn sch -> Sch.put(sch, path, Utils.gen_key(), union, 0) end
 
       _ ->
         fn a -> a end

@@ -1,7 +1,13 @@
 defmodule Fset.Utils do
   @moduledoc """
-  Provide extra functions to Map module
+  Uncategoried utility functions across project
   """
+
+  def gen_key(prefix \\ "key") do
+    id = DateTime.to_unix(DateTime.now!("Etc/UTC"), :microsecond)
+    id = String.slice("#{id}", 6..-1)
+    "#{prefix}_#{to_string(id)}"
+  end
 
   def put_dup(map, key, val) when is_binary(key) do
     if Map.has_key?(map, key) do

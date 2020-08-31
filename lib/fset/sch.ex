@@ -923,10 +923,4 @@ defmodule Fset.Sch do
 
     path
   end
-
-  def gen_key(prefix \\ "key") do
-    id = DateTime.to_unix(DateTime.now!("Etc/UTC"), :microsecond)
-    id = String.slice("#{id}", 6..-1)
-    "#{prefix}_#{to_string(id)}"
-  end
 end
