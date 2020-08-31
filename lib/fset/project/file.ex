@@ -1,4 +1,4 @@
-defmodule Fset.Module2.File do
+defmodule Fset.Project.File do
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -16,7 +16,7 @@ defmodule Fset.Module2.File do
 
     # "uid" use case is when we want an access granted for a user who does not belong to
     # any project, such as turning an individual file into a public mode (like google doc share link).
-    belongs_to :project, Fset.Module2.Project
+    belongs_to :project, Fset.Project.Root
 
     timestamps()
   end

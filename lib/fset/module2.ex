@@ -1,7 +1,6 @@
 defmodule Fset.Module2 do
-  alias Fset.Module2.{Encode, Project}
+  alias Fset.Module2.Encode
   alias Fset.Utils
-  alias Fset.Repo
 
   def encode(map, opts \\ []) do
     Encode.from_json_schema(map, opts)
@@ -24,11 +23,5 @@ defmodule Fset.Module2 do
       end)
 
     [main_file | model_files]
-  end
-
-  def create_project(files) when is_list(files) do
-    %Project{}
-    |> Project.changeset(%{name: Utils.gen_key("project"), schs: files})
-    |> Repo.insert()
   end
 end

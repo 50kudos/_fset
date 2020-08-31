@@ -59,14 +59,4 @@ defmodule Fset.ModuleTest do
              %{@defs => %{"b" => %{}}}
            ]
   end
-
-  test "#persist", %{nodefs: nodefs, defs: defs} do
-    {:ok, project} =
-      Map.merge(nodefs, defs)
-      |> encode(defs_per_file: 1)
-      |> to_files()
-      |> create_project()
-
-    assert length(project.schs) == 3
-  end
 end
