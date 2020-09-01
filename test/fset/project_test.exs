@@ -23,12 +23,21 @@ defmodule Fset.ProjectTest do
     assert length(project.schs) == 3
   end
 
-  test "#create_with_user", %{files: files} do
+  test "#create_with_user successfully", %{files: files} do
     user = user_fixture()
     {:ok, project} = create_with_user(files, user.id)
     project = Fset.Repo.preload(project, :users)
 
     assert length(project.schs) == 3
     assert Enum.map(project.users, & &1.id) == [user.id]
+  end
+
+  test "#create_with_user unsuccessfully", %{files: files} do
+    user = user_fixture()
+    [main | models] = files
+    files = [%{main | type: :invalid_type} | models]
+
+    {:error, changeset} = create_with_user(files, user.id)
+    assert %{schs: [%{type: ["is invalid"]}, %{}, %{}]} = errors_on(changeset)
   end
 end

@@ -7,7 +7,7 @@ defmodule Fset.Project.File do
   @primary_key {:id, :binary_id, autogenerate: true}
   schema "files" do
     field :name, :string
-    field :type, :string
+    field :type, Ecto.Enum, values: [:main, :model]
     field :schema, :map
 
     # We also have "user_files" table which serves as like "uid". This project_id
@@ -26,7 +26,6 @@ defmodule Fset.Project.File do
     file
     |> cast(attrs, @required_fields)
     |> validate_required(@required_fields)
-    |> validate_inclusion(:type, ["main", "model"])
     |> unique_constraint(:name)
   end
 end

@@ -44,8 +44,9 @@ defmodule Fset.MixProject do
     [
       {:bcrypt_elixir, "~> 2.0"},
       {:phoenix, "~> 1.5.3"},
-      {:phoenix_ecto, "~> 4.1"},
-      {:ecto_sql, "~> 3.4"},
+      {:phoenix_ecto, "~> 4.2"},
+      {:ecto, "~> 3.5.0-rc.0", override: true},
+      {:ecto_sql, "~> 3.5.0-rc.0"},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_live_view, "~> 0.14.4",
        github: "phoenixframework/phoenix_live_view", override: true},

@@ -44,12 +44,12 @@ defmodule Fset.ModuleTest do
     [main_file | model_files] = to_files(imported)
 
     assert String.starts_with?(main_file.name, "main_")
-    assert main_file.type == "main"
+    assert main_file.type == :main
     assert main_file.schema == nodefs
 
     for model_file <- model_files do
       assert String.starts_with?(model_file.name, "model_")
-      assert model_file.type == "model"
+      assert model_file.type == :model
     end
 
     assert length(model_files) == 2

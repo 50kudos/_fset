@@ -22,7 +22,7 @@ defmodule Fset.Project do
            {:ok, _project_user} <- add_member(project.id, user_id) do
         project
       else
-        {:error, changeset} -> changeset
+        {:error, changeset} -> Repo.rollback(changeset)
       end
     end)
   end

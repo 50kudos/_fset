@@ -9,7 +9,7 @@ defmodule Fset.Module2 do
   def to_files(%{main_sch: main, model_schs: models}) when is_map(main) and is_list(models) do
     main_file = %{
       name: Utils.gen_key("main"),
-      type: "main",
+      type: :main,
       schema: main
     }
 
@@ -17,7 +17,7 @@ defmodule Fset.Module2 do
       Enum.map(models, fn model ->
         %{
           name: Utils.gen_key("model"),
-          type: "model",
+          type: :model,
           schema: model
         }
       end)
