@@ -1,8 +1,43 @@
 defmodule Fset.Project do
   alias Fset.Project.Root, as: Project
   alias Fset.Project.ProjectUser
+  alias Fset.Project.File, as: ProjectFile
   alias Fset.Repo
   alias Fset.Utils
+  import Ecto.Query, warn: false
+
+  def load(%{path: path}, encoder: encoder) do
+    load(File.read!(path), encoder: encoder)
+  end
+
+  def load(data, encoder: encoder) when is_binary(data) do
+    with {:ok, map} <- Jason.decode(data),
+         %{main_sch: _, model_schs: _} = map <- encoder.(map) do
+      {:ok, map}
+    else
+      {:error, _err_struct} = error -> error
+    end
+  end
+
+  def all(user_id) do
+    user_projects_q = user_projects_query(user_id)
+
+    user_projects_q =
+      from p in Project,
+        join: pu in subquery(user_projects_q),
+        on: pu.project_id == p.id
+
+    Repo.all(user_projects_q)
+  end
+
+  def schs_indice(project_id) do
+    schs_indice_q =
+      from f in ProjectFile,
+        where: f.project_id == ^project_id,
+        select: [:id, :name, :type, :project_id]
+
+    Repo.all(schs_indice_q)
+  end
 
   def create(files) when is_list(files) do
     %Project{}
@@ -25,5 +60,9 @@ defmodule Fset.Project do
         {:error, changeset} -> Repo.rollback(changeset)
       end
     end)
+  end
+
+  defp user_projects_query(user_id) do
+    from pu in ProjectUser, where: pu.user_id == ^user_id
   end
 end

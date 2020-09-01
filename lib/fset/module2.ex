@@ -2,11 +2,22 @@ defmodule Fset.Module2 do
   alias Fset.Module2.Encode
   alias Fset.Utils
 
+  @moduledoc """
+  Deals with schema level data and is independent from database layer.
+  Data comes from outside worlds, either from imported files or database.
+  But the data has to be already a map.
+  """
+
   def encode(map, opts \\ []) do
     Encode.from_json_schema(map, opts)
   end
 
-  def to_files(%{main_sch: main, model_schs: models}) when is_map(main) and is_list(models) do
+  @doc """
+  Map schs into ready-to-persist format. And may have responsibilty at schema level
+  to transform schema before output the format.
+  """
+  def to_files(%{main_sch: main, model_schs: models}, _opts \\ [])
+      when is_map(main) and is_list(models) do
     main_file = %{
       name: Utils.gen_key("main"),
       type: :main,
