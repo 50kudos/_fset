@@ -1,0 +1,21 @@
+<header class="flex justify-between items-center px-4 h-8 text-sm border-b border-gray-800">
+  <span class="text-gray-600"><b>F</b>SET</span>
+  <%= if @current_user do %>
+    <details>
+      <summary class="flex">
+        <div class="flex my-1 px-2 py-1 rounded cursor-pointer select-none text-gray-500 text-xs">
+          <%= @current_user.email %>
+        </div>
+      </summary>
+      <ul class="details-menu absolute mt-1 z-10 bg-gray-900 border border-gray-800 rounded text-xs">
+        <li class="px-2 py-1 hover:bg-gray-800 bg-opacity-75 odd:border-b odd:border-gray-800"><%= link "Accounts", to: Routes.user_settings_path(@socket, :edit) %></li>
+        <li class="px-2 py-1 hover:bg-gray-800 bg-opacity-75 odd:border-b odd:border-gray-800"><%= link "Log out", to: Routes.user_session_path(@socket, :delete), method: :delete %></li>
+      </ul>
+    </details>
+  <% else %>
+    <ul class="grid grid-flow-col gap-2 text-xs text-gray-600">
+      <li class="hover:text-gray-500 bg-opacity-75"><%= link "Register", to: Routes.user_registration_path(@socket, :new) %></li>
+      <li class="hover:text-gray-500 bg-opacity-75"><%= link "Log in", to: Routes.user_session_path(@socket, :new) %></li>
+    </ul>
+  <% end %>
+</header>

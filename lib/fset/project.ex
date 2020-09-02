@@ -19,13 +19,18 @@ defmodule Fset.Project do
     end
   end
 
-  def all(user_id) do
+  def get_by(attrs) do
+    Repo.get_by!(Project, attrs) |> Repo.preload(:main_sch)
+  end
+
+  def all(user_id) when is_integer(user_id) do
     user_projects_q = user_projects_query(user_id)
 
     user_projects_q =
       from p in Project,
         join: pu in subquery(user_projects_q),
-        on: pu.project_id == p.id
+        on: pu.project_id == p.id,
+        select: [:id, :name]
 
     Repo.all(user_projects_q)
   end

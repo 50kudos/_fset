@@ -35,4 +35,10 @@ defmodule Fset.Module2 do
 
     [main_file | model_files]
   end
+
+  def from_files(files) when is_list(files) do
+    {[main], models} = Enum.split_with(files, fn f -> f.type == :main end)
+
+    %{main_sch: main, model_schs: models}
+  end
 end
