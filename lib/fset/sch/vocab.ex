@@ -54,6 +54,7 @@ defmodule Fset.Sch.Vocab do
 
       # Custom
       @props_order "order"
+      @defs_order "defs_order"
 
       # Combination
       @types [@object, @array, @string, @boolean, @number, @null]

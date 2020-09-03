@@ -5,14 +5,20 @@ defmodule FsetWeb.ProfileLive do
   alias Fset.Module2
 
   @impl true
-  def mount(params, _session, socket) do
-    user = Accounts.get_user_by_username(params["username"])
+  def mount(params, session, socket) do
+    user =
+      if params == :not_mounted_at_router do
+        Accounts.get_user!(session["current_user_id"])
+      else
+        Accounts.get_user_by_username(params["username"])
+      end
+
     projects = Project.all(user.id)
 
     {:ok,
      socket
      |> assign(projects: projects)
-     |> assign(username: params["username"])
+     |> assign(username: user.email)
      |> assign(current_user: user)}
   end
 

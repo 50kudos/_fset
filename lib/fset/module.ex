@@ -134,19 +134,6 @@ defmodule Fset.Module do
   def which_section(@main_key), do: :main
   def which_section(@model_key), do: :model
 
-  def put_model(module_sch, defs_props) when is_map(defs_props) do
-    module = from_schema(module_sch)
-
-    module =
-      update_current_section(module, fn section_sch ->
-        for {k, sch} <- defs_props, reduce: section_sch do
-          acc -> Sch.put(acc, @model_key, k, sch, -1)
-        end
-      end)
-
-    to_schema(module)
-  end
-
   def add_model_fun(model, path) do
     case model do
       "Record" ->

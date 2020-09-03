@@ -45,9 +45,11 @@ defmodule Fset.Sch do
 
   # Helper
   def prop_sch(sch, key) when is_map(sch), do: Map.get(properties(sch), key)
+  def def_sch(sch, key) when is_map(sch), do: Map.get(defs(sch), key)
 
   ## Custom
   def order(sch) when is_map(sch), do: Map.get(sch, @props_order, [])
+  def defs_order(sch) when is_map(sch), do: Map.get(sch, @defs_order, [])
   # END Accessor
 
   # Matcher
@@ -126,9 +128,19 @@ defmodule Fset.Sch do
     put_schs(map, path, [%{key: key, sch: sch, index: index}])
   end
 
-  def put_def(map, key, sch) when is_binary(key) and is_map(sch) do
-    update_in(map, [Access.key(@defs, %{})], fn defs ->
-      Map.update(defs, key, sch, fn def_sch -> Map.merge(def_sch, sch) end)
+  def put_def(map, key, sch, index \\ -1) when is_binary(key) and is_map(sch) do
+    raw_schs = [%{key: key, sch: sch, index: index}]
+    defs = Map.new(raw_schs, fn %{key: key, sch: sch} -> {key, sch} end)
+
+    map
+    |> Map.update(@defs, defs, fn p -> Map.merge(p, defs) end)
+    |> Map.update!(@defs_order, fn order ->
+      reindex(raw_schs, order)
+      |> Enum.map(fn
+        %{key: k} -> k
+        {k, _i} -> k
+      end)
+      |> Enum.uniq()
     end)
   end
 

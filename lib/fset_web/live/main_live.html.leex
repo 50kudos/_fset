@@ -1,4 +1,4 @@
-<% f = form_for String.to_atom(@current_file.module.current_section_key), "#", [class: "w-full"] %>
+<% f = form_for @current_file.type, "#", [class: "w-full"] %>
 <div class="w-full">
   <section class="flex flex-col h-screen">
     <%= render FsetWeb.LayoutView, "_header.html", assigns %>
@@ -7,34 +7,29 @@
     <% end %>
     <section class="flex flex-grow overflow-scroll">
       <aside class="w-1/6 flex flex-col text-gray-500 shadow bg-dark-gray">
-        <ul class="overflow-scroll space-y-4 divide-y divide-gray-900">
+        <p class="ml-2 text-sm leading-8"><%= @project_name %></p>
+        <ul class="overflow-scroll divide-y divide-gray-900 space-y-2 text-sm leading-6">
           <%= for file <- @files do %>
             <%= if @current_file.id == file.id do %>
-              <li class="text-sm">
-                <p class="pl-2 leading-8 bg-gray-800 bg-opacity-50"><%= file.name %></p>
-                <ul class="pt-2 text-xs space-y-2">
-                  <li class="ml-2 <%= if @current_file.module.current_section == :model, do: "text-indigo-500" %>">MODEL</li>
-                  <li class="ml-2 <%= if @current_file.module.current_section == :main, do: "text-indigo-500" %>">MAIN</li>
-                </ul>
-              </li>
+              <li class="ml-2 <%= if @current_file.id == file.id, do: "text-indigo-500" %>"><%= file.name %>.<%= file.type %></li>
             <% else %>
-              <%= live_redirect to: "#" do %>
-                <li class="pl-4 text-sm leading-8 bg-gray-800 bg-opacity-50">
+              <%= live_redirect to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id) do %>
+                <li class="pl-4 leading-8 bg-gray-800 bg-opacity-50">
                   <%= file.name %>
                 </li>
               <% end %>
             <% end %>
           <% end %>
-          <li class="text-sm p-2">
-            <p class="mb-1 text-gray-600">New model: </p>
-            <div class="grid grid-cols-2 gap-px text-gray-400 text-xs">
-              <%= for higher_type <- [:Record, :Field, :List, :Tuple, :Union] do %>
-                <button class="text-left px-2 py-1 hover:bg-indigo-800 hover:text-gray-100 border border-gray-800"
-                  phx-click="add_model" phx-value-model="<%= higher_type %>"> + <%= higher_type %></button>
-              <% end %>
-            </div>
-          </li>
         </ul>
+        <div class="text-sm p-2 border-t border-gray-900">
+          <p class="mb-1 text-gray-600">New model: </p>
+          <div class="grid grid-cols-2 gap-px text-gray-400 text-xs">
+            <%= for higher_type <- [:Record, :Field, :List, :Tuple, :Union] do %>
+              <button class="text-left px-2 py-1 hover:bg-indigo-800 hover:text-gray-100 border border-gray-800"
+                phx-click="add_model" phx-value-model="<%= higher_type %>"> + <%= higher_type %></button>
+            <% end %>
+          </div>
+        </div>
         <span class="flex-1"></span>
         <%=# render_storage(assigns) %>
       </aside>
@@ -56,7 +51,7 @@
       </nav>
       <aside class="w-2/6 overflow-scroll p-4 text-sm">
         <%= if !is_list(@ui.current_path) do %>
-          <%= live_component @socket, SchComponent, id: @ui.current_path, sch: get_sch(@current_file, @ui), parent: get_parent(@current_file, @ui), ui: @ui, root?: f.name == Sch.find_parent(@ui.current_path).path %>
+          <%= #live_component @socket, SchComponent, id: @ui.current_path, sch: get_sch(@current_file, @ui), parent: get_parent(@current_file, @ui), ui: @ui, root?: f.name == Sch.find_parent(@ui.current_path).path %>
         <% end %>
       </aside>
     </section>

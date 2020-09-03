@@ -1,28 +1,28 @@
 defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
   alias FsetWeb.{SchComponent, ModuleComponent}
-  alias Fset.{Sch, Persistence, Module}
+  alias Fset.{Sch, Persistence, Module, Module2, Project, Accounts}
   alias Fset.Sch.New
 
   @impl true
-  def mount(params, session, socket) do
+  def mount(params, _session, socket) do
     if connected?(socket) do
-      Phoenix.PubSub.subscribe(Fset.PubSub, "sch_update:" <> params["file_id"])
+      # Phoenix.PubSub.subscribe(Fset.PubSub, "sch_update:" <> params["file_id"])
     end
 
-    user_files = Fset.Persistence.get_user_files(session["current_user_id"])
-
-    files = Enum.map(user_files, &Map.take(&1.file, [:id, :name]))
-    user_file = Enum.find(user_files, fn user_file -> user_file.file.id == params["file_id"] end)
-    file = file_assigns(user_file.file)
+    user = Accounts.get_user_by_username(params["username"])
+    project = Project.get_by(name: params["project_name"])
+    schs_indice = Project.schs_indice(project.id)
+    # schs_indice = Module2.from_files(schs_indice)
 
     {:ok,
      socket
-     |> assign_new(:current_user, fn -> user_file.user end)
-     |> assign(:current_file, file)
-     |> assign(:files, files)
+     |> assign_new(:current_user, fn -> user end)
+     |> assign(:current_file, project.main_sch)
+     |> assign(:project_name, project.name)
+     |> assign(:files, schs_indice)
      |> assign(:ui, %{
-       current_path: file.module.current_section_key,
+       current_path: "main",
        current_edit: nil,
        errors: []
      })}

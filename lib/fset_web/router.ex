@@ -58,12 +58,6 @@ defmodule FsetWeb.Router do
     put "/users/settings/update_password", UserSettingsController, :update_password
     put "/users/settings/update_email", UserSettingsController, :update_email
     get "/users/settings/confirm_email/:token", UserSettingsController, :confirm_email
-
-    live "/:username", ProfileLive, :index
-
-    scope "/:username" do
-      live "/:project_name", MainLive, :index
-    end
   end
 
   scope "/", FsetWeb do
@@ -73,5 +67,18 @@ defmodule FsetWeb.Router do
     get "/users/confirm", UserConfirmationController, :new
     post "/users/confirm", UserConfirmationController, :create
     get "/users/confirm/:token", UserConfirmationController, :confirm
+
+    get "/", StaticPageController, :landing
+  end
+
+  scope "/", FsetWeb do
+    pipe_through [:browser, :require_authenticated_user]
+
+    live "/:username", ProfileLive, :index
+
+    scope "/:username" do
+      live "/:project_name", MainLive, :index
+      live "/:project_name/:file_id", MainLive, :show
+    end
   end
 end
