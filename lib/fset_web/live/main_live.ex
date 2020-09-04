@@ -2,23 +2,21 @@ defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
   alias FsetWeb.{SchComponent, ModuleComponent}
   alias Fset.{Sch, Persistence, Module, Module2, Project, Accounts}
-  alias Fset.Sch.New
 
   @impl true
   def mount(params, _session, socket) do
-    if connected?(socket) do
-      # Phoenix.PubSub.subscribe(Fset.PubSub, "sch_update:" <> params["file_id"])
-    end
-
     user = Accounts.get_user_by_username(params["username"])
     project = Project.get_by(name: params["project_name"])
     schs_indice = Project.schs_indice(project.id)
-    # schs_indice = Module2.from_files(schs_indice)
+    socket = assign(socket, :current_file, project.main_sch)
+
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(Fset.PubSub, "sch_update:" <> socket.assigns.current_file.id)
+    end
 
     {:ok,
      socket
      |> assign_new(:current_user, fn -> user end)
-     |> assign(:current_file, project.main_sch)
      |> assign(:project_name, project.name)
      |> assign(:files, schs_indice)
      |> assign(:ui, %{
@@ -117,13 +115,8 @@ defmodule FsetWeb.MainLive do
     sch_path = socket.assigns.ui.current_path
 
     file = socket.assigns.current_file
-
-    module =
-      Module.update_current_section(file.module, fn section_sch ->
-        Sch.update(section_sch, sch_path, key, value)
-      end)
-
-    socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
+    schema = Sch.update(file.schema, sch_path, key, value)
+    socket = update(socket, :current_file, fn _ -> %{file | schema: schema} end)
 
     async_update_schema()
     {:noreply, socket}
@@ -267,9 +260,7 @@ defmodule FsetWeb.MainLive do
     existing_file = Project.get_file(updated_file.id)
 
     existing_schema = existing_file.schema
-
     updated_schema = Sch.merge(existing_schema, updated_file.schema) |> Sch.sanitize()
-
     file = Persistence.replace_file(existing_file, schema: updated_schema)
 
     socket = assign(socket, :current_file, file)
@@ -285,22 +276,9 @@ defmodule FsetWeb.MainLive do
     Process.send_after(self(), :update_schema, Enum.random(200..300))
   end
 
-  defp get_sch(current_file, ui) do
-    Module.current_section_sch(current_file.module, ui.current_path)
-  end
-
   defp get_parent(current_file, ui) do
     parent_path = Sch.find_parent(ui.current_path).path
-    Module.current_section_sch(current_file.module, parent_path)
-  end
-
-  defp file_assigns(file) do
-    module = Module.from_schema(file.schema)
-
-    file
-    |> Map.from_struct()
-    |> Map.put(:module, module)
-    |> Map.put(:bytes, Persistence.term_size(module))
+    Sch.get(current_file.schema, parent_path)
   end
 
   defp selected_count(ui, f) do

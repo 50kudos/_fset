@@ -34,8 +34,8 @@ defmodule Fset.Sch do
   def any_of(sch) when is_map(sch), do: Map.get(sch, @any_of)
 
   ## Metadata
-  def title(sch) when is_map(sch), do: Map.get(sch, @title)
-  def description(sch) when is_map(sch), do: Map.get(sch, @description)
+  def title(sch) when is_map(sch), do: Map.get(sch, @title, "")
+  def description(sch) when is_map(sch), do: Map.get(sch, @description, "")
   def examples(sch) when is_map(sch), do: Map.get(sch, @examples, [])
 
   def example(sch) do

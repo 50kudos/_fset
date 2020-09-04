@@ -51,7 +51,7 @@
       </nav>
       <aside class="w-2/6 overflow-scroll p-4 text-sm">
         <%= if !is_list(@ui.current_path) do %>
-          <%= #live_component @socket, SchComponent, id: @ui.current_path, sch: get_sch(@current_file, @ui), parent: get_parent(@current_file, @ui), ui: @ui, root?: f.name == Sch.find_parent(@ui.current_path).path %>
+          <%= live_component @socket, SchComponent, id: @ui.current_path, sch: Sch.get(@current_file.schema, @ui.current_path), parent: get_parent(@current_file, @ui), ui: @ui, root?: f.name == Sch.find_parent(@ui.current_path).path %>
         <% end %>
       </aside>
     </section>
