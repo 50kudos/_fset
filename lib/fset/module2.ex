@@ -50,6 +50,10 @@ defmodule Fset.Module2 do
     %{main_sch: main, model_schs: models}
   end
 
+  def changable_types do
+    ~w(record list tuple string bool number null union value)
+  end
+
   def change_type(%_{schema: root} = file, path, type) do
     to_type =
       case type do

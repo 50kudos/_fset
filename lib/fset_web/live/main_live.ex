@@ -1,7 +1,7 @@
 defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
   alias FsetWeb.{SchComponent, ModuleComponent}
-  alias Fset.{Sch, Persistence, Module, Module2, Project, Accounts}
+  alias Fset.{Sch, Persistence, Module2, Project, Accounts}
 
   @impl true
   def mount(params, _session, socket) do
@@ -50,7 +50,7 @@ defmodule FsetWeb.MainLive do
 
     file =
       if file.type == :main do
-        if type in Module.changable_types() do
+        if type in Module2.changable_types() do
           Module2.change_type(file, ui.current_path, type)
         end
       end
@@ -98,7 +98,7 @@ defmodule FsetWeb.MainLive do
 
   def handle_event("edit_sch", %{"path" => sch_path}, socket) do
     updated_ui =
-      if socket.assigns.ui.current_path in Module.preserve_keys() do
+      if socket.assigns.ui.current_path in Enum.map(socket.assigns.files, & &1.id) do
         socket.assigns.ui
       else
         socket.assigns.ui
@@ -191,7 +191,7 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("module_keyup", val, socket) do
-    if socket.assigns.ui.current_path in Module.preserve_keys() do
+    if socket.assigns.ui.current_path in Enum.map(socket.assigns.files, & &1.id) do
       {:noreply, socket}
     else
       updated_assigns = module_keyup(val, socket.assigns)

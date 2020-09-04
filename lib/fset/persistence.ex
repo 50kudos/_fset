@@ -6,7 +6,7 @@ defmodule Fset.Persistence do
   import Ecto.Query, warn: false
   alias Fset.Repo
 
-  alias Fset.Persistence.{UserFile, File, OauthToken}
+  alias Fset.Persistence.{File, OauthToken}
 
   @doc """
   Returns the list of oauth_tokens.
@@ -124,59 +124,6 @@ defmodule Fset.Persistence do
   """
   def json_size(term) do
     :erlang.byte_size(Jason.encode!(term))
-  end
-
-  @doc """
-  Get a user file by id
-
-  ## Examples
-
-      iex> get_user_file(user, file_id)
-      %UserFile{}
-  """
-  def get_user_file(file_id, user) do
-    query =
-      from uf in UserFile,
-        where: uf.file_id == ^file_id and uf.user_id == ^user.id,
-        join: f in assoc(uf, :file),
-        join: u in assoc(uf, :user),
-        preload: [file: f, user: u]
-
-    Repo.one!(query)
-  end
-
-  @doc """
-  Get all user files
-
-  ## Examples
-
-      iex> get_user_files(user)
-      [%UserFile{}]
-  """
-  def get_user_files(user_id) do
-    query =
-      from uf in UserFile,
-        where: uf.user_id == ^user_id,
-        join: f in assoc(uf, :file),
-        join: u in assoc(uf, :user),
-        select: %{file: f, user: u}
-
-    Repo.all(query)
-  end
-
-  @doc """
-  Create a schema file of a user
-
-  ## Examples
-
-      iex> create_user_file(user, Module.new())
-      {:ok, %UserFile{user_id: 1, file_id: 1}}
-  """
-  def create_user_file(user, attrs) do
-    Repo.transaction(fn ->
-      file = Repo.insert!(File.changeset(%File{}, attrs))
-      Repo.insert!(UserFile.changeset(%UserFile{}, %{user_id: user.id, file_id: file.id}))
-    end)
   end
 
   @doc """
