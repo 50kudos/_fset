@@ -136,13 +136,9 @@ defmodule FsetWeb.MainLive do
     new_key = String.slice(new_key, 0, min(255, String.length(new_key)))
 
     file = socket.assigns.current_file
+    file = Module2.rename_key(file, parent_path, old_key, new_key)
 
-    module =
-      Module.update_current_section(file.module, fn section_sch ->
-        Sch.rename_key(section_sch, parent_path, old_key, new_key)
-      end)
-
-    socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
+    socket = update(socket, :current_file, fn _ -> file end)
 
     socket =
       update(socket, :ui, fn ui ->
@@ -165,23 +161,18 @@ defmodule FsetWeb.MainLive do
     paths_refs =
       Enum.map(List.wrap(socket.assigns.ui.current_path), fn p -> {p, Ecto.UUID.generate()} end)
 
-    module =
-      Module.update_current_section(file.module, fn section_sch ->
-        for {current_path, ref} <- paths_refs, reduce: section_sch do
-          acc -> Sch.update(acc, current_path, "$id", ref)
-        end
-      end)
+    schema =
+      for {current_path, ref} <- paths_refs, reduce: file.schema do
+        acc -> Sch.update(acc, current_path, "$id", ref)
+      end
 
-    module =
-      Module.update_current_section(module, fn section_sch ->
-        Sch.move(section_sch, src_indices, dst_indices)
-      end)
+    schema = Sch.move(schema, src_indices, dst_indices)
 
-    socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
+    socket = update(socket, :current_file, fn _ -> %{file | schema: schema} end)
 
     socket =
       update(socket, :ui, fn ui ->
-        section_sch = Module.current_section(socket.assigns.current_file.module)
+        section_sch = socket.assigns.current_file.schema
 
         current_paths =
           for ref <- Keyword.values(paths_refs) do
@@ -270,7 +261,7 @@ defmodule FsetWeb.MainLive do
           |> put_in([:ui, :current_edit], nil)
 
         _ ->
-          file.module
+          assigns
       end
 
     Map.take(assigns, [:current_file, :ui])
