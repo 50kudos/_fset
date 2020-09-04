@@ -61,7 +61,9 @@ defmodule FsetWeb.ModuleComponent do
 
   defp render_main(assigns) do
     ~L"""
-    <main>
+    <main id="moveable__<%= @f.name %>" phx-hook="moveable" data-group="body" data-path="<%= @f.name %>"
+      data-current-paths="<%= Jason.encode!(List.wrap(@ui.current_path)) %>"
+      phx-capture-click="select_sch" phx-value-paths="<%= @f.name %>" class="grid grid-cols-fit py-6 h-full row-gap-6">
       <%= live_component(@socket, ModelComponent,
         id: @f.name,
         key: @name,

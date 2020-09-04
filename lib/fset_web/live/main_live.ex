@@ -36,15 +36,10 @@ defmodule FsetWeb.MainLive do
 
   def handle_event("add_model", %{"model" => model} = val, socket) do
     file = socket.assigns.current_file
-    add_path = Map.get(val, "path", file.module.current_section_key)
+    add_path = Map.get(val, "path", file.id)
+    file = Module2.add_model(file, add_path, model)
 
-    module =
-      Module.update_current_section(
-        file.module,
-        Module.add_model_fun(model, add_path)
-      )
-
-    socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
+    socket = update(socket, :current_file, fn _ -> file end)
 
     async_update_schema()
     {:noreply, socket}
@@ -83,7 +78,6 @@ defmodule FsetWeb.MainLive do
 
   def handle_event("select_sch", %{"paths" => sch_path}, socket) do
     file = socket.assigns.current_file
-    module = Module.update_current_section(file.module, &Sch.sanitize/1)
 
     sch_path =
       case sch_path do
@@ -92,6 +86,8 @@ defmodule FsetWeb.MainLive do
         a -> a
       end
 
+    file = Map.update!(file, :schema, &Sch.sanitize/1)
+
     {:noreply,
      socket
      |> update(:ui, fn ui ->
@@ -99,7 +95,7 @@ defmodule FsetWeb.MainLive do
        |> Map.put(:current_path, sch_path)
        |> Map.put(:current_edit, nil)
      end)
-     |> update(:current_file, fn _ -> %{file | module: module} end)}
+     |> update(:current_file, fn _ -> file end)}
   end
 
   def handle_event("edit_sch", %{"path" => sch_path}, socket) do

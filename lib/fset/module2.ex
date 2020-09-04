@@ -2,6 +2,7 @@ defmodule Fset.Module2 do
   alias Fset.Module2.Encode
   alias Fset.Utils
   alias Fset.Sch
+  alias Fset.Sch.New
 
   @moduledoc """
   Deals with schema level data and is independent from database layer.
@@ -52,17 +53,30 @@ defmodule Fset.Module2 do
   def change_type(%_{schema: root} = file, path, type) do
     to_type =
       case type do
-        "record" -> Sch.New.object()
-        "list" -> Sch.New.array(:homo)
-        "tuple" -> Sch.New.array(:hetero)
-        "string" -> Sch.New.string()
-        "bool" -> Sch.New.boolean()
-        "number" -> Sch.New.number()
-        "null" -> Sch.New.null()
-        "union" -> Sch.New.any_of([Sch.New.object(), Sch.New.array(), Sch.New.string()])
-        "value" -> Sch.New.const()
+        "record" -> New.object()
+        "list" -> New.array(:homo)
+        "tuple" -> New.array(:hetero)
+        "string" -> New.string()
+        "bool" -> New.boolean()
+        "number" -> New.number()
+        "null" -> New.null()
+        "union" -> New.any_of([New.object(), New.array(), New.string()])
+        "value" -> New.const()
       end
 
     %{file | schema: Sch.change_type(root, path, to_type)}
+  end
+
+  def add_model(%_{schema: root} = file, path, model) do
+    model =
+      case model do
+        "Record" -> New.object(anchor_prefix: "model")
+        "Field" -> New.string(anchor_prefix: "model")
+        "List" -> New.array(:homo, anchor_prefix: "model")
+        "Tuple" -> New.array(:hetero, anchor_prefix: "model")
+        "Union" -> New.any_of([New.object(), New.array(), New.string()], anchor_prefix: "model")
+      end
+
+    %{file | schema: Sch.put(root, path, Utils.gen_key(), model, 0)}
   end
 end
