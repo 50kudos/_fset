@@ -217,14 +217,12 @@ defmodule FsetWeb.MainLive do
         "Delete" ->
           async_update_schema()
 
-          current_section = Module.current_section(file.module)
-
           # Referential integrity
 
           referrers =
             Enum.map(List.wrap(ui.current_path), fn path ->
-              if sch = Sch.get(current_section, path) do
-                Sch.find_path(current_section, fn sch_ ->
+              if sch = Sch.get(file.schema, path) do
+                Sch.find_path(file.schema, fn sch_ ->
                   if ref = Sch.ref(sch_) do
                     "#" <> ref = ref
                     ref == Sch.anchor(sch)
@@ -235,15 +233,11 @@ defmodule FsetWeb.MainLive do
             |> Enum.reject(fn a -> is_nil(a) || a == "" end)
 
           if Enum.empty?(referrers) do
-            module =
-              Module.update_current_section(file.module, fn section_sch ->
-                Sch.delete(section_sch, ui.current_path)
-              end)
-
+            schema = Sch.delete(file.schema, ui.current_path)
             new_current_paths = Map.keys(Sch.find_parents(ui.current_path))
 
             assigns
-            |> put_in([:current_file], %{file | module: module})
+            |> put_in([:current_file], %{file | schema: schema})
             |> put_in([:ui, :current_path], new_current_paths)
           else
             assigns
@@ -257,7 +251,7 @@ defmodule FsetWeb.MainLive do
 
         "Escape" ->
           assigns
-          |> put_in([:ui, :current_path], assigns.current_file.module.current_section_key)
+          |> put_in([:ui, :current_path], assigns.current_file.id)
           |> put_in([:ui, :current_edit], nil)
 
         _ ->
