@@ -1,4 +1,4 @@
-defmodule Fset.Module2.Encode do
+defmodule Fset.Module.Encode do
   alias Fset.Sch
 
   @defs_chunk_size 100

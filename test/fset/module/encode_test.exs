@@ -3,7 +3,7 @@ defmodule Fset.ModuleEncodeTest do
 
   use Fset.Sch.Vocab
   alias Fset.Sch
-  import Fset.Module2.Encode
+  import Fset.Module.Encode
 
   setup do
     nodefs = %{@id => "https://a.com"}

@@ -1,7 +1,7 @@
 defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
   alias FsetWeb.{SchComponent, ModuleComponent}
-  alias Fset.{Sch, Persistence, Module2, Project, Accounts}
+  alias Fset.{Sch, Persistence, Module, Project, Accounts}
 
   @impl true
   def mount(params, _session, socket) do
@@ -35,7 +35,7 @@ defmodule FsetWeb.MainLive do
   def handle_event("add_model", %{"model" => model} = val, socket) do
     file = socket.assigns.current_file
     add_path = Map.get(val, "path", file.id)
-    file = Module2.add_model(file, add_path, model)
+    file = Module.add_model(file, add_path, model)
 
     socket = update(socket, :current_file, fn _ -> file end)
 
@@ -50,8 +50,8 @@ defmodule FsetWeb.MainLive do
 
     file =
       if file.type == :main do
-        if type in Module2.changable_types() do
-          Module2.change_type(file, ui.current_path, type)
+        if type in Module.changable_types() do
+          Module.change_type(file, ui.current_path, type)
         end
       end
 
@@ -129,7 +129,7 @@ defmodule FsetWeb.MainLive do
     new_key = String.slice(new_key, 0, min(255, String.length(new_key)))
 
     file = socket.assigns.current_file
-    file = Module2.rename_key(file, parent_path, old_key, new_key)
+    file = Module.rename_key(file, parent_path, old_key, new_key)
 
     socket = update(socket, :current_file, fn _ -> file end)
 

@@ -2,7 +2,7 @@ defmodule FsetWeb.ProfileLive do
   use FsetWeb, :live_view
   alias Fset.Accounts
   alias Fset.Project
-  alias Fset.Module2
+  alias Fset.Module
 
   @impl true
   def mount(params, session, socket) do
@@ -55,7 +55,7 @@ defmodule FsetWeb.ProfileLive do
 
   @impl true
   def handle_event("create_project", _val, socket) do
-    files = Module2.init_files(Module2.encode(%{}))
+    files = Module.init_files(Module.encode(%{}))
     {:ok, project} = Project.create_with_user(files, socket.assigns.current_user.id)
 
     {:noreply,

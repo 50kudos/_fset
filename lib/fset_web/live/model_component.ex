@@ -1,6 +1,6 @@
 defmodule FsetWeb.ModelComponent do
   use FsetWeb, :live_component
-  alias Fset.{Sch, Module2, Utils}
+  alias Fset.{Sch, Module, Utils}
 
   @impl true
   def mount(socket) do
@@ -489,7 +489,7 @@ defmodule FsetWeb.ModelComponent do
   end
 
   defp text_val_types(ui) do
-    Module2.changable_types() ++ Map.keys(ui.model_names)
+    Module.changable_types() ++ Map.keys(ui.model_names)
   end
 
   defp error_class(assigns) do

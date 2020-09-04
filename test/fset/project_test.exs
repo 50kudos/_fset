@@ -1,7 +1,7 @@
 defmodule Fset.ProjectTest do
   use Fset.DataCase, async: true
   use Fset.Sch.Vocab
-  alias Fset.{Sch, Module2}
+  alias Fset.{Sch, Module}
 
   import Fset.Project
   import Fset.AccountsFixtures
@@ -12,8 +12,8 @@ defmodule Fset.ProjectTest do
         @id => "https://a.com",
         @defs => %{"a" => %{}, "b" => %{}}
       }
-      |> Module2.encode(defs_per_file: 1)
-      |> Module2.init_files()
+      |> Module.encode(defs_per_file: 1)
+      |> Module.init_files()
 
     %{files: files}
   end
@@ -78,12 +78,12 @@ defmodule Fset.ProjectTest do
       path: Path.expand("../../test/support/fixtures/sch_samples/github-action.json", __DIR__)
     }
 
-    {:ok, map} = load(file, encoder: &Module2.encode/1)
+    {:ok, map} = load(file, encoder: &Module.encode/1)
     assert %{main_sch: _, model_schs: _} = map
   end
 
   test "#load bad json format" do
-    {:error, error_struct} = load("{#}", encoder: &Module2.encode/1)
+    {:error, error_struct} = load("{#}", encoder: &Module.encode/1)
 
     assert error_struct.data == "{#}"
     assert error_struct.position == 1

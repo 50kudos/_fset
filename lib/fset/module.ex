@@ -1,5 +1,5 @@
-defmodule Fset.Module2 do
-  alias Fset.Module2.Encode
+defmodule Fset.Module do
+  alias Fset.Module.Encode
   alias Fset.Utils
   alias Fset.Sch
   alias Fset.Sch.New
