@@ -1,7 +1,8 @@
 defmodule Fset.ProjectTest do
   use Fset.DataCase, async: true
   use Fset.Sch.Vocab
-  alias Fset.Module2
+  alias Fset.{Sch, Module2}
+
   import Fset.Project
   import Fset.AccountsFixtures
 
@@ -19,8 +20,11 @@ defmodule Fset.ProjectTest do
 
   test "#create", %{files: files} do
     {:ok, project} = create(files)
-
     assert length(project.schs) == 3
+
+    for file <- project.schs do
+      assert Sch.get(file.schema, file.id) != nil
+    end
   end
 
   test "#create_with_user successfully", %{files: files} do

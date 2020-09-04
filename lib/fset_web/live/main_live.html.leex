@@ -1,4 +1,4 @@
-<% f = form_for @current_file.type, "#", [class: "w-full"] %>
+<% f = form_for String.to_atom(@current_file.id), "#", [class: "w-full"] %>
 <div class="w-full">
   <section class="flex flex-col h-screen">
     <%= render FsetWeb.LayoutView, "_header.html", assigns %>

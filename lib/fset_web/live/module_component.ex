@@ -1,22 +1,23 @@
 defmodule FsetWeb.ModuleComponent do
   use FsetWeb, :live_component
   alias FsetWeb.ModelComponent
-  alias Fset.{Sch, Module}
+  alias Fset.Sch
 
   @impl true
   def update(assigns, socket) do
     init_ui = Map.merge(assigns.ui, %{tab: 1, parent_path: assigns.f.name})
     file = assigns.file
-    current_section_sch = Sch.sanitize(file.schema)
+    file = Map.update!(file, :schema, fn root -> Sch.sanitize(Sch.get(root, file.id)) end)
+    current_section_sch = file.schema
 
     {:ok,
      socket
      |> assign(:ui, init_ui)
      |> update(:ui, fn ui ->
        model_names =
-         for k <- Sch.defs_order(current_section_sch), reduce: %{} do
+         for k <- Sch.order(current_section_sch), reduce: %{} do
            acc ->
-             model_sch = Sch.def_sch(current_section_sch, k)
+             model_sch = Sch.prop_sch(current_section_sch, k)
              Map.put(acc, k, Sch.anchor(model_sch))
          end
 
@@ -63,7 +64,7 @@ defmodule FsetWeb.ModuleComponent do
     <main>
       <%= live_component(@socket, ModelComponent,
         id: @f.name,
-        key: @f.name,
+        key: @name,
         sch: @body,
         ui: @ui,
         f: @f

@@ -2,7 +2,7 @@ defmodule Fset.Project.File do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @required_fields [:name, :type, :schema]
+  @required_fields [:id, :name, :type, :schema]
 
   @primary_key {:id, :binary_id, autogenerate: true}
   schema "files" do

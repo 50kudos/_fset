@@ -22,7 +22,7 @@ defmodule FsetWeb.MainLive do
      |> assign(:project_name, project.name)
      |> assign(:files, schs_indice)
      |> assign(:ui, %{
-       current_path: "main",
+       current_path: project.main_sch.id,
        current_edit: nil,
        errors: []
      })}
@@ -55,27 +55,27 @@ defmodule FsetWeb.MainLive do
     file = socket.assigns.current_file
     ui = socket.assigns.ui
 
-    change_type_fun =
-      if type in Module.changable_types() do
-        Module.change_type_fun(type, ui.current_path)
-      else
-        current_section_sch = Module.current_section_sch(file.module)
-
-        anchor =
-          Enum.find_value(
-            Sch.properties(current_section_sch),
-            fn {k, sch} -> k == type && Sch.anchor(sch) end
-          )
-
-        if anchor do
-          fn sch -> Sch.change_type(sch, ui.current_path, New.ref(anchor)) end
-        else
-          fn a -> a end
+    file =
+      if file.type == :main do
+        if type in Module.changable_types() do
+          Module2.change_type(file, ui.current_path, type)
         end
       end
 
-    module = Module.update_current_section(file.module, change_type_fun)
-    socket = update(socket, :current_file, fn _ -> %{file | module: module} end)
+    # current_section_sch = file.schema
+    # anchor =
+    #   Enum.find_value(
+    #     Sch.properties(current_section_sch),
+    #     fn {k, sch} -> k == type && Sch.anchor(sch) end
+    #   )
+
+    # if anchor do
+    #   fn sch -> Sch.change_type(sch, ui.current_path, New.ref(anchor)) end
+    # else
+    #   fn a -> a end
+    # end
+
+    socket = update(socket, :current_file, fn _ -> file end)
 
     async_update_schema()
     {:noreply, socket}
@@ -282,22 +282,14 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def handle_info(:update_schema, socket) do
-    file = socket.assigns.current_file
-    user = socket.assigns.current_user
-    user_file = Persistence.get_user_file(file.id, user)
+    updated_file = socket.assigns.current_file
+    existing_file = Project.get_file(updated_file.id)
 
-    current_schema = Module.to_schema(file.module)
-    existing_schema = user_file.file.schema
-    updated_schema = Sch.merge(existing_schema, current_schema) |> Sch.sanitize()
+    existing_schema = existing_file.schema
 
-    file = Persistence.replace_file(user_file.file, schema: updated_schema)
-    module = Module.from_schema(file.schema)
+    updated_schema = Sch.merge(existing_schema, updated_file.schema) |> Sch.sanitize()
 
-    file =
-      file
-      |> Map.from_struct()
-      |> Map.put(:module, module)
-      |> Map.put(:bytes, Persistence.term_size(module))
+    file = Persistence.replace_file(existing_file, schema: updated_schema)
 
     socket = assign(socket, :current_file, file)
     Phoenix.PubSub.broadcast_from!(Fset.PubSub, self(), "sch_update:" <> file.id, file)

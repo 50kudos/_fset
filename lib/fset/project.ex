@@ -23,6 +23,10 @@ defmodule Fset.Project do
     Repo.get_by!(Project, attrs) |> Repo.preload(:main_sch)
   end
 
+  def get_file(file_id) do
+    Repo.get!(ProjectFile, file_id)
+  end
+
   def all(user_id) when is_integer(user_id) do
     user_projects_q = user_projects_query(user_id)
 
