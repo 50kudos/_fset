@@ -55,7 +55,7 @@ defmodule FsetWeb.ProfileLive do
 
   @impl true
   def handle_event("create_project", _val, socket) do
-    files = Module2.to_files(Module2.encode(%{}))
+    files = Module2.init_files(Module2.encode(%{}))
     {:ok, project} = Project.create_with_user(files, socket.assigns.current_user.id)
 
     {:noreply,

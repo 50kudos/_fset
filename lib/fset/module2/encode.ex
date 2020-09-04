@@ -8,7 +8,15 @@ defmodule Fset.Module2.Encode do
 
     model_schs =
       for defs_chuck <- chunk_defs(defs, opts[:defs_per_file]) do
-        Sch.put_defs(%{}, defs_chuck)
+        raw_schs =
+          defs_chuck
+          |> Enum.with_index()
+          |> Enum.map(fn {{key, sch}, i} -> %{key: key, sch: sch, index: i} end)
+
+        "temp_root"
+        |> Sch.new(Sch.New.object())
+        |> Sch.put_schs("temp_root", raw_schs)
+        |> Sch.get("temp_root")
       end
 
     %{main_sch: main, model_schs: model_schs}

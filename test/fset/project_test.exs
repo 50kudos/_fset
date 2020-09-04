@@ -12,7 +12,7 @@ defmodule Fset.ProjectTest do
         @defs => %{"a" => %{}, "b" => %{}}
       }
       |> Module2.encode(defs_per_file: 1)
-      |> Module2.to_files()
+      |> Module2.init_files()
 
     %{files: files}
   end

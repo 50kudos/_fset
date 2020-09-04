@@ -2,6 +2,7 @@ defmodule Fset.ModuleTest do
   use Fset.DataCase, async: true
 
   use Fset.Sch.Vocab
+  alias Fset.Sch
   import Fset.Module2
 
   setup do
@@ -11,52 +12,23 @@ defmodule Fset.ModuleTest do
     %{nodefs: nodefs, defs: defs}
   end
 
-  test "#encode empty schema" do
-    assert encode(%{}) == %{main_sch: %{}, model_schs: []}
-  end
-
-  test "#encode no defs schema", %{nodefs: jsch} do
-    assert encode(jsch) == %{main_sch: jsch, model_schs: []}
-  end
-
-  test "#encode schema produces default chunk size models", %{nodefs: nodefs, defs: defs} do
-    jsch = Map.merge(nodefs, defs)
-    assert encode(jsch) == %{main_sch: nodefs, model_schs: [defs]}
-  end
-
-  test "#encode schema produces 1 models chunk", %{nodefs: nodefs, defs: defs} do
-    jsch = Map.merge(nodefs, defs)
-    assert encode(jsch, defs_per_file: 2) == %{main_sch: nodefs, model_schs: [defs]}
-  end
-
-  test "#encode schema produces 2 models chunks", %{nodefs: nodefs, defs: defs} do
-    jsch = Map.merge(nodefs, defs)
-
-    assert encode(jsch, defs_per_file: 1) == %{
-             main_sch: nodefs,
-             model_schs: [%{@defs => %{"a" => %{}}}, %{@defs => %{"b" => %{}}}]
-           }
-  end
-
-  test "#to_files", %{nodefs: nodefs, defs: defs} do
-    jsch = Map.merge(nodefs, defs)
-    imported = encode(jsch, defs_per_file: 1)
-    [main_file | model_files] = to_files(imported)
+  test "#init_files", %{nodefs: nodefs, defs: defs} do
+    imported = encode(Map.merge(nodefs, defs), defs_per_file: 1)
+    [main_file | model_files] = init_files(imported)
 
     assert String.starts_with?(main_file.name, "main_")
     assert main_file.type == :main
-    assert main_file.schema == nodefs
-
-    for model_file <- model_files do
-      assert String.starts_with?(model_file.name, "model_")
-      assert model_file.type == :model
-    end
+    assert Sch.get(main_file.schema, main_file.id) == nodefs
 
     assert length(model_files) == 2
 
-    assert Enum.map(model_files, & &1.schema) == [
-             %{@defs => %{"a" => %{}}},
-             %{@defs => %{"b" => %{}}}
-           ]
+    for {model_file, expected} <- Enum.zip(model_files, [%{"a" => %{}}, %{"b" => %{}}]) do
+      model_sch = Sch.get(model_file.schema, model_file.id)
+      model_props = Sch.properties(model_sch)
+
+      assert model_props == expected
+      assert String.starts_with?(model_file.name, "model_")
+      assert model_file.type == :model
+    end
   end
 end
