@@ -18,7 +18,7 @@ defmodule Fset.Utils do
   end
 
   def word_break_html(string) when is_binary(string) do
-    ~r/(?<=::)|(?<=\.)/
+    ~r/(?<=::)|(?<=\.)|(?<=_)/
     |> Regex.split(string)
     |> Enum.intersperse({:safe, "<wbr>"})
   end

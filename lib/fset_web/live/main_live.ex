@@ -8,7 +8,11 @@ defmodule FsetWeb.MainLive do
     user = Accounts.get_user_by_username(params["username"])
     project = Project.get_by(name: params["project_name"])
     schs_indice = Project.schs_indice(project.id)
-    socket = assign(socket, :current_file, project.main_sch)
+
+    current_file =
+      if params["file_id"], do: Project.get_file(params["file_id"]), else: project.main_sch
+
+    socket = assign(socket, :current_file, current_file)
 
     if connected?(socket) do
       Phoenix.PubSub.subscribe(Fset.PubSub, "sch_update:" <> socket.assigns.current_file.id)
@@ -20,7 +24,7 @@ defmodule FsetWeb.MainLive do
      |> assign(:project_name, project.name)
      |> assign(:files, schs_indice)
      |> assign(:ui, %{
-       current_path: project.main_sch.id,
+       current_path: current_file.id,
        current_edit: nil,
        errors: []
      })}
@@ -147,7 +151,7 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("move", payload, socket) do
-    %{"oldIndices" => src_indices, "newIndices" => dst_indices} = payload
+    %{"oldIndices" => src_indices, "newIndices" => dst_indices} = payload |> IO.inspect()
 
     file = socket.assigns.current_file
 

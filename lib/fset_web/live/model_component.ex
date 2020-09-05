@@ -482,7 +482,7 @@ defmodule FsetWeb.ModelComponent do
       Sch.null?(sch) -> "null"
       Sch.any_of?(sch) -> "union"
       Sch.any?(sch) -> "any"
-      Sch.ref?(sch) -> ref_type(sch, ui)
+      Sch.ref?(sch) -> "ref_type(sch, ui)"
       Sch.const?(sch) -> const_type(sch)
       true -> "please define what type #{inspect(sch)} is"
     end

@@ -6,15 +6,22 @@
       <span class="w-full text-red-600"><%= error.payload.msg %></span>
     <% end %>
     <section class="flex flex-grow overflow-scroll">
-      <aside class="w-1/6 flex flex-col text-gray-500 shadow bg-dark-gray">
+      <aside class="w-1/5 flex flex-col text-gray-500 shadow bg-gray-900">
         <p class="ml-2 text-sm leading-8"><%= @project_name %></p>
-        <ul class="overflow-scroll divide-y divide-gray-900 space-y-2 text-sm leading-6">
+        <ul class="overflow-scroll text-sm leading-6 space-y-4">
           <%= for file <- @files do %>
             <%= if @current_file.id == file.id do %>
-              <li class="ml-2 <%= if @current_file.id == file.id, do: "text-indigo-500" %>"><%= file.name %>.<%= file.type %></li>
+              <li class="ml-2 <%= if @current_file.id == file.id, do: "text-indigo-500" %>">
+                <%= file.name %>
+                <ul class="mt-1">
+                  <%= for {model_name, model_sch} <- Sch.properties(Sch.get(@current_file.schema, file.id)) do %>
+                    <li class="text-gray-600 text-xs"><%= model_name %></li>
+                  <% end %>
+                </ul>
+              </li>
             <% else %>
-              <%= live_redirect to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id) do %>
-                <li class="pl-4 leading-8 bg-gray-800 bg-opacity-50">
+              <%= live_redirect to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id), class: "block" do %>
+                <li class="ml-2">
                   <%= file.name %>
                 </li>
               <% end %>
@@ -33,8 +40,8 @@
         <span class="flex-1"></span>
         <%=# render_storage(assigns) %>
       </aside>
-      <nav class="w-3/6 overflow-scroll">
-        <div class="text-xs px-2 h-8 bg-dark-gray sticky top-0 z-10">
+      <nav class="w-2/5 overflow-scroll">
+        <div class="text-xs px-2 h-8 bg-gray-900 sticky top-0 z-10">
           <%= if selected_count = selected_count(@ui, f) do %>
             <div class="flex items-center h-full space-x-2">
               <button phx-click="escape" class="text-gray-600 hover:text-gray-300" title="Deselect">&times;</button>
@@ -49,7 +56,7 @@
           <%= live_component @socket, ModuleComponent, id: f.name, file: @current_file, ui: @ui, f: f %>
         </div>
       </nav>
-      <aside class="w-2/6 overflow-scroll p-4 text-sm">
+      <aside class="w-2/5 overflow-scroll p-4 text-sm">
         <%= if !is_list(@ui.current_path) do %>
           <%= live_component @socket, SchComponent, id: @ui.current_path, sch: Sch.get(@current_file.schema, @ui.current_path), parent: get_parent(@current_file, @ui), ui: @ui, root?: f.name == Sch.find_parent(@ui.current_path).path %>
         <% end %>

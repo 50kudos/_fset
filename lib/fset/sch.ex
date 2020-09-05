@@ -601,7 +601,9 @@ defmodule Fset.Sch do
     map_ =
       parent
       |> Map.put(@properties, Map.new(remained))
-      |> Map.update!(@props_order, fn order -> order -- Keyword.keys(popped) end)
+      |> Map.update(@props_order, Keyword.keys(remained), fn order ->
+        order -- Keyword.keys(popped)
+      end)
 
     {popped, map_}
   end

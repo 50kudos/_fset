@@ -23,11 +23,18 @@ defmodule FsetWeb.ProfileLive do
   end
 
   @impl true
-  def render(%{projects: []} = assigns) do
+  def render(assigns) do
     ~L"""
     <div class="w-full">
       <%= render FsetWeb.LayoutView, "_header.html", assigns %>
       <section class="h-screen w-2/3 mx-auto flex flex-col items-center justify-center">
+        <ul>
+          <%= for project <- @projects do %>
+            <li>
+              <%= live_redirect project.name, to: Routes.main_path(@socket, :index, @username, project.name) %>
+            </li>
+          <% end %>
+        </ul>
         <div class="w-full flex flex-col items-center space-y-4">
           <button class="w-full md:w-1/2 h-32 border border-gray-800 hover:bg-indigo-800 text-2xl font-hairline rounded" phx-click="create_project">
             Create Project
@@ -41,21 +48,16 @@ defmodule FsetWeb.ProfileLive do
     """
   end
 
-  def render(assigns) do
-    ~L"""
-    <ul>
-      <%= for project <- @projects do %>
-        <li>
-          <%= live_redirect project.name, to: Routes.main_path(@socket, :index, @username, project.name) %>
-        </li>
-      <% end %>
-    </ul>
-    """
-  end
-
   @impl true
   def handle_event("create_project", _val, socket) do
-    files = Module.init_files(Module.encode(%{}))
+    # encoded = Module.encode(%{})
+    uploaded_file = %{
+      path: Path.expand("../../../test/support/fixtures/sch_samples/all-spec.json", __DIR__)
+    }
+
+    {:ok, encoded} = Project.load(uploaded_file, encoder: &Module.encode/1)
+    files = Module.init_files(encoded)
+
     {:ok, project} = Project.create_with_user(files, socket.assigns.current_user.id)
 
     {:noreply,
