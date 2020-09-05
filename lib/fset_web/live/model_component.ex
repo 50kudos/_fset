@@ -350,7 +350,7 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_type(assigns, :no_prevent) do
     ~L"""
-    <p class="text-blue-500 text-sm break-words flex-shrink-0">
+    <p class="text-blue-500 text-sm break-words _flex-shrink-0">
       <%= render_type_(assigns) %>
     </p>
     """
@@ -358,7 +358,7 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_type(assigns) do
     ~L"""
-    <p class="text-blue-500 text-sm break-words flex-shrink-0" onclick="event.preventDefault()">
+    <p class="text-blue-500 text-sm break-words _flex-shrink-0" onclick="event.preventDefault()">
       <%= render_type_(assigns) %>
     </p>
     """

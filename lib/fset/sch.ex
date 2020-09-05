@@ -678,6 +678,18 @@ defmodule Fset.Sch do
 
   defp pop_schs(_, _), do: nil
 
+  def ensure_props_order(object) do
+    props = Map.keys(Map.get(object, @properties, %{}))
+    object = Map.put_new(object, @props_order, props)
+    props_order = Map.get(object, @props_order)
+
+    if Enum.count(props) != Enum.count(props_order) do
+      Map.update!(object, @props_order, fn order -> Enum.uniq(order ++ props) end)
+    else
+      object
+    end
+  end
+
   def update(map, path, key, val) when is_binary(key) do
     cond do
       key in [@title, @description, @id] and is_binary(val) ->

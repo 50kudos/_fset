@@ -34,13 +34,14 @@ defmodule Fset.Module.Encode do
     end)
   end
 
-  defp encode(sch, acc \\ %{})
+  defp encode(map, acc \\ %{})
 
-  defp encode(sch, _acc) do
-    Sch.walk_container(sch, fn sch_ ->
+  defp encode(map, _acc) do
+    Sch.walk_container(map, fn sch ->
       cond do
-        Sch.leaf?(sch_, :multi) -> Sch.expand_multi_types(sch_)
-        true -> sch_
+        Sch.object?(sch) -> Sch.ensure_props_order(sch)
+        Sch.leaf?(sch, :multi) -> Sch.expand_multi_types(sch)
+        true -> sch
       end
     end)
   end
