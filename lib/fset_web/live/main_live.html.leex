@@ -11,17 +11,17 @@
         <ul class="overflow-scroll text-sm leading-6 space-y-4">
           <%= for file <- @files do %>
             <%= if @current_file.id == file.id do %>
-              <li class="ml-2 <%= if @current_file.id == file.id, do: "text-indigo-500" %>">
-                <%= file.name %>
-                <ul class="mt-1">
+              <li class="">
+                <span class="pl-2 block text-black sticky top-0 <%= if @current_file.id == file.id, do: "bg-indigo-500" %>"><%= file.name %></span>
+                <ul class="pl-2 py-2 border border-indigo-800 text-xs">
                   <%= for model_name <- Sch.order(Sch.get(@current_file.schema, file.id)) do %>
-                    <li class="text-gray-600 text-xs"><%= model_name %></li>
+                    <li class=""><%= model_name %></li>
                   <% end %>
                 </ul>
               </li>
             <% else %>
               <%= live_redirect to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id), class: "block" do %>
-                <li class="ml-2">
+                <li class="pl-2 hover:text-black hover:bg-indigo-500">
                   <%= file.name %>
                 </li>
               <% end %>

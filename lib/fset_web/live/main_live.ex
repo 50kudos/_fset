@@ -53,10 +53,8 @@ defmodule FsetWeb.MainLive do
     ui = socket.assigns.ui
 
     file =
-      if file.type == :main do
-        if type in Module.changable_types() do
-          Module.change_type(file, ui.current_path, type)
-        end
+      if type in Module.changable_types() do
+        Module.change_type(file, ui.current_path, type)
       end
 
     # current_section_sch = file.schema
@@ -151,7 +149,7 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("move", payload, socket) do
-    %{"oldIndices" => src_indices, "newIndices" => dst_indices} = payload |> IO.inspect()
+    %{"oldIndices" => src_indices, "newIndices" => dst_indices} = payload
 
     file = socket.assigns.current_file
 

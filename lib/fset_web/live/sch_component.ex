@@ -12,7 +12,7 @@ defmodule FsetWeb.SchComponent do
         <br>
         <dt class="inline-block text-xs text-gray-600">Raw :</dt>
         <dd class="inline-block text-gray-500">
-          <a href="data:application/json,<%= Jason.encode!(@sch, html_safe: true) %>" target="_blank" class="underline cursor-pointer">open</a>
+          <%= link "open", to: {:data, "application/json,#{URI.encode_www_form(Jason.encode!(@sch, html_safe: true))}"}, target: "_blank", class: "underline cursor-pointer" %>
         </dd>
       </dl>
       <%= render_required(assigns) %>
