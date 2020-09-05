@@ -26,11 +26,10 @@ defmodule Fset.Module.Encode do
 
   defp chunk_defs(defs, chunk_size) do
     defs
+    |> Enum.sort_by(fn {key, _sch} -> key end)
     |> Enum.chunk_every(chunk_size || @defs_chunk_size)
     |> Enum.map(fn defs_chuck ->
-      Enum.reduce(defs_chuck, %{}, fn {def, sch}, acc ->
-        Map.put(acc, def, encode(sch))
-      end)
+      Enum.map(defs_chuck, fn {def, sch} -> {def, encode(sch)} end)
     end)
   end
 

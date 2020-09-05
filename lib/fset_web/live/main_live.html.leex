@@ -14,7 +14,7 @@
               <li class="ml-2 <%= if @current_file.id == file.id, do: "text-indigo-500" %>">
                 <%= file.name %>
                 <ul class="mt-1">
-                  <%= for {model_name, model_sch} <- Sch.properties(Sch.get(@current_file.schema, file.id)) do %>
+                  <%= for model_name <- Sch.order(Sch.get(@current_file.schema, file.id)) do %>
                     <li class="text-gray-600 text-xs"><%= model_name %></li>
                   <% end %>
                 </ul>
