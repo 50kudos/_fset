@@ -42,7 +42,7 @@ defmodule FsetWeb.ModuleComponent do
     ~L"""
     <div id="moveable__<%= @f.name %>" phx-hook="moveable" data-group="body" data-path="<%= @f.name %>"
       data-current-paths="<%= Jason.encode!(List.wrap(@ui.current_path)) %>"
-      phx-capture-click="select_sch" phx-value-paths="<%= @f.name %>" class="grid grid-cols-fit py-6 h-full row-gap-6">
+      phx-capture-click="select_sch" phx-value-paths="<%= @f.name %>" class="grid grid-cols-fit py-6 h-full gap-4">
       <%= for key <- @models do %>
         <%= for f0 <- inputs_for(@f, key) do %>
           <%= live_component(@socket, ModelComponent,

@@ -563,7 +563,7 @@ defmodule Fset.Sch do
     end
   end
 
-  defp split_path(path) when is_binary(path) do
+  def split_path(path) when is_binary(path) do
     String.split(path, :binary.compile_pattern(["[", "][", "]"]), trim: true)
   end
 

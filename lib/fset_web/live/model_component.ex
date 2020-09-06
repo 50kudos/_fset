@@ -35,7 +35,11 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_folder(assigns) do
     ~L"""
-    <nav class="sort-handle <%= if selected?(@f, @ui), do: 'sortable-selected' %>" data-path="<%= @f.name %>">
+    <nav class="sort-handle
+      <%= if selected?(@f, @ui), do: 'sortable-selected-s' %>
+      <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow' %>"
+      data-path="<%= @f.name %>">
+
       <details phx-hook="openable" id="openable__<%= @f.name %>" <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>>
         <summary class="flex flex-col" >
           <%= render_folder_header(assigns) %>
@@ -343,7 +347,7 @@ defmodule FsetWeb.ModelComponent do
 
       true ->
         ~L"""
-        <span class="break-words"><%= Utils.word_break_html(@key) %></span>
+        <span class="break-words opacity-75"><%= Utils.word_break_html(@key) %></span>
         """
     end
   end

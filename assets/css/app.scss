@@ -25,16 +25,28 @@
   @apply py-0 border border-gray-700 border-dashed
 }*/
 .sort-handle [phx-click="add_field"] { @apply hidden }
-.sort-handle.sortable-selected > details > summary [phx-click="add_field"] { @apply inline }
-.sortable-selected > div {
-  @apply bg-indigo-600 bg-opacity-25
+.sort-handle.sortable-selected,
+.sort-handle.sortable-selected-s {
+  > details > summary [phx-click="add_field"] { @apply inline }
 }
-.sortable-selected > details {
-  --bg-opacity: 0.1 !important;
-  @apply bg-indigo-600
+.sortable-selected,
+.sortable-selected-s {
+  > div {
+    @apply bg-indigo-600 bg-opacity-25
+  }
 }
-.sortable-selected > details > summary > .dragover-hl {
-  @apply bg-indigo-700 bg-opacity-25
+.sortable-selected,
+.sortable-selected-s {
+  > details {
+    --bg-opacity: 0.1 !important;
+    @apply bg-indigo-600
+  }
+}
+.sortable-selected,
+.sortable-selected-s {
+  > details > summary > .dragover-hl {
+    @apply bg-indigo-700 bg-opacity-25
+  }
 }
 
 textarea { resize: none; }

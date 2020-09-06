@@ -55,7 +55,9 @@ defmodule FsetWeb.ProfileLive do
       path: Path.expand("../../../test/support/fixtures/sch_samples/all-spec.json", __DIR__)
     }
 
-    {:ok, encoded} = Project.load(uploaded_file, encoder: &Module.encode/1)
+    {:ok, encoded} =
+      Project.load(uploaded_file, encoder: fn a -> Module.encode(a, defs_per_file: 50) end)
+
     files = Module.init_files(encoded)
 
     {:ok, project} = Project.create_with_user(files, socket.assigns.current_user.id)

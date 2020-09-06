@@ -5,15 +5,15 @@
     <%= for error <- @ui.errors do %>
       <span class="w-full text-red-600"><%= error.payload.msg %></span>
     <% end %>
-    <section class="flex flex-grow overflow-scroll">
+    <section class="flex flex-grow overflow-scroll space-x-4">
       <aside class="w-1/5 flex flex-col text-gray-500 shadow bg-gray-900">
         <p class="ml-2 text-sm leading-8"><%= @project_name %></p>
         <ul class="overflow-scroll text-sm leading-6 space-y-4">
           <%= for file <- @files do %>
             <%= if @current_file.id == file.id do %>
               <li class="">
-                <span class="pl-2 block text-black sticky top-0 <%= if @current_file.id == file.id, do: "bg-indigo-500" %>"><%= file.name %></span>
-                <ul class="pl-2 py-2 border border-indigo-800 text-xs">
+                <span class="pl-2 block text-black sticky top-0 <%= if @current_file.id == file.id, do: "bg-teal-600 rounded-tl rounded-tr" %>"><%= file.name %></span>
+                <ul class="pl-2 py-2 border border-teal-900 text-xs">
                   <%= for model_name <- Sch.order(Sch.get(@current_file.schema, file.id)) do %>
                     <li class=""><%= model_name %></li>
                   <% end %>
@@ -21,7 +21,7 @@
               </li>
             <% else %>
               <%= live_redirect to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id), class: "block" do %>
-                <li class="pl-2 hover:text-black hover:bg-indigo-500">
+                <li class="pl-2 hover:text-black hover:bg-teal-600">
                   <%= file.name %>
                 </li>
               <% end %>
@@ -56,7 +56,7 @@
           <%= live_component @socket, ModuleComponent, id: f.name, file: @current_file, ui: @ui, f: f %>
         </div>
       </nav>
-      <aside class="w-2/5 overflow-scroll p-4 text-sm">
+      <aside class="w-2/5 overflow-scroll text-sm">
         <%= if !is_list(@ui.current_path) do %>
           <%= live_component @socket, SchComponent, id: @ui.current_path, sch: Sch.get(@current_file.schema, @ui.current_path), parent: get_parent(@current_file, @ui), ui: @ui, root?: f.name == Sch.find_parent(@ui.current_path).path %>
         <% end %>

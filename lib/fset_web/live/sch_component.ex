@@ -5,33 +5,13 @@ defmodule FsetWeb.SchComponent do
   @impl true
   def render(assigns) do
     ~L"""
-    <article>
-      <dl class="mb-2">
-        <dt class="inline-block text-xs text-gray-600">Path :</dt>
-        <dd class="inline-block text-gray-500 break-all"><%= if !is_list(@ui.current_path), do: @ui.current_path, else: "multi-paths" %></dd>
-        <br>
-        <dt class="inline-block text-xs text-gray-600">Raw :</dt>
-        <dd class="inline-block text-gray-500">
-          <%= link "open", to: {:data, "application/json,#{URI.encode_www_form(Jason.encode!(@sch, html_safe: true))}"}, target: "_blank", class: "underline cursor-pointer" %>
-        </dd>
-      </dl>
+    <article class="mt-12">
+      <%=# render_header(assigns) %>
       <%= render_required(assigns) %>
-      <label class="block border border-gray-800">
-        <p class="px-2 py-1 text-xs text-gray-600">Title</p>
-        <textarea type="text" class="block px-2 py-1 bg-gray-900 shadow w-full"
-          phx-blur="update_sch"
-          phx-value-key="title"
-          rows="2"
-          spellcheck="false"><%= Sch.title(@sch) %></textarea>
-      </label>
-      <label class="block border border-gray-800">
-        <p class="px-2 py-1 text-xs text-gray-600">Description</p>
-        <textarea type="text" class="block px-2 py-1 bg-gray-900 shadow w-full"
-          phx-blur="update_sch"
-          phx-value-key="description"
-          rows="2"
-          spellcheck="false"><%= Sch.description(@sch) %></textarea>
-      </label>
+      <%= if @root? do %>
+        <h1 class="px-2 text-teal-600 text-2xl"><%= List.last(Sch.split_path(@ui.current_path)) %></h1>
+      <% end %>
+      <%= render_title_description(assigns) %>
       <%= render_sch(assigns) %>
       <%= render_examples(assigns) %>
     </article>
@@ -41,8 +21,57 @@ defmodule FsetWeb.SchComponent do
   @impl true
   def update(assigns, socket) do
     socket = assign(socket, Map.take(assigns, [:ui, :sch, :parent, :root?]))
+    socket = assign(socket, :title, Sch.title(socket.assigns.sch))
+    socket = assign(socket, :description, Sch.description(socket.assigns.sch))
 
     {:ok, socket}
+  end
+
+  def render_header(assigns) do
+    ~L"""
+    <dl class="mb-2">
+      <dt class="inline-block text-xs text-gray-600">Path :</dt>
+      <dd class="inline-block text-gray-500 break-all"><%= if !is_list(@ui.current_path), do: @ui.current_path, else: "multi-paths" %></dd>
+      <br>
+      <dt class="inline-block text-xs text-gray-600">Raw :</dt>
+      <dd class="inline-block text-gray-500">
+        <%= link "open", to: {:data, "application/json,#{URI.encode_www_form(Jason.encode!(@sch, html_safe: true))}"}, target: "_blank", class: "underline cursor-pointer" %>
+      </dd>
+    </dl>
+    """
+  end
+
+  defp take_title_description(sch) do
+    %{title: Sch.title(sch), description: Sch.description(sch)}
+  end
+
+  defp render_title_description(assigns) do
+    ~L"""
+    <label class="block my-1">
+      <p class="px-2 py-1 text-xs text-gray-700"></p>
+      <textarea type="text" class="block px-2 py-1 bg-gray-900 shadow w-full"
+        id="<%= :erlang.ref_to_list(make_ref()) %>"
+        phx-blur="update_sch"
+        phx-hook="autoResize"
+        phx-value-key="title"
+        rows="2"
+        spellcheck="false"
+        placeholder="Title"
+        ><%= @title %></textarea>
+    </label>
+    <label class="block my-1">
+      <p class="px-2 py-1 text-xs text-gray-700"></p>
+      <textarea type="text" class="block px-2 py-1 bg-gray-900 shadow w-full"
+        id="<%= :erlang.ref_to_list(make_ref()) %>"
+        phx-blur="update_sch"
+        phx-hook="autoResize"
+        phx-value-key="description"
+        rows="2"
+        spellcheck="false"
+        placeholder="Description"
+        ><%= @description %></textarea>
+    </label>
+    """
   end
 
   defp render_sch(assigns) do
@@ -60,6 +89,15 @@ defmodule FsetWeb.SchComponent do
 
   defp render_object(assigns) do
     ~L"""
+      <section class="">
+        <%= for prop <- Sch.order(@sch) do %>
+          <article class="my-10">
+            <h1 class="px-2 text-xl text-yellow-600"><%= prop %></h1>
+            <%= render_title_description(Map.merge(assigns, Sch.prop_sch(@sch, prop) |> take_title_description())) %>
+          </article>
+          <hr class="border-gray-800">
+        <% end %>
+      </section>
       <div class="grid grid-cols-2">
         <label class="border border-gray-800">
           <p class="px-2 py-1 text-xs text-gray-600">Max Properties</p>
