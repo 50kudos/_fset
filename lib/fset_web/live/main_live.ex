@@ -112,9 +112,8 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("update_sch", params, socket) do
-    %{"key" => key} = params
+    %{"key" => key, "path" => sch_path} = params
     value = Map.get(params, "value")
-    sch_path = socket.assigns.ui.current_path
 
     file = socket.assigns.current_file
     schema = Sch.update(file.schema, sch_path, key, value)

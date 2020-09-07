@@ -7,11 +7,11 @@ defmodule FsetWeb.SchComponent do
     ~L"""
     <article class="mt-12">
       <%=# render_header(assigns) %>
-      <%= render_required(assigns) %>
-      <%= if @root? do %>
-        <h1 class="px-2 text-teal-600 text-2xl"><%= List.last(Sch.split_path(@ui.current_path)) %></h1>
-      <% end %>
-      <%= render_title_description(assigns) %>
+      <%=# render_required(assigns) %>
+
+      <h1 class="px-2 text-teal-600 text-2xl"><%= List.last(Sch.split_path(@ui.current_path)) %></h1>
+      <%= render_title(assigns) %>
+      <%= render_description(assigns) %>
       <%= render_sch(assigns) %>
       <%= render_examples(assigns) %>
     </article>
@@ -20,9 +20,14 @@ defmodule FsetWeb.SchComponent do
 
   @impl true
   def update(assigns, socket) do
-    socket = assign(socket, Map.take(assigns, [:ui, :sch, :parent, :root?]))
-    socket = assign(socket, :title, Sch.title(socket.assigns.sch))
-    socket = assign(socket, :description, Sch.description(socket.assigns.sch))
+    socket = assign(socket, :sch, Sch.get(assigns.file.schema, assigns.ui.current_path))
+    socket = assign(socket, :f, %{assigns.f | name: assigns.ui.current_path})
+
+    socket =
+      socket
+      |> assign(:ui, assigns.ui)
+      |> assign(:title, Sch.title(socket.assigns.sch))
+      |> assign(:description, Sch.description(socket.assigns.sch))
 
     {:ok, socket}
   end
@@ -41,31 +46,45 @@ defmodule FsetWeb.SchComponent do
     """
   end
 
-  defp take_title_description(sch) do
-    %{title: Sch.title(sch), description: Sch.description(sch)}
+  defp title_description_assigns(assigns, prop) do
+    this_assigns =
+      if sch = Sch.prop_sch(assigns.sch, prop) do
+        %{title: Sch.title(sch), description: Sch.description(sch), key: prop}
+      else
+        %{key: nil}
+      end
+
+    Map.merge(assigns, this_assigns)
   end
 
-  defp render_title_description(assigns) do
+  defp render_title(assigns) do
     ~L"""
     <label class="block my-1">
       <p class="px-2 py-1 text-xs text-gray-700"></p>
       <textarea type="text" class="block px-2 py-1 bg-gray-900 shadow w-full"
-        id="<%= :erlang.ref_to_list(make_ref()) %>"
+        id="<%= @f.name <> ~s(_title) %>"
         phx-blur="update_sch"
         phx-hook="autoResize"
         phx-value-key="title"
+        phx-value-path="<%= @f.name %>"
         rows="2"
         spellcheck="false"
         placeholder="Title"
         ><%= @title %></textarea>
     </label>
+    """
+  end
+
+  defp render_description(assigns) do
+    ~L"""
     <label class="block my-1">
       <p class="px-2 py-1 text-xs text-gray-700"></p>
       <textarea type="text" class="block px-2 py-1 bg-gray-900 shadow w-full"
-        id="<%= :erlang.ref_to_list(make_ref()) %>"
+        id="<%= @f.name <> ~s(_description) %>"
         phx-blur="update_sch"
         phx-hook="autoResize"
         phx-value-key="description"
+        phx-value-path="<%= @f.name %>"
         rows="2"
         spellcheck="false"
         placeholder="Description"
@@ -93,7 +112,8 @@ defmodule FsetWeb.SchComponent do
         <%= for prop <- Sch.order(@sch) do %>
           <article class="my-10">
             <h1 class="px-2 text-xl text-yellow-600"><%= prop %></h1>
-            <%= render_title_description(Map.merge(assigns, Sch.prop_sch(@sch, prop) |> take_title_description())) %>
+            <%= render_title(%{assigns | sch: Sch.get(@sch, prop), f: hd(inputs_for(@f, prop)), title: Sch.get(@sch, prop) |> Sch.title() }) %>
+            <%= render_description(%{assigns | sch: Sch.get(@sch, prop), f: hd(inputs_for(@f, prop)), description: Sch.get(@sch, prop) |> Sch.description() }) %>
           </article>
           <hr class="border-gray-800">
         <% end %>
@@ -104,18 +124,20 @@ defmodule FsetWeb.SchComponent do
           <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
             phx-hook="updateSch"
             phx-value-key="maxProperties"
+            phx-value-path="<%= @f.name %>"
             value="<%= Sch.max_properties(@sch) %>"
             class="px-2 py-1 bg-gray-900 shadow w-full"
-            id="updateSch__maxProperties_<%= @ui.current_path %>">
+            id="updateSch__maxProperties_<%= @f.name %>">
         </label>
         <label class="border border-gray-800">
           <p class="px-2 py-1 text-xs text-gray-600">Min Properties</p>
           <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
             phx-hook="updateSch"
             phx-value-key="minProperties"
+            phx-value-path="<%= @f.name %>"
             value="<%= Sch.min_properties(@sch) %>"
             class="px-2 py-1 bg-gray-900 shadow w-full"
-            id="updateSch__minProperties_<%= @ui.current_path %>">
+            id="updateSch__minProperties_<%= @f.name %>">
         </label>
       </div>
     """
@@ -129,18 +151,20 @@ defmodule FsetWeb.SchComponent do
         <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
             phx-hook="updateSch"
             phx-value-key="minItems"
+            phx-value-path="<%= @f.name %>"
             value="<%= Sch.min_items(@sch) %>"
             class="flex-1 min-w-0 px-2 py-1 bg-gray-900 text-center shadow"
-            id="updateSch__minItem_<%= @ui.current_path %>">
+            id="updateSch__minItem_<%= @f.name %>">
         <span class="flex-1 text-center text-blue-500">≤</span>
         <span class="flex-1 text-center text-blue-500">N</span>
         <span class="flex-1 text-center text-blue-500">≤</span>
         <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
           phx-hook="updateSch"
           phx-value-key="maxItems"
+          phx-value-path="<%= @f.name %>"
           value="<%= Sch.max_items(@sch) %>"
           class="flex-1 min-w-0 px-2 py-1 bg-gray-900 text-center shadow"
-          id="updateSch__maxItem_<%= @ui.current_path %>">
+          id="updateSch__maxItem_<%= @f.name %>">
       </div>
     </div>
     """
@@ -154,18 +178,20 @@ defmodule FsetWeb.SchComponent do
           <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
             phx-hook="updateSch"
             phx-value-key="minLength"
+            phx-value-path="<%= @f.name %>"
             value="<%= Sch.min_length(@sch) %>"
             class="px-2 py-1 bg-gray-900 shadow w-full"
-            id="updateSch__minLength_<%= @ui.current_path %>">
+            id="updateSch__minLength_<%= @f.name %>">
         </label>
         <label class="border border-gray-800">
           <p class="px-2 py-1 text-xs text-gray-600">Max Length</p>
           <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
             phx-hook="updateSch"
             phx-value-key="maxLength"
+            phx-value-path="<%= @f.name %>"
             value="<%= Sch.max_length(@sch) %>"
             class="px-2 py-1 bg-gray-900 shadow w-full"
-            id="updateSch__maxLength_<%= @ui.current_path %>">
+            id="updateSch__maxLength_<%= @f.name %>">
         </label>
         <label class="col-span-2 border border-gray-800">
           <div class="px-2 py-1 text-xs text-gray-600">
@@ -175,9 +201,10 @@ defmodule FsetWeb.SchComponent do
           <input type="string"
             phx-hook="updateSch"
             phx-value-key="pattern"
+            phx-value-path="<%= @f.name %>"
             value="<%= Sch.pattern(@sch) %>"
             class="px-2 py-1 bg-gray-900 shadow w-full"
-            id="updateSch__pattern_<%= @ui.current_path %>">
+            id="updateSch__pattern_<%= @f.name %>">
         </label>
       </div>
     """
@@ -191,18 +218,20 @@ defmodule FsetWeb.SchComponent do
         <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
           phx-hook="updateSch"
           phx-value-key="maximum"
+          phx-value-path="<%= @f.name %>"
           value="<%= Sch.maximum(@sch) %>"
           class="px-2 py-1 bg-gray-900 shadow w-full"
-          id="updateSch__maximum_<%= @ui.current_path %>">
+          id="updateSch__maximum_<%= @f.name %>">
       </label>
       <label class="border border-gray-800">
         <p class="px-2 py-1 text-xs text-gray-600">Minimum</p>
         <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
           phx-hook="updateSch"
           phx-value-key="minimum"
+          phx-value-path="<%= @f.name %>"
           value="<%= Sch.minimum(@sch) %>"
           class="px-2 py-1 bg-gray-900 shadow w-full"
-          id="updateSch__minimum_<%= @ui.current_path %>">
+          id="updateSch__minimum_<%= @f.name %>">
       </label>
       <label class="border border-gray-800">
         <p class="px-2 py-1 text-xs text-gray-600">Multiple Of</p>
@@ -211,7 +240,7 @@ defmodule FsetWeb.SchComponent do
           phx-value-key="multipleOf"
           value="<%= Sch.multiple_of(@sch) %>"
           class="px-2 py-1 bg-gray-900 shadow w-full"
-          id="updateSch__multipleOf_<%= @ui.current_path %>">
+          id="updateSch__multipleOf_<%= @f.name %>">
       </label>
     </div>
     """
@@ -223,7 +252,8 @@ defmodule FsetWeb.SchComponent do
       <p class="px-2 py-1 text-xs text-gray-600">Json Value</p>
       <textarea type="text" class="px-2 py-1 block bg-gray-900 shadow w-full" rows="2"
         phx-blur="update_sch"
-        phx-value-key="const">
+        phx-value-key="const"
+        phx-value-path="<%= @f.name %>">
 
         <%= Jason.encode_to_iodata!(Sch.const(@sch)) %>
       </textarea>
@@ -246,9 +276,9 @@ defmodule FsetWeb.SchComponent do
 
   defp render_required(assigns) do
     ~L"""
-    <%= if Sch.object?(@parent) && !@root? do %>
+    <%= if Sch.object?(@parent) do %>
       <label class="flex items-center">
-        <input type="checkbox" phx-click="update_sch" phx-value-key="required" value="<%= checked?(@parent, @ui) %>" class="mr-1" <%= checked?(@parent, @ui) && "checked" %>>
+        <input type="checkbox" phx-click="update_sch" phx-value-key="required" phx-value-path="<%= @f.name %>" value="<%= checked?(@parent, @ui) %>" class="mr-1" <%= checked?(@parent, @ui) && "checked" %>>
         <p class="p-1 text-xs text-gray-600 select-none">Required</p>
       </label>
     <% end %>
