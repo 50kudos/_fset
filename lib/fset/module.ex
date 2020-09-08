@@ -66,6 +66,7 @@ defmodule Fset.Module do
         "null" -> New.null()
         "union" -> New.any_of([New.object(), New.array(), New.string()])
         "value" -> New.const()
+        {:ref, anchor} -> Sch.New.ref(anchor)
       end
 
     %{file | schema: Sch.change_type(root, path, to_type)}

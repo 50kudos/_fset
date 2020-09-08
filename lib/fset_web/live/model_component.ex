@@ -354,7 +354,7 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_type(assigns, :no_prevent) do
     ~L"""
-    <p class="text-blue-500 text-sm break-words _flex-shrink-0">
+    <p class="text-blue-500 text-sm break-words overflow-auto _flex-shrink-0">
       <%= render_type_(assigns) %>
     </p>
     """
@@ -362,7 +362,7 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_type(assigns) do
     ~L"""
-    <p class="text-blue-500 text-sm break-words _flex-shrink-0" onclick="event.preventDefault()">
+    <p class="text-blue-500 text-sm break-words overflow-auto _flex-shrink-0" onclick="event.preventDefault()">
       <%= render_type_(assigns) %>
     </p>
     """
@@ -486,14 +486,14 @@ defmodule FsetWeb.ModelComponent do
       Sch.null?(sch) -> "null"
       Sch.any_of?(sch) -> "union"
       Sch.any?(sch) -> "any"
-      Sch.ref?(sch) -> "ref_type(sch, ui)"
+      Sch.ref?(sch) -> ref_type(sch, ui)
       Sch.const?(sch) -> const_type(sch)
       true -> "please define what type #{inspect(sch)} is"
     end
   end
 
   defp text_val_types(ui) do
-    Module.changable_types() ++ Map.keys(ui.model_names)
+    Module.changable_types() ++ Enum.map(ui.model_names, fn {key, _} -> key end)
   end
 
   defp error_class(assigns) do
@@ -520,8 +520,6 @@ defmodule FsetWeb.ModelComponent do
     end
   end
 
-  defp ref_type(nil, _), do: "#invalid_type"
-
   defp ref_type(sch, ui) do
     Enum.find_value(ui.model_names, fn {k, anchor} ->
       if "#" <> anchor == Sch.ref(sch) do
@@ -531,6 +529,6 @@ defmodule FsetWeb.ModelComponent do
         <span class='text-teal-500'><%= Utils.word_break_html(k) %></span>
         """
       end
-    end)
+    end) || "#invalid_type"
   end
 end

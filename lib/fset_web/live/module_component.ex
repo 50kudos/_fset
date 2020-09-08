@@ -5,7 +5,7 @@ defmodule FsetWeb.ModuleComponent do
 
   @impl true
   def update(assigns, socket) do
-    init_ui = Map.merge(assigns.ui, %{tab: 4, parent_path: assigns.f.name})
+    init_ui = Map.merge(assigns.ui, %{tab: 1, parent_path: assigns.f.name})
     file = assigns.file
     file = Map.update!(file, :schema, fn root -> Sch.sanitize(Sch.get(root, file.id)) end)
     current_section_sch = file.schema
@@ -13,16 +13,7 @@ defmodule FsetWeb.ModuleComponent do
     {:ok,
      socket
      |> assign(:ui, init_ui)
-     |> update(:ui, fn ui ->
-       model_names =
-         for k <- Sch.order(current_section_sch), reduce: %{} do
-           acc ->
-             model_sch = Sch.prop_sch(current_section_sch, k)
-             Map.put(acc, k, Sch.anchor(model_sch))
-         end
-
-       Map.put(ui, :model_names, model_names)
-     end)
+     |> update(:ui, fn ui -> Map.put(ui, :model_names, assigns.model_names) end)
      |> assign(:f, assigns.f)
      |> assign(:body, current_section_sch)
      |> assign(:type, file.type)

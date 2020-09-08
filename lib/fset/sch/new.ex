@@ -54,4 +54,8 @@ defmodule Fset.Sch.New do
   def put_anchor(sch, a) do
     Map.put_new(sch, @anchor, a)
   end
+
+  def put_ref(sch, r) do
+    Map.put(sch, @ref, r)
+  end
 end

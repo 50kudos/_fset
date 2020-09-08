@@ -43,7 +43,7 @@ defmodule Fset.Project do
     schs_indice_q =
       from f in ProjectFile,
         where: f.project_id == ^project_id,
-        select: [:id, :name, :type, :project_id]
+        select: [:id, :name, :type, :project_id, :schema]
 
     Repo.all(schs_indice_q)
   end

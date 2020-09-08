@@ -18,11 +18,26 @@ defmodule FsetWeb.MainLive do
       Phoenix.PubSub.subscribe(Fset.PubSub, "sch_update:" <> socket.assigns.current_file.id)
     end
 
+    {model_names, schs_indice} =
+      Enum.flat_map_reduce(schs_indice, [], fn fi, acc ->
+        fi = Map.update!(fi, :schema, fn root -> Sch.get(root, fi.id) end)
+        schema = fi.schema
+
+        model_anchor =
+          for k <- Sch.order(schema) do
+            model_sch = Sch.prop_sch(schema, k)
+            {k, Sch.anchor(model_sch)}
+          end
+
+        {model_anchor, [%{fi | schema: nil} | acc]}
+      end)
+
     {:ok,
      socket
      |> assign_new(:current_user, fn -> user end)
      |> assign(:project_name, project.name)
-     |> assign(:files, schs_indice)
+     |> assign(:files, Enum.reverse(schs_indice))
+     |> assign(:model_names, model_names)
      |> assign(:ui, %{
        current_path: current_file.id,
        current_edit: nil,
@@ -51,24 +66,19 @@ defmodule FsetWeb.MainLive do
     type = Map.get(val, "type") || Map.get(val, "value")
     file = socket.assigns.current_file
     ui = socket.assigns.ui
+    model_names = socket.assigns.model_names
 
     file =
-      if type in Module.changable_types() do
-        Module.change_type(file, ui.current_path, type)
+      cond do
+        type in Module.changable_types() ->
+          Module.change_type(file, ui.current_path, type)
+
+        {_m, anchor} = Enum.find(model_names, fn {m, _a} -> m == type end) ->
+          Module.change_type(file, ui.current_path, {:ref, anchor})
+
+        true ->
+          file
       end
-
-    # current_section_sch = file.schema
-    # anchor =
-    #   Enum.find_value(
-    #     Sch.properties(current_section_sch),
-    #     fn {k, sch} -> k == type && Sch.anchor(sch) end
-    #   )
-
-    # if anchor do
-    #   fn sch -> Sch.change_type(sch, ui.current_path, New.ref(anchor)) end
-    # else
-    #   fn a -> a end
-    # end
 
     socket = update(socket, :current_file, fn _ -> file end)
 

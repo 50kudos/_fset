@@ -567,6 +567,16 @@ defmodule Fset.Sch do
     String.split(path, :binary.compile_pattern(["[", "][", "]"]), trim: true)
   end
 
+  def split_fragment_path("#/" <> @definitions <> path) do
+    split_fragment_path("#/" <> @defs <> path)
+  end
+
+  def split_fragment_path("#/" <> @defs <> "" <> path) do
+    String.split(path, :binary.compile_pattern(["/"]), trim: true) |> List.last()
+  end
+
+  def split_fragment_path(_), do: nil
+
   # defp find_root(path) when is_binary(path) do
   #   hd(split_path(path))
   # end
