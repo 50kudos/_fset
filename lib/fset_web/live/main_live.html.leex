@@ -53,12 +53,12 @@
           <% end %>
         </div>
         <div class="min-h-full" phx-window-keyup="module_keyup">
-          <%= live_component @socket, ModuleComponent, id: f.name, file: @current_file, model_names: @model_names, ui: @ui, f: f %>
+          <%= live_component @socket, ModuleComponent, id: f.name, file: @current_file, model_names: @model_names, ui: @ui, path: @current_file.id %>
         </div>
       </nav>
       <aside class="w-2/5 overflow-scroll text-sm">
         <%= if !is_list(@ui.current_path) do %>
-          <%= live_component @socket, SchComponent, id: f.name, file: @current_file, ui: @ui, f: f %>
+          <%= live_component @socket, SchComponent, id: f.name, file: @current_file, ui: @ui, path: @current_file.id %>
         <% end %>
       </aside>
     </section>

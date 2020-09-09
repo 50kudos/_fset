@@ -5,7 +5,7 @@ defmodule FsetWeb.ModuleComponent do
 
   @impl true
   def update(assigns, socket) do
-    init_ui = Map.merge(assigns.ui, %{tab: 1, parent_path: assigns.f.name})
+    init_ui = Map.merge(assigns.ui, %{tab: 1, parent_path: assigns.path})
     file = assigns.file
     file = Map.update!(file, :schema, fn root -> Sch.sanitize(Sch.get(root, file.id)) end)
     current_section_sch = file.schema
@@ -14,7 +14,7 @@ defmodule FsetWeb.ModuleComponent do
      socket
      |> assign(:ui, init_ui)
      |> update(:ui, fn ui -> Map.put(ui, :model_names, assigns.model_names) end)
-     |> assign(:f, assigns.f)
+     |> assign(:path, assigns.path)
      |> assign(:body, current_section_sch)
      |> assign(:type, file.type)
      |> assign(:models, Sch.order(current_section_sch))
@@ -31,20 +31,18 @@ defmodule FsetWeb.ModuleComponent do
 
   defp render_model(assigns) do
     ~L"""
-    <div id="moveable__<%= @f.name %>" phx-hook="moveable" data-group="body" data-path="<%= @f.name %>"
+    <div id="moveable__<%= @path %>" phx-hook="moveable" data-group="body" data-path="<%= @path %>"
       data-current-paths="<%= Jason.encode!(List.wrap(@ui.current_path)) %>"
-      phx-capture-click="select_sch" phx-value-paths="<%= @f.name %>" class="grid grid-cols-fit py-6 h-full gap-4">
+      phx-capture-click="select_sch" phx-value-paths="<%= @path %>" class="grid grid-cols-fit py-6 h-full gap-4">
       <%= for key <- @models do %>
-        <%= for f0 <- inputs_for(@f, key) do %>
-          <%= live_component(@socket, ModelComponent,
-            id: f0.name,
-            key: key,
-            sch: Sch.prop_sch(@body, key),
-            parent: @body,
-            ui: @ui,
-            f: f0
-          ) %>
-        <% end %>
+        <%= live_component(@socket, ModelComponent,
+          id: input_name(@path, key),
+          key: key,
+          sch: Sch.prop_sch(@body, key),
+          parent: @body,
+          ui: @ui,
+          path: input_name(@path, key)
+        ) %>
       <% end %>
     </div>
     """
@@ -52,15 +50,15 @@ defmodule FsetWeb.ModuleComponent do
 
   defp render_main(assigns) do
     ~L"""
-    <main id="moveable__<%= @f.name %>" phx-hook="moveable" data-group="body" data-path="<%= @f.name %>"
+    <main id="moveable__<%= @path %>" phx-hook="moveable" data-group="body" data-path="<%= @path %>"
       data-current-paths="<%= Jason.encode!(List.wrap(@ui.current_path)) %>"
-      phx-capture-click="select_sch" phx-value-paths="<%= @f.name %>" class="grid grid-cols-fit py-6 h-full row-gap-6">
+      phx-capture-click="select_sch" phx-value-paths="<%= @path %>" class="grid grid-cols-fit py-6 h-full row-gap-6">
       <%= live_component(@socket, ModelComponent,
-        id: @f.name,
+        id: @path,
         key: @name,
         sch: @body,
         ui: @ui,
-        f: @f
+        path: @path
       ) %>
     </main>
     """

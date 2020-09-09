@@ -9,14 +9,14 @@ defmodule FsetWeb.ModelComponent do
 
   @impl true
   def update(assigns, socket) do
-    parent_assigns = Map.take(assigns, [:key, :sch, :parent, :ui, :f])
+    parent_assigns = Map.take(assigns, [:key, :sch, :parent, :ui, :path])
 
     {:ok,
      socket
      |> assign(parent_assigns)
      |> update(:sch, fn sch -> Map.delete(sch, "examples") end)
      |> update(:ui, fn ui -> Map.put_new(ui, :level, ui.tab) end)
-     |> update(:ui, fn ui -> Map.put_new(ui, :parent_path, parent_assigns.f.name) end)}
+     |> update(:ui, fn ui -> Map.put_new(ui, :parent_path, parent_assigns.path) end)}
   end
 
   @impl true
@@ -36,16 +36,16 @@ defmodule FsetWeb.ModelComponent do
   defp render_folder(assigns) do
     ~L"""
     <nav class="sort-handle
-      <%= if selected?(@f, @ui), do: 'sortable-selected-s' %>
+      <%= if selected?(@path, @ui), do: 'sortable-selected-s' %>
       <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow' %>"
-      data-path="<%= @f.name %>">
+      data-path="<%= @path %>">
 
-      <details phx-hook="openable" id="openable__<%= @f.name %>" <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>>
+      <details phx-hook="openable" id="openable__<%= @path %>" <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>>
         <summary class="flex flex-col" >
           <%= render_folder_header(assigns) %>
         </summary>
         <article
-          id="moveable__<%= @f.name %>"
+          id="moveable__<%= @path %>"
           phx-hook="moveable"
           data-indent="<%= (@ui.level + 1) * 1.25 %>rem">
 
@@ -59,7 +59,7 @@ defmodule FsetWeb.ModelComponent do
   defp render_folder_header(%{ui: %{level: _}} = assigns) do
     ~L"""
     <div class="relative dragover-hl flex flex-wrap items-start w-full">
-      <%= if selected?(@f, @ui, :single) do %>
+      <%= if selected?(@path, @ui, :single) do %>
         <p class="absolute m-1 leading-4 text-gray-900 font-mono text-xs">
           <span class="close-marker cursor-pointer select-none">+</span>
           <span class="open-marker cursor-pointer select-none">-</span>
@@ -85,30 +85,28 @@ defmodule FsetWeb.ModelComponent do
   defp render_object(assigns) do
     ~L"""
     <%= for key <- (Sch.order(@sch) ++ Map.keys(Sch.properties(@sch) || %{})) |> Enum.uniq() do %>
-      <%= for f0 <- inputs_for(@f, key) do %>
-        <%= live_component(@socket, __MODULE__,
-          id: f0.name,
-          key: key,
-          sch: if(is_map(Sch.prop_sch(@sch, key)), do: Sch.prop_sch(@sch, key), else: %{}),
-          parent: @sch,
-          ui: %{@ui | level: @ui.level + 1, parent_path: @f.name},
-          f: f0
-        ) %>
-      <% end %>
+      <%= live_component(@socket, __MODULE__,
+        id: input_name(@path, key),
+        key: key,
+        sch: if(is_map(Sch.prop_sch(@sch, key)), do: Sch.prop_sch(@sch, key), else: %{}),
+        parent: @sch,
+        ui: %{@ui | level: @ui.level + 1, parent_path: @path},
+        path: input_name(@path, key)
+      ) %>
     <% end %>
     """
   end
 
   defp render_array(assigns) do
     ~L"""
-    <%= for f0 <- inputs_for(@f, nil, default: List.wrap(Sch.items(@sch))) do %>
+    <%= for {data, i} <- Enum.with_index(List.wrap(Sch.items(@sch))) do %>
       <%= live_component(@socket, __MODULE__,
-        id: f0.name,
-        key: f0.index,
-        sch: if(is_map(f0.data), do: f0.data, else: %{}),
+        id: input_name(@path <> "[]", Integer.to_string(i)),
+        key: i,
+        sch: if(is_map(data), do: data, else: %{}),
         parent: @sch,
-        ui: %{@ui | level: @ui.level + 1, parent_path: @f.name},
-        f: f0
+        ui: %{@ui | level: @ui.level + 1, parent_path: @path},
+        path: input_name(@path <> "[]", Integer.to_string(i))
       ) %>
     <% end %>
     """
@@ -116,14 +114,14 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_union(assigns) do
     ~L"""
-    <%= for f0 <- inputs_for(@f, nil, default: Sch.any_of(@sch)) do %>
+    <%= for {data, i} <- Enum.with_index(List.wrap(Sch.any_of(@sch))) do %>
       <%= live_component(@socket, __MODULE__,
-        id: f0.name,
+        id: input_name(@path <> "[]", Integer.to_string(i)),
         key: "",
-        sch: if(is_map(f0.data), do: f0.data, else: %{}),
+        sch: if(is_map(data), do: data, else: %{}),
         parent: @sch,
-        ui: %{@ui | level: @ui.level + 1, parent_path: @f.name},
-        f: f0
+        ui: %{@ui | level: @ui.level + 1, parent_path: @path},
+        path: input_name(@path <> "[]", Integer.to_string(i))
       ) %>
     <% end %>
     """
@@ -131,7 +129,7 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_file(assigns) do
     ~L"""
-    <nav class="sort-handle <%= if selected?(@f, @ui), do: 'sortable-selected' %>" data-path="<%= @f.name %>">
+    <nav class="sort-handle <%= if selected?(@path, @ui), do: 'sortable-selected' %>" data-path="<%= @path %>">
       <%= render_key_type_pair(assigns) %>
     </nav>
     """
@@ -147,7 +145,7 @@ defmodule FsetWeb.ModelComponent do
         onclick="event.preventDefault()">
       </div>
 
-      <%= if selected?(@f, @ui, :single) do %>
+      <%= if selected?(@path, @ui, :single) do %>
         <%= render_key(assigns) %>
         <%= render_type_options(assigns) %>
       <% else %>
@@ -156,10 +154,10 @@ defmodule FsetWeb.ModelComponent do
       <% end %>
 
       <div class="flex-1 px-1 text-right" onclick="event.preventDefault()">
-        <div class="<%= if selected?(@f, @ui, :multi), do: 'hidden' %>">
+        <div class="<%= if selected?(@path, @ui, :multi), do: 'hidden' %>">
           <%= render_add_button(assigns) %>
         </div>
-        <% if selected?(@f, @ui, :single) do %>
+        <% if selected?(@path, @ui, :single) do %>
         <% else %>
           &nbsp;
         <% end %>
@@ -171,7 +169,7 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_type_options(assigns) do
     ~L"""
-    <%= if selected?(@f, @ui, :single) do %>
+    <%= if selected?(@path, @ui, :single) do %>
       <details class="relative min-w-0" phx-hook="focusOnOpen" id="change_type_input">
         <summary class="block">
           <div class="break-words rounded cursor-pointer select-none text-gray-500 text-xs">
@@ -304,13 +302,13 @@ defmodule FsetWeb.ModelComponent do
   end
 
   # Current or selected path
-  defp render_key_text(%{ui: %{current_path: name}, f: %{name: name}} = assigns) do
+  defp render_key_text(%{ui: %{current_path: name}, path: name} = assigns) do
     ~L"""
     <p class="" style="max-width: 12rem"
       phx-click="edit_sch"
-      phx-value-path="<%= @f.name %>"
+      phx-value-path="<%= @path %>"
       onclick="event.preventDefault()">
-      <%= if @ui.current_edit == @f.name && is_binary(@key) do %>
+      <%= if @ui.current_edit == @path && is_binary(@key) do %>
         <%= render_textarea(assigns) %>
       <% else %>
         <%= render_key_text_(assigns) %>
@@ -471,9 +469,9 @@ defmodule FsetWeb.ModelComponent do
   #   """
   # endÍ
 
-  defp selected?(f, ui), do: f.name in List.flatten([ui.current_path])
-  defp selected?(f, ui, :multi), do: selected?(f, ui) && is_list(ui.current_path)
-  defp selected?(f, ui, :single), do: selected?(f, ui) && !is_list(ui.current_path)
+  defp selected?(path, ui), do: path in List.flatten([ui.current_path])
+  defp selected?(path, ui, :multi), do: selected?(path, ui) && is_list(ui.current_path)
+  defp selected?(path, ui, :single), do: selected?(path, ui) && !is_list(ui.current_path)
 
   defp read_type(sch, ui) when is_map(sch) do
     cond do
@@ -501,7 +499,7 @@ defmodule FsetWeb.ModelComponent do
       acc ->
         case error.type do
           :reference ->
-            if assigns.f.name in error.payload.path, do: ["text-red-600" | acc], else: acc
+            if assigns.path in error.payload.path, do: ["text-red-600" | acc], else: acc
 
           _ ->
             acc
