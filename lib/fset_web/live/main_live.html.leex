@@ -1,5 +1,12 @@
-<% f = form_for String.to_atom(@current_file.id), "#", [class: "w-full"] %>
 <div class="w-full">
+  <datalist id="changeable_types">
+    <%= for type_text <- text_val_types(@model_names) do %>
+      <option class="px-2 py-1 hover:bg-gray-800 hover:text-gray-300 bg-opacity-75 cursor-pointer border-b border-gray-500 last:border-0"
+        value="<%= type_text %>">
+        <%= type_text %>
+      </option>
+    <% end %>
+  </datalist>
   <section class="flex flex-col h-screen">
     <%= render FsetWeb.LayoutView, "_header.html", assigns %>
     <%= for error <- @ui.errors do %>
@@ -14,7 +21,7 @@
               <li class="">
                 <span class="pl-2 block text-black sticky top-0 <%= if true || @current_file.id == file.id, do: "bg-teal-600 rounded-tl rounded-tr" %>"><%= file.name %></span>
                 <ul class="pl-2 py-2 border border-teal-900 text-xs">
-                  <%= for model_name <- Sch.order(Sch.get(@current_file.schema, file.id)) do %>
+                  <%= for model_name <- @models_nav do %>
                     <li class=""><%= model_name %></li>
                   <% end %>
                 </ul>
@@ -42,7 +49,7 @@
       </aside>
       <nav class="w-2/5 overflow-scroll">
         <div class="text-xs px-2 h-8 bg-gray-900 sticky top-0 z-10">
-          <%= if selected_count = selected_count(@ui, f) do %>
+          <%= if selected_count = Enum.count(current_path()) do %>
             <div class="flex items-center h-full space-x-2">
               <button phx-click="escape" class="text-gray-600 hover:text-gray-300" title="Deselect">&times;</button>
               <span>selected <%= selected_count %></span>
@@ -53,17 +60,17 @@
           <% end %>
         </div>
         <div class="min-h-full" phx-window-keyup="module_keyup">
-          <%= live_component @socket, ModuleComponent, id: f.name, file: @current_file, model_names: @model_names, ui: @ui, path: @current_file.id %>
+          <%= live_component @socket, ModuleComponent, id: @current_file.id, file: @current_file, model_names: @model_names, ui: @ui, path: @current_file.id %>
         </div>
       </nav>
       <aside class="w-2/5 overflow-scroll text-sm">
-        <%= if !is_list(@ui.current_path) do %>
-          <%= live_component @socket, SchComponent, id: f.name, file: @current_file, ui: @ui, path: @current_file.id %>
+        <%= if selected?(@current_file.id, current_path(), :single) do %>
+          <%= live_component @socket, SchComponent, id: @current_file.id, sch: @current_file.schema, ui: @ui, path: @current_file.id %>
         <% end %>
       </aside>
     </section>
     <footer class="flex items-center justify-center py-1 text-sm bg-gray-900 border-t border-gray-800">
-      <p class="text-xs text-gray-500 max-w-full break-words"><%= if !is_list(@ui.current_path), do: @ui.current_path, else: "multi-paths" %></p>
+      <p class="text-xs text-gray-500 max-w-full break-words"><%= if selected?(@current_file.id, current_path(), :single), do: current_path(), else: "multi-paths" %></p>
     </footer>
   </section>
 </div>

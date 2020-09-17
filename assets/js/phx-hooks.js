@@ -126,7 +126,6 @@ Hooks.moveable = {
   heighlightStyle: ["bg-indigo-700", "bg-opacity-25"],
   indentClass: ".indent",
   cursorLoadingStyle: "phx-click-loading",
-  serverSelectedClass: "sortable-selected-s",
 
   resetHighLight() {
     document.querySelectorAll(this.highlightClass).forEach(a => a.classList.remove(...this.heighlightStyle))
@@ -216,8 +215,6 @@ Hooks.moveable = {
       onSelect: (evt) => {
         // workaround for multi-select items from multiple lists
         evt.item.from = evt.from
-
-        document.querySelectorAll("." + this.serverSelectedClass).forEach(a => a.classList.remove(this.serverSelectedClass))
 
         // Deselect all ancestors; do not allow selecting items that follow the same path.
         let ancestors = evt.items.filter(item => {

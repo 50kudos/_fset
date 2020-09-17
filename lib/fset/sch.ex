@@ -936,6 +936,10 @@ defmodule Fset.Sch do
     |> fun.()
   end
 
+  def selected_paths(map) do
+    find_path(map, fn sch -> Map.get(sch, :selected) == true end)
+  end
+
   # Helpers
 
   def sanitize(map) when is_map(map) do

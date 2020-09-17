@@ -9,7 +9,7 @@ defmodule FsetWeb.SchComponent do
       <%=# render_header(assigns) %>
       <%=# render_required(assigns) %>
 
-      <h1 class="px-2 text-teal-600 text-2xl"><%= List.last(Sch.split_path(@ui.current_path)) %></h1>
+      <h1 class="px-2 text-teal-600 text-2xl"><%= List.last(Sch.split_path(@path)) %></h1>
       <%= render_title(assigns) %>
       <%= render_description(assigns) %>
       <%= render_sch(assigns) %>
@@ -20,14 +20,15 @@ defmodule FsetWeb.SchComponent do
 
   @impl true
   def update(assigns, socket) do
-    socket = assign(socket, :sch, Sch.get(assigns.file.schema, assigns.ui.current_path))
-    socket = assign(socket, :path, assigns.ui.current_path)
+    assigns = Map.merge(socket.assigns, assigns)
+    assigns = Map.take(assigns, [:sch, :ui, :path])
 
     socket =
       socket
+      |> assign(assigns)
       |> assign(:ui, assigns.ui)
-      |> assign(:title, Sch.title(socket.assigns.sch))
-      |> assign(:description, Sch.description(socket.assigns.sch))
+      |> assign(:title, Sch.title(assigns.sch))
+      |> assign(:description, Sch.description(assigns.sch))
 
     {:ok, socket}
   end
@@ -36,7 +37,7 @@ defmodule FsetWeb.SchComponent do
     ~L"""
     <dl class="mb-2">
       <dt class="inline-block text-xs text-gray-600">Path :</dt>
-      <dd class="inline-block text-gray-500 break-all"><%= if !is_list(@ui.current_path), do: @ui.current_path, else: "multi-paths" %></dd>
+      <dd class="inline-block text-gray-500 break-all"><%= if !is_list(@path), do: @path, else: "multi-paths" %></dd>
       <br>
       <dt class="inline-block text-xs text-gray-600">Raw :</dt>
       <dd class="inline-block text-gray-500">
@@ -267,7 +268,7 @@ defmodule FsetWeb.SchComponent do
     ~L"""
     <%= if Sch.object?(@parent) do %>
       <label class="flex items-center">
-        <input type="checkbox" phx-click="update_sch" phx-value-key="required" phx-value-path="<%= @path %>" value="<%= checked?(@parent, @ui) %>" class="mr-1" <%= checked?(@parent, @ui) && "checked" %>>
+        <input type="checkbox" phx-click="update_sch" phx-value-key="required" phx-value-path="<%= @path %>" value="<%= checked?(@parent, @ui) %>" class="mr-1" <%= # checked?(@parent, @ui) && "checked" %>>
         <p class="p-1 text-xs text-gray-600 select-none">Required</p>
       </label>
     <% end %>

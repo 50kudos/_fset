@@ -1,7 +1,7 @@
 defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
   alias FsetWeb.{SchComponent, ModuleComponent}
-  alias Fset.{Sch, Persistence, Module, Project, Accounts}
+  alias Fset.{Sch, Persistence, Module, Project, Accounts, Utils}
 
   @impl true
   def mount(params, _session, socket) do
@@ -32,22 +32,27 @@ defmodule FsetWeb.MainLive do
         {model_anchor, [%{fi | schema: nil} | acc]}
       end)
 
-    {:ok,
-     socket
-     |> assign_new(:current_user, fn -> user end)
-     |> assign(:project_name, project.name)
-     |> assign(:files, Enum.reverse(schs_indice))
-     |> assign(:model_names, model_names)
-     |> assign(:ui, %{
-       current_path: current_file.id,
-       current_edit: nil,
-       errors: []
-     })}
+    models_nav = Sch.order(Sch.get(current_file.schema, current_file.id))
+    :ets.new(:main, [:set, :protected, :named_table])
+    :ets.insert(:main, {:current_path, [current_file.id]})
+
+    {
+      :ok,
+      socket
+      |> assign_new(:current_user, fn -> user end)
+      |> assign(:project_name, project.name)
+      |> assign(:files, Enum.reverse(schs_indice))
+      |> assign(:model_names, model_names)
+      |> assign(:models_nav, models_nav)
+      |> assign(:ui, %{current_edit: nil, errors: []}),
+      temporary_assigns: [models_nav: []]
+    }
   end
 
   @impl true
   def handle_event("add_field", %{"field" => field}, socket) do
-    add_path = socket.assigns.ui.current_path
+    add_path = socket.assigns.current_path
+
     handle_event("add_model", %{"model" => field, "path" => add_path}, socket)
   end
 
@@ -65,16 +70,16 @@ defmodule FsetWeb.MainLive do
   def handle_event("change_type", val, socket) do
     type = Map.get(val, "type") || Map.get(val, "value")
     file = socket.assigns.current_file
-    ui = socket.assigns.ui
     model_names = socket.assigns.model_names
+    selected_paths = Sch.selected_paths(file)
 
     file =
       cond do
         type in Module.changable_types() ->
-          Module.change_type(file, ui.current_path, type)
+          Module.change_type(file, selected_paths, type)
 
         {_m, anchor} = Enum.find(model_names, fn {m, _a} -> m == type end) ->
-          Module.change_type(file, ui.current_path, {:ref, anchor})
+          Module.change_type(file, selected_paths, {:ref, anchor})
 
         true ->
           file
@@ -87,25 +92,43 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("select_sch", %{"paths" => sch_path}, socket) do
+    sch_path = List.wrap(sch_path)
+
+    {:memory, mem} = Process.info(socket.root_pid, :memory)
+    IO.inspect("#{mem / (1024 * 1024)} MB", label: "MEMORY")
+
     file = socket.assigns.current_file
+    previous_path = current_path()
+    :ets.insert(:main, {:current_path, sch_path})
 
-    sch_path =
-      case sch_path do
-        [] -> socket.assigns.ui.current_path
-        [a] -> a
-        a -> a
-      end
+    case previous_path do
+      [path] when is_binary(path) ->
+        send_update(FsetWeb.ModelComponent, id: path)
 
-    file = Map.update!(file, :schema, &Sch.sanitize/1)
+      paths when is_list(paths) ->
+        for path <- paths do
+          send_update(FsetWeb.ModelComponent, id: path)
+        end
+    end
 
-    {:noreply,
-     socket
-     |> update(:ui, fn ui ->
-       ui
-       |> Map.put(:current_path, sch_path)
-       |> Map.put(:current_edit, nil)
-     end)
-     |> update(:current_file, fn _ -> file end)}
+    case sch_path do
+      [path] when is_binary(path) ->
+        sch = Sch.get(file.schema, path)
+
+        send_update(FsetWeb.ModelComponent, id: path)
+        send_update(FsetWeb.SchComponent, id: file.id, sch: sch, path: path)
+
+      paths when is_list(paths) ->
+        for path <- paths do
+          send_update(FsetWeb.ModelComponent, id: path)
+        end
+    end
+
+    {
+      :noreply,
+      socket
+      |> update(:ui, fn ui -> Map.put(ui, :current_edit, nil) end)
+    }
   end
 
   def handle_event("edit_sch", %{"path" => sch_path}, socket) do
@@ -275,12 +298,24 @@ defmodule FsetWeb.MainLive do
     file = Persistence.replace_file(existing_file, schema: updated_schema)
 
     socket = assign(socket, :current_file, file)
-    Phoenix.PubSub.broadcast_from!(Fset.PubSub, self(), "sch_update:" <> file.id, file)
+
+    Phoenix.PubSub.broadcast_from!(
+      Fset.PubSub,
+      self(),
+      "sch_update:" <> file.id,
+      {:update_file, file}
+    )
+
     {:noreply, socket}
   end
 
-  def handle_info(file, socket) do
+  def handle_info({:update_file, file}, socket) do
     {:noreply, assign(socket, :current_file, file)}
+  end
+
+  def handle_info({:update_sch, sch, path}, socket) do
+    send_update(FsetWeb.SchComponent, id: path, sch: sch)
+    {:noreply, socket}
   end
 
   defp async_update_schema() do
@@ -293,8 +328,9 @@ defmodule FsetWeb.MainLive do
   end
 
   defp selected_count(ui, f) do
-    length = length(List.wrap(ui.current_path) -- [f.name])
-    if length < 1, do: false, else: length
+    # length = length(List.wrap(ui.current_path) -- [f.name])
+    # if length < 1, do: false, else: length
+    false
   end
 
   defp percent(byte_size, :per_mb, quota) do
@@ -325,4 +361,28 @@ defmodule FsetWeb.MainLive do
     </div>
     """
   end
+
+  defp text_val_types(model_names) do
+    Module.changable_types() ++ Enum.map(model_names, fn {key, _} -> key end)
+  end
+
+  def selected?([path], current_path), do: selected?(path, current_path)
+
+  def selected?(path, current_path) when is_binary(path) do
+    path in current_path
+  end
+
+  def selected?([path], current_path, :single), do: selected?(path, current_path, :single)
+
+  def selected?(path, current_path, :single) do
+    path in current_path && Enum.count(current_path) == 1
+  end
+
+  def selected?([path], current_path, :multi), do: selected?(path, current_path, :multi)
+
+  def selected?(path, current_path, :multi) do
+    path in current_path && Enum.count(current_path) > 1
+  end
+
+  def current_path(), do: :ets.lookup(:main, :current_path)[:current_path]
 end

@@ -10,15 +10,17 @@ defmodule FsetWeb.ModuleComponent do
     file = Map.update!(file, :schema, fn root -> Sch.sanitize(Sch.get(root, file.id)) end)
     current_section_sch = file.schema
 
-    {:ok,
-     socket
-     |> assign(:ui, init_ui)
-     |> update(:ui, fn ui -> Map.put(ui, :model_names, assigns.model_names) end)
-     |> assign(:path, assigns.path)
-     |> assign(:body, current_section_sch)
-     |> assign(:type, file.type)
-     |> assign(:models, Sch.order(current_section_sch))
-     |> assign(:name, file.name)}
+    {
+      :ok,
+      socket
+      |> assign(:ui, init_ui)
+      |> update(:ui, fn ui -> Map.put(ui, :model_names, assigns.model_names) end)
+      |> assign(:path, assigns.path)
+      |> assign(:body, current_section_sch)
+      |> assign(:type, file.type)
+      |> assign(:models, Sch.order(current_section_sch))
+      |> assign(:name, file.name)
+    }
   end
 
   @impl true
@@ -32,7 +34,7 @@ defmodule FsetWeb.ModuleComponent do
   defp render_model(assigns) do
     ~L"""
     <div id="moveable__<%= @path %>" phx-hook="moveable" data-group="body" data-path="<%= @path %>"
-      data-current-paths="<%= Jason.encode!(List.wrap(@ui.current_path)) %>"
+      data-current-paths="<%= Jason.encode!([]) %>"
       phx-capture-click="select_sch" phx-value-paths="<%= @path %>" class="grid grid-cols-fit py-6 h-full gap-4">
       <%= for key <- @models do %>
         <%= live_component(@socket, ModelComponent,
@@ -51,7 +53,7 @@ defmodule FsetWeb.ModuleComponent do
   defp render_main(assigns) do
     ~L"""
     <main id="moveable__<%= @path %>" phx-hook="moveable" data-group="body" data-path="<%= @path %>"
-      data-current-paths="<%= Jason.encode!(List.wrap(@ui.current_path)) %>"
+      data-current-paths="<%= Jason.encode!([]) %>"
       phx-capture-click="select_sch" phx-value-paths="<%= @path %>" class="grid grid-cols-fit py-6 h-full row-gap-6">
       <%= live_component(@socket, ModelComponent,
         id: @path,

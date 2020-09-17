@@ -1,6 +1,7 @@
 defmodule FsetWeb.ModelComponent do
   use FsetWeb, :live_component
-  alias Fset.{Sch, Module, Utils}
+  alias Fset.{Sch, Utils}
+  alias FsetWeb.MainLive, as: M
 
   @impl true
   def mount(socket) do
@@ -9,14 +10,19 @@ defmodule FsetWeb.ModelComponent do
 
   @impl true
   def update(assigns, socket) do
-    parent_assigns = Map.take(assigns, [:key, :sch, :parent, :ui, :path])
+    assigns = Map.merge(socket.assigns, assigns)
+    assigns = Map.take(assigns, [:key, :sch, :parent, :ui, :path])
 
-    {:ok,
-     socket
-     |> assign(parent_assigns)
-     |> update(:sch, fn sch -> Map.delete(sch, "examples") end)
-     |> update(:ui, fn ui -> Map.put_new(ui, :level, ui.tab) end)
-     |> update(:ui, fn ui -> Map.put_new(ui, :parent_path, parent_assigns.path) end)}
+    {
+      :ok,
+      socket
+      |> assign(assigns)
+      |> assign(:current_path, M.current_path())
+      |> assign_new(:errors, fn -> assigns.ui.errors end)
+      |> update(:sch, fn sch -> Map.delete(sch, "examples") end)
+      |> update(:ui, fn ui -> Map.put_new(ui, :level, ui.tab) end)
+      |> update(:ui, fn ui -> Map.put_new(ui, :parent_path, assigns.path) end)
+    }
   end
 
   @impl true
@@ -36,7 +42,7 @@ defmodule FsetWeb.ModelComponent do
   defp render_folder(assigns) do
     ~L"""
     <nav class="sort-handle
-      <%= if selected?(@path, @ui), do: 'sortable-selected-s' %>
+      <%= if M.selected?(@path, @current_path), do: 'sortable-selected' %>
       <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow' %>"
       data-path="<%= @path %>">
 
@@ -59,7 +65,7 @@ defmodule FsetWeb.ModelComponent do
   defp render_folder_header(%{ui: %{level: _}} = assigns) do
     ~L"""
     <div class="relative dragover-hl flex flex-wrap items-start w-full">
-      <%= if selected?(@path, @ui, :single) do %>
+      <%= if M.selected?(@path, @current_path, :single) do %>
         <p class="absolute m-1 leading-4 text-gray-900 font-mono text-xs">
           <span class="close-marker cursor-pointer select-none">+</span>
           <span class="open-marker cursor-pointer select-none">-</span>
@@ -129,7 +135,7 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_file(assigns) do
     ~L"""
-    <nav class="sort-handle <%= if selected?(@path, @ui), do: 'sortable-selected' %>" data-path="<%= @path %>">
+    <nav class="sort-handle <%= if M.selected?(@path, @current_path), do: 'sortable-selected' %>" data-path="<%= @path %>">
       <%= render_key_type_pair(assigns) %>
     </nav>
     """
@@ -145,7 +151,7 @@ defmodule FsetWeb.ModelComponent do
         onclick="event.preventDefault()">
       </div>
 
-      <%= if selected?(@path, @ui, :single) do %>
+      <%= if M.selected?(@path, @current_path, :single) do %>
         <%= render_key(assigns) %>
         <%= render_type_options(assigns) %>
       <% else %>
@@ -154,10 +160,10 @@ defmodule FsetWeb.ModelComponent do
       <% end %>
 
       <div class="flex-1 px-1 text-right" onclick="event.preventDefault()">
-        <div class="<%= if selected?(@path, @ui, :multi), do: 'hidden' %>">
+        <div class="<%= if M.selected?(@path, @current_path, :multi), do: 'hidden' %>">
           <%= render_add_button(assigns) %>
         </div>
-        <% if selected?(@path, @ui, :single) do %>
+        <% if M.selected?(@path, @current_path, :single) do %>
         <% else %>
           &nbsp;
         <% end %>
@@ -169,26 +175,16 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_type_options(assigns) do
     ~L"""
-    <%= if selected?(@path, @ui, :single) do %>
-      <details class="relative min-w-0" phx-hook="focusOnOpen" id="change_type_input">
-        <summary class="block">
-          <div class="break-words rounded cursor-pointer select-none text-gray-500 text-xs">
-            <%= render_type(assigns, :no_prevent) %>
-          </div>
-        </summary>
-        <ul class="details-menu absolute mt-1 z-10 bg-gray-300 text-gray-800 border border-gray-900 rounded text-xs">
-          <li><input type="text" autofocus list="changeable_types" phx-keyup="change_type" phx-key="Enter" style="min-width: 30vw" ></li>
-          <datalist id="changeable_types">
-            <%= for type_text <- text_val_types(@ui) do %>
-              <option class="px-2 py-1 hover:bg-gray-800 hover:text-gray-300 bg-opacity-75 cursor-pointer border-b border-gray-500 last:border-0"
-                value="<%= type_text %>">
-                <%= type_text %>
-              </option>
-            <% end %>
-        </datalist>
-        </ul>
-      </details>
-    <% end %>
+    <details class="relative min-w-0" phx-hook="focusOnOpen" id="change_type_input">
+      <summary class="block">
+        <div class="break-words rounded cursor-pointer select-none text-gray-500 text-xs">
+          <%= render_type(assigns, :no_prevent) %>
+        </div>
+      </summary>
+      <ul class="details-menu absolute mt-1 z-10 bg-gray-300 text-gray-800 border border-gray-900 rounded text-xs">
+        <li><input type="text" autofocus list="changeable_types" phx-keyup="change_type" phx-key="Enter" style="min-width: 30vw" ></li>
+      </ul>
+    </details>
     """
   end
 
@@ -216,7 +212,7 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_textarea(assigns) do
     ~L"""
-    <textarea type="text" id="autoFocus__<%= @ui.current_path %>"
+    <textarea type="text" id="autoFocus__<%= @path %>"
       class="filtered block px-2 box-border outline-none mr-2 min-w-0 h-full self-start text-xs leading-6 bg-gray-800 z-10 shadow-inner text-white"
       phx-hook="renameable"
       phx-blur="rename_key"
@@ -469,10 +465,6 @@ defmodule FsetWeb.ModelComponent do
   #   """
   # endÍ
 
-  defp selected?(path, ui), do: path in List.flatten([ui.current_path])
-  defp selected?(path, ui, :multi), do: selected?(path, ui) && is_list(ui.current_path)
-  defp selected?(path, ui, :single), do: selected?(path, ui) && !is_list(ui.current_path)
-
   defp read_type(sch, ui) when is_map(sch) do
     cond do
       Sch.object?(sch) -> "record"
@@ -490,12 +482,8 @@ defmodule FsetWeb.ModelComponent do
     end
   end
 
-  defp text_val_types(ui) do
-    Module.changable_types() ++ Enum.map(ui.model_names, fn {key, _} -> key end)
-  end
-
   defp error_class(assigns) do
-    for error <- assigns.ui.errors, reduce: [] do
+    for error <- assigns.errors, reduce: [] do
       acc ->
         case error.type do
           :reference ->
