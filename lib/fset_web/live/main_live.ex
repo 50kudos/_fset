@@ -72,15 +72,15 @@ defmodule FsetWeb.MainLive do
     type = Map.get(val, "type") || Map.get(val, "value")
     file = socket.assigns.current_file
     model_names = socket.assigns.model_names
-    selected_paths = Sch.selected_paths(file)
+    current_path = current_path()
 
     file =
       cond do
         type in Module.changable_types() ->
-          Module.change_type(file, selected_paths, type)
+          Module.change_type(file, current_path, type)
 
         {_m, anchor} = Enum.find(model_names, fn {m, _a} -> m == type end) ->
-          Module.change_type(file, selected_paths, {:ref, anchor})
+          Module.change_type(file, current_path, {:ref, anchor})
 
         true ->
           file
