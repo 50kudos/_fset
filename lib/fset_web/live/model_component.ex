@@ -18,6 +18,7 @@ defmodule FsetWeb.ModelComponent do
       socket
       |> assign(assigns)
       |> assign(:current_path, M.current_path())
+      |> assign(:current_edit, M.current_edit())
       |> assign_new(:errors, fn -> assigns.ui.errors end)
       |> update(:sch, fn sch -> Map.delete(sch, "examples") end)
       |> update(:ui, fn ui -> Map.put_new(ui, :level, ui.tab) end)
@@ -135,7 +136,11 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_file(assigns) do
     ~L"""
-    <nav class="sort-handle <%= if M.selected?(@path, @current_path), do: 'sortable-selected' %>" data-path="<%= @path %>">
+    <nav class="sort-handle
+      <%= if M.selected?(@path, @current_path), do: 'sortable-selected' %>
+      <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow' %>"
+      data-path="<%= @path %>">
+
       <%= render_key_type_pair(assigns) %>
     </nav>
     """
@@ -298,13 +303,13 @@ defmodule FsetWeb.ModelComponent do
   end
 
   # Current or selected path
-  defp render_key_text(%{ui: %{current_path: name}, path: name} = assigns) do
+  defp render_key_text(%{current_path: name, path: name} = assigns) do
     ~L"""
     <p class="" style="max-width: 12rem"
       phx-click="edit_sch"
       phx-value-path="<%= @path %>"
       onclick="event.preventDefault()">
-      <%= if @ui.current_edit == @path && is_binary(@key) do %>
+      <%= if @current_edit == @path && is_binary(@key) do %>
         <%= render_textarea(assigns) %>
       <% else %>
         <%= render_key_text_(assigns) %>

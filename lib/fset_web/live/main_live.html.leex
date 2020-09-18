@@ -49,28 +49,20 @@
       </aside>
       <nav class="w-2/5 overflow-scroll">
         <div class="text-xs px-2 h-8 bg-gray-900 sticky top-0 z-10">
-          <%= if selected_count = Enum.count(current_path()) do %>
-            <div class="flex items-center h-full space-x-2">
-              <button phx-click="escape" class="text-gray-600 hover:text-gray-300" title="Deselect">&times;</button>
-              <span>selected <%= selected_count %></span>
-              <button class="flex-1"></button>
-              <button phx-click="delete" class="text-red-500 hover:text-red-600">delete</button>
-            </div>
-
-          <% end %>
+          <%= live_component @socket, ModelBarComponent, id: :model_bar, except: @current_file.id %>
         </div>
         <div class="min-h-full" phx-window-keyup="module_keyup">
           <%= live_component @socket, ModuleComponent, id: @current_file.id, file: @current_file, model_names: @model_names, ui: @ui, path: @current_file.id %>
         </div>
       </nav>
       <aside class="w-2/5 overflow-scroll text-sm">
-        <%= if selected?(@current_file.id, current_path(), :single) do %>
-          <%= live_component @socket, SchComponent, id: @current_file.id, sch: @current_file.schema, ui: @ui, path: @current_file.id %>
+        <%= if !is_list(current_path()) do %>
+          <%= live_component @socket, SchComponent, id: @current_file.id, sch: Sch.get(@current_file.schema, current_path()), ui: @ui, path: current_path() %>
         <% end %>
       </aside>
     </section>
     <footer class="flex items-center justify-center py-1 text-sm bg-gray-900 border-t border-gray-800">
-      <p class="text-xs text-gray-500 max-w-full break-words"><%= if selected?(@current_file.id, current_path(), :single), do: current_path(), else: "multi-paths" %></p>
+      <p class="text-xs text-gray-500 max-w-full break-words"><%= if !is_list(current_path()), do: current_path(), else: "multi-paths" %></p>
     </footer>
   </section>
 </div>

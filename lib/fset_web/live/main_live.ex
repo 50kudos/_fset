@@ -1,6 +1,6 @@
 defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
-  alias FsetWeb.{SchComponent, ModuleComponent}
+  alias FsetWeb.{SchComponent, ModuleComponent, ModelBarComponent}
   alias Fset.{Sch, Persistence, Module, Project, Accounts, Utils}
 
   @impl true
@@ -34,7 +34,8 @@ defmodule FsetWeb.MainLive do
 
     models_nav = Sch.order(Sch.get(current_file.schema, current_file.id))
     :ets.new(:main, [:set, :protected, :named_table])
-    :ets.insert(:main, {:current_path, [current_file.id]})
+    set_current_path(current_file.id)
+    set_current_edit(nil)
 
     {
       :ok,
@@ -44,14 +45,14 @@ defmodule FsetWeb.MainLive do
       |> assign(:files, Enum.reverse(schs_indice))
       |> assign(:model_names, model_names)
       |> assign(:models_nav, models_nav)
-      |> assign(:ui, %{current_edit: nil, errors: []}),
+      |> assign(:ui, %{errors: []}),
       temporary_assigns: [models_nav: []]
     }
   end
 
   @impl true
   def handle_event("add_field", %{"field" => field}, socket) do
-    add_path = socket.assigns.current_path
+    add_path = current_path()
 
     handle_event("add_model", %{"model" => field, "path" => add_path}, socket)
   end
@@ -92,26 +93,17 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("select_sch", %{"paths" => sch_path}, socket) do
-    sch_path = List.wrap(sch_path)
-
     {:memory, mem} = Process.info(socket.root_pid, :memory)
     IO.inspect("#{mem / (1024 * 1024)} MB", label: "MEMORY")
 
     file = socket.assigns.current_file
     previous_path = current_path()
-    :ets.insert(:main, {:current_path, sch_path})
+    sch_path = Utils.unwrap(sch_path, file.id)
+    set_current_path(sch_path)
 
-    case previous_path do
-      [path] when is_binary(path) ->
-        send_update(FsetWeb.ModelComponent, id: path)
+    re_render_model(previous_path)
 
-      paths when is_list(paths) ->
-        for path <- paths do
-          send_update(FsetWeb.ModelComponent, id: path)
-        end
-    end
-
-    case sch_path do
+    case List.wrap(sch_path) do
       [path] when is_binary(path) ->
         sch = Sch.get(file.schema, path)
 
@@ -124,24 +116,20 @@ defmodule FsetWeb.MainLive do
         end
     end
 
-    {
-      :noreply,
-      socket
-      |> update(:ui, fn ui -> Map.put(ui, :current_edit, nil) end)
-    }
+    send_update(ModelBarComponent, id: :model_bar, except: [file.id, Utils.gen_key()])
+
+    {:noreply, socket}
   end
 
   def handle_event("edit_sch", %{"path" => sch_path}, socket) do
-    updated_ui =
-      if socket.assigns.ui.current_path in Enum.map(socket.assigns.files, & &1.id) do
-        socket.assigns.ui
-      else
-        socket.assigns.ui
-        |> Map.put(:current_path, sch_path)
-        |> Map.put(:current_edit, sch_path)
-      end
+    if current_path() in Enum.map(socket.assigns.files, & &1.id) do
+    else
+      set_current_path(sch_path)
+      set_current_edit(sch_path)
+      send_update(FsetWeb.ModelComponent, id: sch_path)
+    end
 
-    {:noreply, update(socket, :ui, fn _ -> updated_ui end)}
+    {:noreply, socket}
   end
 
   def handle_event("update_sch", params, socket) do
@@ -167,14 +155,10 @@ defmodule FsetWeb.MainLive do
 
     socket = update(socket, :current_file, fn _ -> file end)
 
-    socket =
-      update(socket, :ui, fn ui ->
-        new_key = if new_key == "", do: old_key, else: new_key
-
-        ui
-        |> Map.put(:current_path, input_name(parent_path, new_key))
-        |> Map.put(:current_edit, nil)
-      end)
+    new_key = if new_key == "", do: old_key, else: new_key
+    new_path = input_name(parent_path, new_key)
+    set_current_path(new_path)
+    set_current_edit(nil)
 
     async_update_schema()
     {:noreply, socket}
@@ -185,8 +169,7 @@ defmodule FsetWeb.MainLive do
 
     file = socket.assigns.current_file
 
-    paths_refs =
-      Enum.map(List.wrap(socket.assigns.ui.current_path), fn p -> {p, Ecto.UUID.generate()} end)
+    paths_refs = Enum.map(List.wrap(current_path()), fn p -> {p, Ecto.UUID.generate()} end)
 
     schema =
       for {current_path, ref} <- paths_refs, reduce: file.schema do
@@ -194,23 +177,19 @@ defmodule FsetWeb.MainLive do
       end
 
     schema = Sch.move(schema, src_indices, dst_indices)
-
     socket = update(socket, :current_file, fn _ -> %{file | schema: schema} end)
 
-    socket =
-      update(socket, :ui, fn ui ->
-        section_sch = socket.assigns.current_file.schema
+    section_sch = socket.assigns.current_file.schema
 
-        current_paths =
-          for ref <- Keyword.values(paths_refs) do
-            Sch.find_path(section_sch, fn sch -> Map.get(sch, "$id") == ref end)
-          end
+    current_paths =
+      for ref <- Keyword.values(paths_refs) do
+        Sch.find_path(section_sch, fn sch -> Map.get(sch, "$id") == ref end)
+      end
 
-        current_paths = Enum.filter(current_paths, fn p -> p != "" end)
-        current_paths = if length(current_paths) == 1, do: hd(current_paths), else: current_paths
-        # current_paths = Sch.get_paths(section_sch, dst_indices)
-        Map.put(ui, :current_path, current_paths)
-      end)
+    current_paths = Enum.filter(current_paths, fn p -> p != "" end)
+    current_paths = if length(current_paths) == 1, do: hd(current_paths), else: current_paths
+    # current_paths = Sch.get_paths(section_sch, dst_indices)
+    set_current_path(current_paths)
 
     async_update_schema()
     {:noreply, socket}
@@ -225,7 +204,7 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("module_keyup", val, socket) do
-    if socket.assigns.ui.current_path in Enum.map(socket.assigns.files, & &1.id) do
+    if current_path() in Enum.map(socket.assigns.files, & &1.id) do
       {:noreply, socket}
     else
       updated_assigns = module_keyup(val, socket.assigns)
@@ -237,7 +216,7 @@ defmodule FsetWeb.MainLive do
 
   defp module_keyup(%{"key" => key}, assigns) do
     file = assigns.current_file
-    ui = assigns.ui
+    current_path = current_path()
 
     assigns =
       case key do
@@ -247,7 +226,7 @@ defmodule FsetWeb.MainLive do
           # Referential integrity
 
           referrers =
-            Enum.map(List.wrap(ui.current_path), fn path ->
+            Enum.map(List.wrap(current_path), fn path ->
               if sch = Sch.get(file.schema, path) do
                 Sch.find_path(file.schema, fn sch_ ->
                   if ref = Sch.ref(sch_) do
@@ -260,12 +239,12 @@ defmodule FsetWeb.MainLive do
             |> Enum.reject(fn a -> is_nil(a) || a == "" end)
 
           if Enum.empty?(referrers) do
-            schema = Sch.delete(file.schema, ui.current_path)
-            new_current_paths = Map.keys(Sch.find_parents(ui.current_path))
+            schema = Sch.delete(file.schema, current_path)
+            new_current_paths = Map.keys(Sch.find_parents(current_path))
 
-            assigns
-            |> put_in([:current_file], %{file | schema: schema})
-            |> put_in([:ui, :current_path], new_current_paths)
+            set_current_path(new_current_paths)
+            send_update(ModelBarComponent, id: :model_bar, except: [file.id, Utils.gen_key()])
+            put_in(assigns, [:current_file], %{file | schema: schema})
           else
             assigns
             |> put_in([:ui, :errors], [
@@ -277,9 +256,13 @@ defmodule FsetWeb.MainLive do
           end
 
         "Escape" ->
+          previous_path = current_path()
+          set_current_path(file.id)
+          set_current_edit(nil)
+          re_render_model(previous_path)
+          send_update(FsetWeb.SchComponent, id: file.id, sch: file.schema, path: file.id)
+          send_update(ModelBarComponent, id: :model_bar, except: [file.id, Utils.gen_key()])
           assigns
-          |> put_in([:ui, :current_path], assigns.current_file.id)
-          |> put_in([:ui, :current_edit], nil)
 
         _ ->
           assigns
@@ -314,7 +297,7 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_info({:update_sch, sch, path}, socket) do
-    send_update(FsetWeb.SchComponent, id: path, sch: sch)
+    send_update(FsetWeb.SchComponent, id: path, sch: sch, path: path)
     {:noreply, socket}
   end
 
@@ -323,14 +306,8 @@ defmodule FsetWeb.MainLive do
   end
 
   defp get_parent(current_file, ui) do
-    parent_path = Sch.find_parent(ui.current_path).path
+    parent_path = Sch.find_parent(current_path()).path
     Sch.get(current_file.schema, parent_path)
-  end
-
-  defp selected_count(ui, f) do
-    # length = length(List.wrap(ui.current_path) -- [f.name])
-    # if length < 1, do: false, else: length
-    false
   end
 
   defp percent(byte_size, :per_mb, quota) do
@@ -366,23 +343,35 @@ defmodule FsetWeb.MainLive do
     Module.changable_types() ++ Enum.map(model_names, fn {key, _} -> key end)
   end
 
-  def selected?([path], current_path), do: selected?(path, current_path)
-
   def selected?(path, current_path) when is_binary(path) do
-    path in current_path
+    path in List.wrap(current_path)
   end
 
-  def selected?([path], current_path, :single), do: selected?(path, current_path, :single)
-
   def selected?(path, current_path, :single) do
+    current_path = List.wrap(current_path)
     path in current_path && Enum.count(current_path) == 1
   end
 
-  def selected?([path], current_path, :multi), do: selected?(path, current_path, :multi)
-
   def selected?(path, current_path, :multi) do
+    current_path = List.wrap(current_path)
     path in current_path && Enum.count(current_path) > 1
   end
 
   def current_path(), do: :ets.lookup(:main, :current_path)[:current_path]
+  def current_edit(), do: :ets.lookup(:main, :current_edit)[:current_edit]
+
+  def set_current_path(paths), do: :ets.insert(:main, {:current_path, paths})
+  def set_current_edit(paths), do: :ets.insert(:main, {:current_edit, paths})
+
+  def re_render_model(path_) do
+    case List.wrap(path_) do
+      [path] when is_binary(path) ->
+        send_update(FsetWeb.ModelComponent, id: path)
+
+      paths when is_list(paths) ->
+        for path <- paths do
+          send_update(FsetWeb.ModelComponent, id: path)
+        end
+    end
+  end
 end

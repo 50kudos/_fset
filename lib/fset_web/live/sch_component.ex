@@ -1,6 +1,7 @@
 defmodule FsetWeb.SchComponent do
   use FsetWeb, :live_component
   alias Fset.Sch
+  alias FsetWeb.MainLive, as: M
 
   @impl true
   def render(assigns) do
@@ -276,11 +277,11 @@ defmodule FsetWeb.SchComponent do
   end
 
   defp checked?(parent, ui) do
-    sch_key(ui) in Sch.required(parent)
+    sch_key() in Sch.required(parent)
   end
 
-  defp sch_key(ui) do
-    Sch.find_parent(ui.current_path).child_key
+  defp sch_key() do
+    Sch.find_parent(M.current_path()).child_key
   end
 
   @impl true

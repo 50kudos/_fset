@@ -23,6 +23,14 @@ defmodule Fset.Utils do
     |> Enum.intersperse({:safe, "<wbr>"})
   end
 
+  def unwrap(term_or_list, default \\ nil) do
+    case term_or_list do
+      [] -> default
+      [term] -> term
+      terms -> terms
+    end
+  end
+
   def aws_specs_sch() do
     Path.expand("../../test/support/fixtures/sch_samples/all-spec.json", __DIR__)
     |> File.read!()
