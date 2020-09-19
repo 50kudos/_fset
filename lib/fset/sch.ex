@@ -451,8 +451,8 @@ defmodule Fset.Sch do
     end
   end
 
-  def put_schs({_pre, _post, map}, _path, []), do: map
-  def put_schs(map, _path, []), do: map
+  def put_schs({_pre, _post, map}, _path, []), do: {nil, nil, map}
+  def put_schs(map, _path, []), do: {nil, nil, map}
 
   def put_schs({_pre, _post, map}, path, raw_schs), do: put_schs(map, path, raw_schs)
 

@@ -72,18 +72,23 @@ defmodule Fset.Module do
     %{file | schema: Sch.change_type(root, path, to_type)}
   end
 
-  def add_model(%_{schema: root} = file, path, model) do
+  def add_model(root, path, model) do
+    add_field(root, path, model, anchor_prefix: "model")
+  end
+
+  def add_field(root, path, model, opts \\ []) do
+    opts = Keyword.take(opts, [:anchor_prefix])
+
     model =
       case model do
-        "Record" -> New.object(anchor_prefix: "model")
-        "Field" -> New.string(anchor_prefix: "model")
-        "List" -> New.array(:homo, anchor_prefix: "model")
-        "Tuple" -> New.array(:hetero, anchor_prefix: "model")
-        "Union" -> New.any_of([New.object(), New.array(), New.string()], anchor_prefix: "model")
+        "Record" -> New.object(opts)
+        "Field" -> New.string(opts)
+        "List" -> New.array(:homo, opts)
+        "Tuple" -> New.array(:hetero, opts)
+        "Union" -> New.any_of([New.object(), New.array(), New.string()], opts)
       end
 
-    {_, _, new_schema} = Sch.put(root, path, Utils.gen_key(), model, 0)
-    %{file | schema: new_schema}
+    Sch.put(root, path, Utils.gen_key(), model, 0)
   end
 
   def rename_key(%_{schema: root} = file, path, old_key, new_key) do

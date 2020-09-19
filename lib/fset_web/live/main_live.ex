@@ -1,7 +1,10 @@
 defmodule FsetWeb.MainLive do
+  @file_topic "module_update:"
+
   use FsetWeb, :live_view
   alias FsetWeb.{SchComponent, ModuleComponent, ModelBarComponent}
   alias Fset.{Sch, Persistence, Module, Project, Accounts, Utils}
+  import Fset.Main
 
   @impl true
   def mount(params, _session, socket) do
@@ -15,7 +18,7 @@ defmodule FsetWeb.MainLive do
     socket = assign(socket, :current_file, current_file)
 
     if connected?(socket) do
-      Phoenix.PubSub.subscribe(Fset.PubSub, "sch_update:" <> socket.assigns.current_file.id)
+      Phoenix.PubSub.subscribe(Fset.PubSub, @file_topic <> socket.assigns.current_file.id)
     end
 
     {model_names, schs_indice} =
@@ -52,9 +55,13 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def handle_event("add_field", %{"field" => field}, socket) do
+    file = socket.assigns.current_file
     add_path = current_path()
 
-    handle_event("add_model", %{"model" => field, "path" => add_path}, socket)
+    {_, postsch, _} = add_field(file.schema, add_path, field)
+
+    broadcast_update_sch(file, postsch, add_path)
+    {:noreply, socket}
   end
 
   def handle_event("add_model", %{"model" => model} = val, socket) do
@@ -285,7 +292,7 @@ defmodule FsetWeb.MainLive do
     Phoenix.PubSub.broadcast_from!(
       Fset.PubSub,
       self(),
-      "sch_update:" <> file.id,
+      @file_topic <> file.id,
       {:update_file, file}
     )
 
@@ -297,7 +304,7 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_info({:update_sch, sch, path}, socket) do
-    send_update(FsetWeb.SchComponent, id: path, sch: sch, path: path)
+    re_render_model(path, sch: sch)
     {:noreply, socket}
   end
 
@@ -358,14 +365,14 @@ defmodule FsetWeb.MainLive do
   def set_current_path(paths), do: :ets.insert(:main, {:current_path, paths})
   def set_current_edit(paths), do: :ets.insert(:main, {:current_edit, paths})
 
-  def re_render_model(path_) do
+  def re_render_model(path_, opts \\ []) do
     case List.wrap(path_) do
       [path] when is_binary(path) ->
-        send_update(FsetWeb.ModelComponent, id: path)
+        send_update(FsetWeb.ModelComponent, Keyword.merge(opts, id: path))
 
       paths when is_list(paths) ->
         for path <- paths do
-          send_update(FsetWeb.ModelComponent, id: path)
+          send_update(FsetWeb.ModelComponent, Keyword.merge(opts, id: path))
         end
     end
   end
