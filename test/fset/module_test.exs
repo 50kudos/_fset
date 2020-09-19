@@ -26,7 +26,7 @@ defmodule Fset.ModuleTest do
       model_sch = Sch.get(model_file.schema, model_file.id)
       model_props = Sch.properties(model_sch)
 
-      assert model_props == expected
+      assert Map.keys(model_props) == Map.keys(expected)
       assert String.starts_with?(model_file.name, "model_")
       assert model_file.type == :model
     end

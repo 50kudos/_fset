@@ -19,7 +19,7 @@
           <%= for file <- @files do %>
             <%= if @current_file.id == file.id do %>
               <li class="">
-                <span class="pl-2 block text-black sticky top-0 <%= if true || @current_file.id == file.id, do: "bg-teal-600 rounded-tl rounded-tr" %>"><%= file.name %></span>
+                <span class="pl-2 block text-black sticky top-0 bg-teal-600 rounded-tl rounded-tr"><%= file.name %></span>
                 <ul class="pl-2 py-2 border border-teal-900 text-xs">
                   <%= for model_name <- @models_nav do %>
                     <li class=""><%= model_name %></li>

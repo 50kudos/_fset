@@ -63,19 +63,19 @@ defmodule Fset.ProjectTest do
       assert model.type == :model
       assert model.id != nil
       assert model.name != nil
-      assert model.schema == nil
+      assert Sch.object?(Sch.get(model.schema, model.id))
     end
 
     assert main.type == :main
     assert main.project_id == project.id
     assert main.id != nil
     assert main.name != nil
-    assert main.schema == nil
+    assert Sch.any?(Sch.get(main.schema, main.id))
   end
 
   test "#load json schema successfully" do
     file = %{
-      path: Path.expand("../../test/support/fixtures/sch_samples/github-action.json", __DIR__)
+      path: Path.expand("../../test/support/fixtures/json_schema/draft_7.json", __DIR__)
     }
 
     {:ok, map} = load(file, encoder: &Module.encode/1)

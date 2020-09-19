@@ -305,11 +305,6 @@ defmodule FsetWeb.MainLive do
     Process.send_after(self(), :update_schema, Enum.random(200..300))
   end
 
-  defp get_parent(current_file, ui) do
-    parent_path = Sch.find_parent(current_path()).path
-    Sch.get(current_file.schema, parent_path)
-  end
-
   defp percent(byte_size, :per_mb, quota) do
     quota_byte = quota * (1024 * 1024)
     Float.floor(byte_size / quota_byte * 100, 2)

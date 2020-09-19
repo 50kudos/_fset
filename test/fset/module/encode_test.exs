@@ -26,23 +26,19 @@ defmodule Fset.ModuleEncodeTest do
   } do
     jsch = Map.merge(nodefs, defs)
     encoded = from_json_schema(jsch)
+    [model_sch] = encoded.model_schs
 
     assert encoded.main_sch == nodefs
-
-    for {model_sch, expected} <- Enum.zip(encoded.model_schs, [%{"a" => %{}, "b" => %{}}]) do
-      assert Sch.properties(model_sch) == expected
-    end
+    assert %{"a" => %{}, "b" => %{}} = Sch.properties(model_sch)
   end
 
   test "#from_json_schema schema produces 1 models chunk", %{nodefs: nodefs, defs: defs} do
     jsch = Map.merge(nodefs, defs)
     encoded = from_json_schema(jsch, defs_per_file: 2)
+    [model_sch] = encoded.model_schs
 
     assert encoded.main_sch == nodefs
-
-    for {model_sch, expected} <- Enum.zip(encoded.model_schs, [%{"a" => %{}, "b" => %{}}]) do
-      assert Sch.properties(model_sch) == expected
-    end
+    assert %{"a" => %{}, "b" => %{}} = Sch.properties(model_sch)
   end
 
   test "#from_json_schema schema produces 2 models chunks", %{nodefs: nodefs, defs: defs} do
@@ -52,7 +48,7 @@ defmodule Fset.ModuleEncodeTest do
     assert encoded.main_sch == nodefs
 
     for {model_sch, expected} <- Enum.zip(encoded.model_schs, [%{"a" => %{}}, %{"b" => %{}}]) do
-      assert Sch.properties(model_sch) == expected
+      assert Map.keys(expected) == Map.keys(Sch.properties(model_sch))
     end
   end
 end
