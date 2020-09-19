@@ -82,7 +82,8 @@ defmodule Fset.Module do
         "Union" -> New.any_of([New.object(), New.array(), New.string()], anchor_prefix: "model")
       end
 
-    %{file | schema: Sch.put(root, path, Utils.gen_key(), model, 0)}
+    {_, _, new_schema} = Sch.put(root, path, Utils.gen_key(), model, 0)
+    %{file | schema: new_schema}
   end
 
   def rename_key(%_{schema: root} = file, path, old_key, new_key) do

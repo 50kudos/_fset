@@ -115,6 +115,8 @@ defmodule Fset.Sch do
     }
   end
 
+  def get({_pre, _post, map}, path), do: get(map, path)
+
   def get(map, path) when is_map(map) and is_binary(path) do
     get_in(map, access_path(path))
   end
@@ -449,13 +451,17 @@ defmodule Fset.Sch do
     end
   end
 
+  def put_schs({_pre, _post, map}, _path, []), do: map
   def put_schs(map, _path, []), do: map
+
+  def put_schs({_pre, _post, map}, path, raw_schs), do: put_schs(map, path, raw_schs)
 
   def put_schs(map, path, raw_schs)
       when is_map(map) and is_binary(path) and is_list(raw_schs) do
     parent_path = access_path(path)
 
-    update_in(map, parent_path, fn parent -> put_schs(parent, raw_schs) end)
+    {pre, new_map} = get_and_update_in(map, parent_path, &{&1, put_schs(&1, raw_schs)})
+    {pre, _post = get(new_map, path), new_map}
   end
 
   defp put_schs(%{@type_ => @object} = parent, raw_schs) do
