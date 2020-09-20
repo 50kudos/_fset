@@ -17,8 +17,8 @@ defmodule FsetWeb.ModelComponent do
       :ok,
       socket
       |> assign(assigns)
-      |> assign(:current_path, M.current_path())
-      |> assign(:current_edit, M.current_edit())
+      |> assign(:current_path, M.current_path(assigns.ui))
+      |> assign(:current_edit, M.current_edit(assigns.ui))
       |> assign_new(:errors, fn -> assigns.ui.errors end)
       |> update(:sch, fn sch -> Map.delete(sch, "examples") end)
       |> update(:ui, fn ui -> Map.put_new(ui, :level, ui.tab) end)

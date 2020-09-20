@@ -2,7 +2,7 @@ defmodule FsetWeb.MainLive do
   @file_topic "module_update:"
 
   use FsetWeb, :live_view
-  alias FsetWeb.{SchComponent, ModuleComponent, ModelBarComponent}
+  alias FsetWeb.{SchComponent, ModuleComponent, ModelBarComponent, Presence}
   alias Fset.{Sch, Persistence, Module, Project, Accounts, Utils}
   import Fset.Main
 
@@ -36,9 +36,8 @@ defmodule FsetWeb.MainLive do
       end)
 
     models_nav = Sch.order(Sch.get(current_file.schema, current_file.id))
-    :ets.new(:main, [:set, :protected, :named_table])
-    set_current_path(current_file.id)
-    set_current_edit(nil)
+    topic = @file_topic <> socket.assigns.current_file.id
+    Presence.track(self(), topic, user.id, %{current_path: current_file.id, current_edit: nil})
 
     {
       :ok,
@@ -48,7 +47,7 @@ defmodule FsetWeb.MainLive do
       |> assign(:files, Enum.reverse(schs_indice))
       |> assign(:model_names, model_names)
       |> assign(:models_nav, models_nav)
-      |> assign(:ui, %{errors: []}),
+      |> assign(:ui, %{errors: [], topic: topic, user_id: user.id}),
       temporary_assigns: [models_nav: []]
     }
   end
@@ -56,11 +55,17 @@ defmodule FsetWeb.MainLive do
   @impl true
   def handle_event("add_field", %{"field" => field}, socket) do
     file = socket.assigns.current_file
-    add_path = current_path()
+    add_path = current_path(socket.assigns.ui)
 
-    {_, postsch, _} = add_field(file.schema, add_path, field)
+    {_, postsch, new_schema} = add_field(file.schema, add_path, field)
 
-    broadcast_update_sch(file, postsch, add_path)
+    # Note: if we decide to move renderer to frontend, change the handle_info
+    # from calling send_update to push_event with same parameters for client to patch
+    # the DOM.
+    # broadcast_and_persist!(file, add_path, postsch)
+    broadcast_update_sch(file, add_path, postsch)
+
+    # async_update_schema()
     {:noreply, socket}
   end
 
@@ -79,7 +84,7 @@ defmodule FsetWeb.MainLive do
     type = Map.get(val, "type") || Map.get(val, "value")
     file = socket.assigns.current_file
     model_names = socket.assigns.model_names
-    current_path = current_path()
+    current_path = current_path(socket.assigns.ui)
 
     file =
       cond do
@@ -103,10 +108,14 @@ defmodule FsetWeb.MainLive do
     {:memory, mem} = Process.info(socket.root_pid, :memory)
     IO.inspect("#{mem / (1024 * 1024)} MB", label: "MEMORY")
 
+    user = socket.assigns.current_user
     file = socket.assigns.current_file
-    previous_path = current_path()
+    previous_path = current_path(socket.assigns.ui)
     sch_path = Utils.unwrap(sch_path, file.id)
-    set_current_path(sch_path)
+
+    Presence.update(self(), socket.assigns.ui.topic, user.id, fn meta ->
+      Map.put(meta, :current_path, sch_path)
+    end)
 
     re_render_model(previous_path)
 
@@ -129,10 +138,15 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("edit_sch", %{"path" => sch_path}, socket) do
-    if current_path() in Enum.map(socket.assigns.files, & &1.id) do
+    user = socket.assigns.current_user
+
+    if current_path(socket.assigns.ui) in Enum.map(socket.assigns.files, & &1.id) do
     else
-      set_current_path(sch_path)
-      set_current_edit(sch_path)
+      Presence.update(self(), socket.assigns.ui.topic, user.id, fn meta ->
+        meta = Map.put(meta, :current_path, sch_path)
+        _meta = Map.put(meta, :current_edit, sch_path)
+      end)
+
       send_update(FsetWeb.ModelComponent, id: sch_path)
     end
 
@@ -157,6 +171,7 @@ defmodule FsetWeb.MainLive do
     old_key = String.slice(old_key, 0, min(255, String.length(old_key)))
     new_key = String.slice(new_key, 0, min(255, String.length(new_key)))
 
+    user = socket.assigns.current_user
     file = socket.assigns.current_file
     file = Module.rename_key(file, parent_path, old_key, new_key)
 
@@ -164,8 +179,11 @@ defmodule FsetWeb.MainLive do
 
     new_key = if new_key == "", do: old_key, else: new_key
     new_path = input_name(parent_path, new_key)
-    set_current_path(new_path)
-    set_current_edit(nil)
+
+    Presence.update(self(), socket.assigns.ui.topic, user.id, fn meta ->
+      meta = Map.put(meta, :current_path, new_path)
+      _meta = Map.put(meta, :current_edit, nil)
+    end)
 
     async_update_schema()
     {:noreply, socket}
@@ -174,9 +192,11 @@ defmodule FsetWeb.MainLive do
   def handle_event("move", payload, socket) do
     %{"oldIndices" => src_indices, "newIndices" => dst_indices} = payload
 
+    user = socket.assigns.current_user
     file = socket.assigns.current_file
 
-    paths_refs = Enum.map(List.wrap(current_path()), fn p -> {p, Ecto.UUID.generate()} end)
+    paths_refs =
+      Enum.map(List.wrap(current_path(socket.assigns.ui)), fn p -> {p, Ecto.UUID.generate()} end)
 
     schema =
       for {current_path, ref} <- paths_refs, reduce: file.schema do
@@ -196,7 +216,10 @@ defmodule FsetWeb.MainLive do
     current_paths = Enum.filter(current_paths, fn p -> p != "" end)
     current_paths = if length(current_paths) == 1, do: hd(current_paths), else: current_paths
     # current_paths = Sch.get_paths(section_sch, dst_indices)
-    set_current_path(current_paths)
+
+    Presence.update(self(), socket.assigns.ui.topic, user.id, fn meta ->
+      _meta = Map.put(meta, :current_path, current_paths)
+    end)
 
     async_update_schema()
     {:noreply, socket}
@@ -211,7 +234,7 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("module_keyup", val, socket) do
-    if current_path() in Enum.map(socket.assigns.files, & &1.id) do
+    if current_path(socket.assigns.ui) in Enum.map(socket.assigns.files, & &1.id) do
       {:noreply, socket}
     else
       updated_assigns = module_keyup(val, socket.assigns)
@@ -222,8 +245,9 @@ defmodule FsetWeb.MainLive do
   end
 
   defp module_keyup(%{"key" => key}, assigns) do
+    user = assigns.current_user
     file = assigns.current_file
-    current_path = current_path()
+    current_path = current_path(assigns.ui)
 
     assigns =
       case key do
@@ -249,7 +273,10 @@ defmodule FsetWeb.MainLive do
             schema = Sch.delete(file.schema, current_path)
             new_current_paths = Map.keys(Sch.find_parents(current_path))
 
-            set_current_path(new_current_paths)
+            Presence.update(self(), assigns.ui.topic, user.id, fn meta ->
+              _meta = Map.put(meta, :current_path, new_current_paths)
+            end)
+
             send_update(ModelBarComponent, id: :model_bar, except: [file.id, Utils.gen_key()])
             put_in(assigns, [:current_file], %{file | schema: schema})
           else
@@ -263,9 +290,13 @@ defmodule FsetWeb.MainLive do
           end
 
         "Escape" ->
-          previous_path = current_path()
-          set_current_path(file.id)
-          set_current_edit(nil)
+          previous_path = current_path(assigns.ui)
+
+          Presence.update(self(), assigns.ui.topic, user.id, fn meta ->
+            meta = Map.put(meta, :current_path, file.id)
+            _meta = Map.put(meta, :current_edit, nil)
+          end)
+
           re_render_model(previous_path)
           send_update(FsetWeb.SchComponent, id: file.id, sch: file.schema, path: file.id)
           send_update(ModelBarComponent, id: :model_bar, except: [file.id, Utils.gen_key()])
@@ -303,8 +334,12 @@ defmodule FsetWeb.MainLive do
     {:noreply, assign(socket, :current_file, file)}
   end
 
-  def handle_info({:update_sch, sch, path}, socket) do
+  def handle_info({:update_sch, path, sch}, socket) do
     re_render_model(path, sch: sch)
+    {:noreply, socket}
+  end
+
+  def handle_info(%{event: "presence_diff", payload: _payload}, socket) do
     {:noreply, socket}
   end
 
@@ -359,11 +394,15 @@ defmodule FsetWeb.MainLive do
     path in current_path && Enum.count(current_path) > 1
   end
 
-  def current_path(), do: :ets.lookup(:main, :current_path)[:current_path]
-  def current_edit(), do: :ets.lookup(:main, :current_edit)[:current_edit]
+  def current_path(ui) do
+    %{metas: [map | _]} = Presence.get_by_key(ui.topic, ui.user_id)
+    map.current_path
+  end
 
-  def set_current_path(paths), do: :ets.insert(:main, {:current_path, paths})
-  def set_current_edit(paths), do: :ets.insert(:main, {:current_edit, paths})
+  def current_edit(ui) do
+    %{metas: [map | _]} = Presence.get_by_key(ui.topic, ui.user_id)
+    map.current_edit
+  end
 
   def re_render_model(path_, opts \\ []) do
     case List.wrap(path_) do

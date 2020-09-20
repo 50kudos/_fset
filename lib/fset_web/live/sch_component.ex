@@ -269,19 +269,19 @@ defmodule FsetWeb.SchComponent do
     ~L"""
     <%= if Sch.object?(@parent) do %>
       <label class="flex items-center">
-        <input type="checkbox" phx-click="update_sch" phx-value-key="required" phx-value-path="<%= @path %>" value="<%= checked?(@parent) %>" class="mr-1" <%= # checked?(@parent) && "checked" %>>
+        <input type="checkbox" phx-click="update_sch" phx-value-key="required" phx-value-path="<%= @path %>" value="<%= checked?(@ui, @parent) %>" class="mr-1" <%= # checked?(@parent) && "checked" %>>
         <p class="p-1 text-xs text-gray-600 select-none">Required</p>
       </label>
     <% end %>
     """
   end
 
-  defp checked?(parent) do
-    sch_key() in Sch.required(parent)
+  defp checked?(ui, parent) do
+    sch_key(ui) in Sch.required(parent)
   end
 
-  defp sch_key() do
-    Sch.find_parent(M.current_path()).child_key
+  defp sch_key(ui) do
+    Sch.find_parent(M.current_path(ui.topic)).child_key
   end
 
   @impl true
