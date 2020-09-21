@@ -146,7 +146,8 @@ Hooks.moveable = {
   },
   selectCurrentItems() {
     const root = document.querySelector("[data-group='body']")
-    const currentPaths = root.dataset.currentPaths
+    const data = document.querySelector("[data-current-paths]")
+    const currentPaths = data.dataset.currentPaths
 
     if (currentPaths) {
       Sortable.get(this.el).multiDrag._deselectMultiDrag()

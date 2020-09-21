@@ -1,7 +1,6 @@
 defmodule FsetWeb.SchComponent do
   use FsetWeb, :live_component
   alias Fset.Sch
-  alias FsetWeb.MainLive, as: M
 
   @impl true
   def render(assigns) do

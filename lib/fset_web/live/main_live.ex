@@ -66,7 +66,7 @@ defmodule FsetWeb.MainLive do
     broadcast_update_sch(file, add_path, postsch)
 
     # async_update_schema()
-    {:noreply, socket}
+    {:noreply, assign(socket, :current_file, %{file | schema: new_schema})}
   end
 
   def handle_event("add_model", %{"model" => model} = val, socket) do
@@ -132,7 +132,7 @@ defmodule FsetWeb.MainLive do
         end
     end
 
-    send_update(ModelBarComponent, id: :model_bar, except: [file.id, Utils.gen_key()])
+    send_update(ModelBarComponent, id: :model_bar, paths: List.wrap(sch_path) -- [file.id])
 
     {:noreply, socket}
   end
@@ -277,7 +277,16 @@ defmodule FsetWeb.MainLive do
               _meta = Map.put(meta, :current_path, new_current_paths)
             end)
 
-            send_update(ModelBarComponent, id: :model_bar, except: [file.id, Utils.gen_key()])
+            send_update(ModelBarComponent, id: :model_bar, paths: new_current_paths -- [file.id])
+
+            if length(new_current_paths) == 1 do
+              send_update(FsetWeb.SchComponent,
+                id: file.id,
+                sch: schema,
+                path: hd(new_current_paths)
+              )
+            end
+
             put_in(assigns, [:current_file], %{file | schema: schema})
           else
             assigns
@@ -299,7 +308,7 @@ defmodule FsetWeb.MainLive do
 
           re_render_model(previous_path)
           send_update(FsetWeb.SchComponent, id: file.id, sch: file.schema, path: file.id)
-          send_update(ModelBarComponent, id: :model_bar, except: [file.id, Utils.gen_key()])
+          send_update(ModelBarComponent, id: :model_bar, paths: List.wrap(file.id) -- [file.id])
           assigns
 
         _ ->

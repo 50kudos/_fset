@@ -1,23 +1,23 @@
 defmodule FsetWeb.ModelBarComponent do
   use FsetWeb, :live_component
-  alias FsetWeb.MainLive, as: M
 
   @impl true
   def render(assigns) do
     ~L"""
-    <%= if selected_count = selected_count(@ui, @except) do %>
-      <div class="flex items-center h-full space-x-2">
+    <div class="flex items-center h-full space-x-2">
+      <span data-current-paths="<%= Jason.encode!(@paths) %>"></span>
+      <%= if selected_count = selected_count(@paths) do %>
         <button phx-click="escape" class="text-gray-600 hover:text-gray-300" title="Deselect">&times;</button>
         <span>selected <%= selected_count %></span>
         <button class="flex-1"></button>
         <button phx-click="delete" class="text-red-500 hover:text-red-600">delete</button>
-      </div>
-    <% end %>
+      <% end %>
+    </div>
     """
   end
 
-  defp selected_count(ui, except) do
-    length = length(List.wrap(M.current_path(ui)) -- List.wrap(except))
+  defp selected_count(paths) do
+    length = length(paths)
     if length < 1, do: false, else: length
   end
 end
