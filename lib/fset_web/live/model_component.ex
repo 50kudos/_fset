@@ -2,6 +2,7 @@ defmodule FsetWeb.ModelComponent do
   use FsetWeb, :live_component
   alias Fset.{Sch, Utils}
   alias FsetWeb.MainLive, as: M
+  import Fset.Main
 
   @impl true
   def mount(socket) do
@@ -9,20 +10,49 @@ defmodule FsetWeb.ModelComponent do
   end
 
   @impl true
+  def handle_event("add_field", %{"field" => field}, socket) do
+    assigns = socket.assigns
+    schema = Sch.new(assigns.key, assigns.sch)
+
+    {_, postsch, new_schema} = add_field(schema, assigns.key, field)
+
+    # Note: if we decide to move renderer to frontend, change the handle_info
+    # from calling send_update to push_event with same parameters for client to patch
+    # the DOM.
+    # broadcast_and_persist!(file, add_path, postsch)
+    broadcast_update_sch(assigns.ui.topic, assigns.path, postsch)
+
+    # async_update_schema()
+    {:noreply, assign(socket, :sch, Sch.get(new_schema, assigns.key))}
+  end
+
+  @impl true
   def update(assigns, socket) do
     assigns = Map.merge(socket.assigns, assigns)
-    assigns = Map.take(assigns, [:key, :sch, :parent, :ui, :path])
+    assigns = Map.take(assigns, [:key, :sch, :parent, :ui, :path, :model_id])
+
+    socket =
+      socket
+      |> assign(assigns)
+      |> update(:ui, fn ui -> Map.put_new(ui, :level, ui.tab) end)
+      |> update(:ui, fn ui -> Map.put_new(ui, :parent_path, assigns.path) end)
+
+    assigns = socket.assigns
+
+    # socket =
+    #   if assigns.ui.level == assigns.ui.tab do
+    #     update(socket, :ui, fn ui -> Map.put_new(ui, :model_id, assigns.myself) end)
+    #   else
+    #     update(socket, :ui, fn ui -> Map.put_new(ui, :model_id, assigns.myself) end)
+    #   end
 
     {
       :ok,
       socket
-      |> assign(assigns)
       |> assign(:current_path, M.current_path(assigns.ui))
       |> assign(:current_edit, M.current_edit(assigns.ui))
       |> assign_new(:errors, fn -> assigns.ui.errors end)
       |> update(:sch, fn sch -> Map.delete(sch, "examples") end)
-      |> update(:ui, fn ui -> Map.put_new(ui, :level, ui.tab) end)
-      |> update(:ui, fn ui -> Map.put_new(ui, :parent_path, assigns.path) end)
     }
   end
 
@@ -197,17 +227,26 @@ defmodule FsetWeb.ModelComponent do
     cond do
       Sch.object?(assigns.sch) ->
         ~L"""
-        <span phx-click="add_field" phx-value-field="Record" class="px-2 bg-indigo-500 rounded cursor-pointer">+</span>
+        <span class="px-2 bg-indigo-500 rounded cursor-pointer"
+          phx-click="add_field" phx-value-field="Record"
+          phx-value-path="<%= @path %>"
+          phx-target="<%= @myself %>">+</span>
         """
 
       Sch.array?(assigns.sch) ->
         ~L"""
-        <span phx-click="add_field" phx-value-field="Record" class="px-2 bg-indigo-500 rounded cursor-pointer">+</span>
+        <span class="px-2 bg-indigo-500 rounded cursor-pointer"
+          phx-click="add_field" phx-value-field="Record"
+          phx-value-path="<%= @path %>"
+          phx-target="<%= @myself %>">+</span>
         """
 
       Sch.any_of?(assigns.sch) ->
         ~L"""
-        <span phx-click="add_field" phx-value-field="Record" class="px-2 bg-indigo-500 rounded cursor-pointer">+</span>
+        <span class="px-2 bg-indigo-500 rounded cursor-pointer"
+          phx-click="add_field" phx-value-field="Record"
+          phx-value-path="<%= @path %>"
+          phx-target="<%= @myself %>">+</span>
         """
 
       true ->

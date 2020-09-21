@@ -706,6 +706,10 @@ defmodule Fset.Sch do
     end
   end
 
+  def replace(map, path, sch) when is_map(sch) do
+    update_in(map, access_path(path), fn _ -> sch end)
+  end
+
   def update(map, path, key, val) when is_binary(key) do
     cond do
       key in [@title, @description, @id] and is_binary(val) ->

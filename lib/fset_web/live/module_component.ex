@@ -10,6 +10,11 @@ defmodule FsetWeb.ModuleComponent do
     file = Map.update!(file, :schema, fn root -> Sch.sanitize(Sch.get(root, file.id)) end)
     current_section_sch = file.schema
 
+    models =
+      for key <- Sch.order(current_section_sch) do
+        {key, Sch.prop_sch(current_section_sch, key)}
+      end
+
     {
       :ok,
       socket
@@ -18,7 +23,7 @@ defmodule FsetWeb.ModuleComponent do
       |> assign(:path, assigns.path)
       |> assign(:body, current_section_sch)
       |> assign(:type, file.type)
-      |> assign(:models, Sch.order(current_section_sch))
+      |> assign(:models, models)
       |> assign(:name, file.name)
     }
   end
@@ -35,11 +40,11 @@ defmodule FsetWeb.ModuleComponent do
     ~L"""
     <div id="moveable__<%= @path %>" phx-hook="moveable" data-group="body" data-path="<%= @path %>"
       phx-capture-click="select_sch" phx-value-paths="<%= @path %>" class="grid grid-cols-fit py-6 h-full gap-4">
-      <%= for key <- @models do %>
+      <%= for {key, sch} <- @models do %>
         <%= live_component(@socket, ModelComponent,
           id: input_name(@path, key),
           key: key,
-          sch: Sch.prop_sch(@body, key),
+          sch: sch,
           parent: @body,
           ui: @ui,
           path: input_name(@path, key)

@@ -14,10 +14,18 @@ defmodule Fset.Main do
     {_pre, _post, _new_schema} = Module.add_field(schema, path, model_type)
   end
 
-  def broadcast_update_sch(file, path, sch) do
+  def broadcast_update_sch(topic, path, sch) when is_binary(topic) do
     Phoenix.PubSub.broadcast!(
       Fset.PubSub,
-      @file_topic <> file.id,
+      topic,
+      {:update_sch, path, sch}
+    )
+  end
+
+  def broadcast_update_sch(%_{id: id}, path, sch) do
+    Phoenix.PubSub.broadcast!(
+      Fset.PubSub,
+      @file_topic <> id,
       {:update_sch, path, sch}
     )
   end

@@ -53,22 +53,6 @@ defmodule FsetWeb.MainLive do
   end
 
   @impl true
-  def handle_event("add_field", %{"field" => field}, socket) do
-    file = socket.assigns.current_file
-    add_path = current_path(socket.assigns.ui)
-
-    {_, postsch, new_schema} = add_field(file.schema, add_path, field)
-
-    # Note: if we decide to move renderer to frontend, change the handle_info
-    # from calling send_update to push_event with same parameters for client to patch
-    # the DOM.
-    # broadcast_and_persist!(file, add_path, postsch)
-    broadcast_update_sch(file, add_path, postsch)
-
-    # async_update_schema()
-    {:noreply, assign(socket, :current_file, %{file | schema: new_schema})}
-  end
-
   def handle_event("add_model", %{"model" => model} = val, socket) do
     file = socket.assigns.current_file
     add_path = Map.get(val, "path", file.id)
@@ -345,6 +329,15 @@ defmodule FsetWeb.MainLive do
 
   def handle_info({:update_sch, path, sch}, socket) do
     re_render_model(path, sch: sch)
+    current_file = socket.assigns.current_file
+    existing_file = Project.get_file(current_file.id)
+
+    current_schema = Sch.replace(current_file.schema, path, sch)
+    existing_schema = existing_file.schema
+    updated_schema = Sch.merge(existing_schema, current_schema)
+    file = Persistence.replace_file(existing_file, schema: updated_schema)
+
+    socket = assign(socket, :current_file, file)
     {:noreply, socket}
   end
 
