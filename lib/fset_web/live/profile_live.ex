@@ -52,7 +52,11 @@ defmodule FsetWeb.ProfileLive do
   def handle_event("create_project", _val, socket) do
     # encoded = Module.encode(%{})
     uploaded_file = %{
-      path: Path.expand("../../../test/support/fixtures/sch_samples/all-spec.json", __DIR__)
+      path:
+        Path.expand(
+          "../../../test/support/fixtures/sch_samples/camel-yaml-endpoint.json",
+          __DIR__
+        )
     }
 
     {:ok, encoded} =

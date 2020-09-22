@@ -260,7 +260,7 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_key(assigns) do
     ~L"""
-    <div class="flex items-start text-sm"
+    <div class="flex items-start text-sm flex-shrink-0"
       onclick="event.preventDefault()">
       <%= render_key_(assigns) %>
     </div>
@@ -332,7 +332,7 @@ defmodule FsetWeb.ModelComponent do
   # Current or selected path
   defp render_key_text(%{current_path: name, path: name} = assigns) do
     ~L"""
-    <p class="" style="max-width: 12rem"
+    <p class="" style="max-width: 100%"
       phx-click="edit_sch"
       phx-value-path="<%= @path %>"
       onclick="event.preventDefault()">
@@ -347,7 +347,7 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_key_text(assigns) do
     ~L"""
-    <p class="" style="max-width: 12rem"
+    <p class="" style="max-width: 100%"
       onclick="event.preventDefault()">
       <%= render_key_text_(assigns) %>
     </p>
@@ -504,6 +504,7 @@ defmodule FsetWeb.ModelComponent do
       Sch.array?(sch, :hetero) -> "tuple"
       Sch.string?(sch) -> "str"
       Sch.number?(sch) -> "num"
+      Sch.integer?(sch) -> "int"
       Sch.boolean?(sch) -> "bool"
       Sch.null?(sch) -> "null"
       Sch.any_of?(sch) -> "union"

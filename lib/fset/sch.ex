@@ -76,12 +76,14 @@ defmodule Fset.Sch do
 
   def string?(sch), do: match?(%{@type_ => @string}, sch)
   def number?(sch), do: match?(%{@type_ => @number}, sch)
+  def integer?(sch), do: match?(%{@type_ => @integer}, sch)
   def boolean?(sch), do: match?(%{@type_ => @boolean}, sch)
   def null?(sch), do: match?(%{@type_ => @null}, sch)
   def leaf?(sch), do: match?(%{@type_ => _}, sch)
   def leaf?(sch, :multi), do: match?(%{@type_ => types} when is_list(types), sch)
   def ref?(sch), do: match?(%{@ref => _}, sch)
   def const?(sch), do: match?(%{@const => _}, sch)
+  def enum?(sch), do: match?(%{@enum => _}, sch)
 
   def any?(sch) do
     Enum.all?([
@@ -196,6 +198,13 @@ defmodule Fset.Sch do
       |> Map.put(@const, const)
       |> Map.take([@const, @anchor])
     end)
+  end
+
+  def enum_to_union_value(%{@enum => enum} = map) when is_list(enum) do
+    map
+    |> Map.delete(@enum)
+    |> Map.delete(@type_)
+    |> Map.put(@any_of, Enum.map(enum, fn el -> %{@const => el} end))
   end
 
   def expand_multi_types(%{@type_ => types} = map) when is_list(types) do

@@ -43,6 +43,7 @@ defmodule Fset.Module.Encode do
     |> Sch.walk_container(fn sch ->
       cond do
         Sch.object?(sch) -> Sch.ensure_props_order(sch)
+        Sch.enum?(sch) -> Sch.enum_to_union_value(sch)
         Sch.leaf?(sch, :multi) -> Sch.expand_multi_types(sch)
         true -> sch
       end

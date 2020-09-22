@@ -34,8 +34,11 @@ defmodule Fset.Sch.Vocab do
       @maximum "maximum"
       @minimum "minimum"
 
+      @integer "integer"
+
       @type_ "type"
       @const "const"
+      @enum "enum"
       @boolean "boolean"
       @null "null"
 
