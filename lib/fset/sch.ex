@@ -207,6 +207,20 @@ defmodule Fset.Sch do
     |> Map.put(@any_of, Enum.map(enum, fn el -> %{@const => el} end))
   end
 
+  def repair_keywords(map) do
+    case map do
+      %{@type_ => @object} ->
+        map = Map.put_new(map, @properties, %{})
+        _map = Map.put_new(map, @props_order, Map.keys(Map.get(map, @properties)))
+
+      %{@type_ => @array} ->
+        _map = Map.put_new(map, @items, %{})
+
+      _ ->
+        map
+    end
+  end
+
   def expand_multi_types(%{@type_ => types} = map) when is_list(types) do
     {types, map} = Map.pop(map, @type_)
 

@@ -88,7 +88,7 @@ defmodule FsetWeb.MainLive do
       |> update(:current_file, fn _ -> %{file | schema: new_schema} end)
       |> update(:models, fn models -> [{added_key, added_sch} | models] end)
 
-    broadcast_update_sch(assigns.ui.topic, assigns.path, postsch)
+    broadcast_update_sch(assigns.ui.topic, add_path, postsch)
 
     {:noreply, socket}
   end

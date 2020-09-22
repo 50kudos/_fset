@@ -39,6 +39,7 @@ defmodule Fset.Module.Encode do
 
   defp encode(map, _acc) do
     map
+    |> Sch.repair_keywords()
     |> Sch.New.put_anchor(prefix: "model")
     |> Sch.walk_container(fn sch ->
       cond do

@@ -54,7 +54,7 @@ defmodule FsetWeb.ProfileLive do
     uploaded_file = %{
       path:
         Path.expand(
-          "../../../test/support/fixtures/sch_samples/camel-yaml-endpoint.json",
+          "../../../test/support/fixtures/sch_samples/github-workflow.json",
           __DIR__
         )
     }
