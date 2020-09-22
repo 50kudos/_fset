@@ -14,6 +14,10 @@ defmodule Fset.Main do
     {_pre, _post, _new_schema} = Module.add_field(schema, path, model_type)
   end
 
+  def add_model(schema, path, model_type) do
+    {_pre, _post, _new_schema} = Module.add_model(schema, path, model_type)
+  end
+
   def broadcast_update_sch(topic, path, sch) when is_binary(topic) do
     Phoenix.PubSub.broadcast!(
       Fset.PubSub,

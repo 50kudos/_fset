@@ -6,46 +6,34 @@ defmodule FsetWeb.ModuleComponent do
   @impl true
   def update(assigns, socket) do
     init_ui = Map.merge(assigns.ui, %{tab: 1, parent_path: assigns.path})
-    file = assigns.file
-    file = Map.update!(file, :schema, fn root -> Sch.sanitize(Sch.get(root, file.id)) end)
-    current_section_sch = file.schema
-
-    models =
-      for key <- Sch.order(current_section_sch) do
-        {key, Sch.prop_sch(current_section_sch, key)}
-      end
 
     {
       :ok,
       socket
+      |> assign(assigns)
       |> assign(:ui, init_ui)
       |> update(:ui, fn ui -> Map.put(ui, :model_names, assigns.model_names) end)
-      |> assign(:path, assigns.path)
-      |> assign(:body, current_section_sch)
-      |> assign(:type, file.type)
-      |> assign(:models, models)
-      |> assign(:name, file.name)
     }
   end
 
   @impl true
   def render(assigns) do
-    case assigns.type do
-      :main -> render_main(assigns)
-      :model -> render_model(assigns)
+    case assigns do
+      %{models: models} when is_map(models) -> render_main(assigns)
+      %{models: models} when is_list(models) -> render_model(assigns)
     end
   end
 
   defp render_model(assigns) do
     ~L"""
-    <div id="moveable__<%= @path %>" phx-hook="moveable" data-group="body" data-path="<%= @path %>"
+    <div id="moveable__<%= @path %>" phx-hook="moveable" data-group="body" data-path="<%= @path %>" phx-update="prepend"
       phx-capture-click="select_sch" phx-value-paths="<%= @path %>" class="grid grid-cols-fit py-6 h-full gap-4">
       <%= for {key, sch} <- @models do %>
         <%= live_component(@socket, ModelComponent,
           id: input_name(@path, key),
           key: key,
           sch: sch,
-          parent: @body,
+          parent: %{"type" => "object", "properties" => %{}},
           ui: @ui,
           path: input_name(@path, key)
         ) %>
@@ -61,7 +49,7 @@ defmodule FsetWeb.ModuleComponent do
       <%= live_component(@socket, ModelComponent,
         id: @path,
         key: @name,
-        sch: @body,
+        sch: Sch.get(Map.new(@models), @id),
         ui: @ui,
         path: @path
       ) %>

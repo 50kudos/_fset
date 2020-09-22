@@ -4,6 +4,7 @@ defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
   alias FsetWeb.{SchComponent, ModuleComponent, ModelBarComponent, Presence}
   alias Fset.{Sch, Persistence, Module, Project, Accounts, Utils}
+  import Fset.Main
 
   @impl true
   def mount(params, _session, socket) do
@@ -34,9 +35,29 @@ defmodule FsetWeb.MainLive do
         {model_anchor, [%{fi | schema: nil} | acc]}
       end)
 
-    models_nav = Sch.order(Sch.get(current_file.schema, current_file.id))
     topic = @file_topic <> socket.assigns.current_file.id
-    Presence.track(self(), topic, user.id, %{current_path: current_file.id, current_edit: nil})
+
+    Presence.track(self(), topic, user.id, %{
+      current_path: current_file.id,
+      current_edit: nil,
+      pid: self()
+    })
+
+    current_file = socket.assigns.current_file
+
+    schema = Sch.get(current_file.schema, current_file.id)
+
+    {models_nav, models} =
+      if current_file.type == :model do
+        models =
+          for key <- Sch.order(schema) do
+            {key, Sch.prop_sch(schema, key)}
+          end
+
+        {Keyword.keys(models), models}
+      else
+        {[], current_file.schema}
+      end
 
     {
       :ok,
@@ -46,20 +67,29 @@ defmodule FsetWeb.MainLive do
       |> assign(:files, Enum.reverse(schs_indice))
       |> assign(:model_names, model_names)
       |> assign(:models_nav, models_nav)
+      |> assign(:models, models)
       |> assign(:ui, %{errors: [], topic: topic, user_id: user.id}),
-      temporary_assigns: [models_nav: []]
+      temporary_assigns: [models_nav: [], models: []]
     }
   end
 
   @impl true
-  def handle_event("add_model", %{"model" => model} = val, socket) do
-    file = socket.assigns.current_file
-    add_path = Map.get(val, "path", file.id)
-    file = Module.add_model(file, add_path, model)
+  def handle_event("add_model", %{"model" => model}, socket) do
+    assigns = socket.assigns
+    file = assigns.current_file
+    add_path = file.id
+    {_, postsch, new_schema} = add_model(file.schema, add_path, model)
 
-    socket = update(socket, :current_file, fn _ -> file end)
+    [added_key | _] = Sch.order(postsch)
+    added_sch = Sch.get(postsch, added_key)
 
-    async_update_schema()
+    socket =
+      socket
+      |> update(:current_file, fn _ -> %{file | schema: new_schema} end)
+      |> update(:models, fn models -> [{added_key, added_sch} | models] end)
+
+    broadcast_update_sch(assigns.ui.topic, assigns.path, postsch)
+
     {:noreply, socket}
   end
 
@@ -97,7 +127,8 @@ defmodule FsetWeb.MainLive do
     sch_path = Utils.unwrap(sch_path, file.id)
 
     Presence.update(self(), socket.assigns.ui.topic, user.id, fn meta ->
-      Map.put(meta, :current_path, sch_path)
+      meta = Map.put(meta, :current_path, sch_path)
+      _meta = Map.put(meta, :pid, socket.root_pid)
     end)
 
     send_update(ModelBarComponent, id: :model_bar, paths: List.wrap(sch_path) -- [file.id])
@@ -186,7 +217,17 @@ defmodule FsetWeb.MainLive do
       end
 
     schema = Sch.move(schema, src_indices, dst_indices)
-    socket = update(socket, :current_file, fn _ -> %{file | schema: schema} end)
+    schema = Sch.get(schema, file.id)
+
+    models =
+      for key <- Sch.order(schema) do
+        {key, Sch.prop_sch(schema, key)}
+      end
+
+    socket =
+      socket
+      |> update(:current_file, fn _ -> %{file | schema: schema} end)
+      |> assign(:models, models)
 
     section_sch = socket.assigns.current_file.schema
 
@@ -269,7 +310,8 @@ defmodule FsetWeb.MainLive do
               )
             end
 
-            put_in(assigns, [:current_file], %{file | schema: schema})
+            assigns
+            |> put_in([:current_file], %{file | schema: schema})
           else
             assigns
             |> put_in([:ui, :errors], [
@@ -310,19 +352,7 @@ defmodule FsetWeb.MainLive do
     file = Persistence.replace_file(existing_file, schema: updated_schema)
 
     socket = assign(socket, :current_file, file)
-
-    Phoenix.PubSub.broadcast_from!(
-      Fset.PubSub,
-      self(),
-      @file_topic <> file.id,
-      {:update_file, file}
-    )
-
     {:noreply, socket}
-  end
-
-  def handle_info({:update_file, file}, socket) do
-    {:noreply, assign(socket, :current_file, file)}
   end
 
   def handle_info({:update_sch, path, sch}, socket) do
@@ -395,13 +425,19 @@ defmodule FsetWeb.MainLive do
   end
 
   def current_path(ui) do
-    %{metas: [map | _]} = Presence.get_by_key(ui.topic, ui.user_id)
-    map.current_path
+    %{metas: metas} = Presence.get_by_key(ui.topic, ui.user_id)
+
+    meta = Enum.find(metas, fn meta -> meta.pid == self() end)
+    meta = meta || hd(metas)
+    meta.current_path
   end
 
   def current_edit(ui) do
-    %{metas: [map | _]} = Presence.get_by_key(ui.topic, ui.user_id)
-    map.current_edit
+    %{metas: metas} = Presence.get_by_key(ui.topic, ui.user_id)
+
+    meta = Enum.find(metas, fn meta -> meta.pid == self() end)
+    meta = meta || hd(metas)
+    meta.current_edit
   end
 
   def re_render_model(path_, opts \\ []) do
