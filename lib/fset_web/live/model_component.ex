@@ -29,30 +29,18 @@ defmodule FsetWeb.ModelComponent do
   @impl true
   def update(assigns, socket) do
     assigns = Map.merge(socket.assigns, assigns)
-    assigns = Map.take(assigns, [:key, :sch, :parent, :ui, :path, :model_id])
-
-    socket =
-      socket
-      |> assign(assigns)
-      |> update(:ui, fn ui -> Map.put_new(ui, :level, ui.tab) end)
-      |> update(:ui, fn ui -> Map.put_new(ui, :parent_path, assigns.path) end)
-
-    assigns = socket.assigns
-
-    # socket =
-    #   if assigns.ui.level == assigns.ui.tab do
-    #     update(socket, :ui, fn ui -> Map.put_new(ui, :model_id, assigns.myself) end)
-    #   else
-    #     update(socket, :ui, fn ui -> Map.put_new(ui, :model_id, assigns.myself) end)
-    #   end
+    assigns = Map.take(assigns, [:key, :sch, :parent, :ui, :path])
 
     {
       :ok,
       socket
+      |> assign(assigns)
       |> assign(:current_path, M.current_path(assigns.ui))
       |> assign(:current_edit, M.current_edit(assigns.ui))
       |> assign_new(:errors, fn -> assigns.ui.errors end)
       |> update(:sch, fn sch -> Map.delete(sch, "examples") end)
+      |> update(:ui, fn ui -> Map.put_new(ui, :level, ui.tab) end)
+      |> update(:ui, fn ui -> Map.put_new(ui, :parent_path, assigns.path) end)
     }
   end
 

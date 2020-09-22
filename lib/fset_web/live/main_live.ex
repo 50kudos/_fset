@@ -4,7 +4,6 @@ defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
   alias FsetWeb.{SchComponent, ModuleComponent, ModelBarComponent, Presence}
   alias Fset.{Sch, Persistence, Module, Project, Accounts, Utils}
-  import Fset.Main
 
   @impl true
   def mount(params, _session, socket) do
@@ -101,6 +100,7 @@ defmodule FsetWeb.MainLive do
       Map.put(meta, :current_path, sch_path)
     end)
 
+    send_update(ModelBarComponent, id: :model_bar, paths: List.wrap(sch_path) -- [file.id])
     re_render_model(previous_path)
 
     case List.wrap(sch_path) do
@@ -115,8 +115,6 @@ defmodule FsetWeb.MainLive do
           send_update(FsetWeb.ModelComponent, id: path)
         end
     end
-
-    send_update(ModelBarComponent, id: :model_bar, paths: List.wrap(sch_path) -- [file.id])
 
     {:noreply, socket}
   end
