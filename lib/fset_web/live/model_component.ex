@@ -260,7 +260,7 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_key(assigns) do
     ~L"""
-    <div class="flex items-start text-sm flex-shrink-0"
+    <div class="flex items-start text-sm"
       onclick="event.preventDefault()">
       <%= render_key_(assigns) %>
     </div>
@@ -332,7 +332,7 @@ defmodule FsetWeb.ModelComponent do
   # Current or selected path
   defp render_key_text(%{current_path: name, path: name} = assigns) do
     ~L"""
-    <p class="" style="max-width: <%= if @ui.level == @ui.tab, do: 24, else: 12 %>rem"
+    <p class="" style="_max-width: <%= if @ui.level == @ui.tab, do: 24, else: 12 %>rem"
       phx-click="edit_sch"
       phx-value-path="<%= @path %>"
       onclick="event.preventDefault()">
@@ -347,7 +347,7 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_key_text(assigns) do
     ~L"""
-    <p class="" style="max-width: <%= if @ui.level == @ui.tab, do: 24, else: 12 %>rem"
+    <p class="" style="_max-width: <%= if @ui.level == @ui.tab, do: 24, else: 12 %>rem"
       onclick="event.preventDefault()">
       <%= render_key_text_(assigns) %>
     </p>
@@ -380,7 +380,7 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_type(assigns, :no_prevent) do
     ~L"""
-    <p class="text-blue-500 text-sm break-words overflow-auto _flex-shrink-0">
+    <p class="text-blue-500 text-sm break-words whitespace-no-wrap">
       <%= render_type_(assigns) %>
     </p>
     """
@@ -388,7 +388,7 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_type(assigns) do
     ~L"""
-    <p class="text-blue-500 text-sm break-words overflow-auto _flex-shrink-0" onclick="event.preventDefault()">
+    <p class="text-blue-500 text-sm break-words whitespace-no-wrap" onclick="event.preventDefault()">
       <%= render_type_(assigns) %>
     </p>
     """

@@ -20,6 +20,11 @@ defmodule Fset.Utils do
   def word_break_html(string) when is_binary(string) do
     ~r/(?<=::)|(?<=\.)|(?<=_)/
     |> Regex.split(string)
+    |> Enum.flat_map(fn a ->
+      Macro.underscore(a)
+      |> String.split("_")
+      |> Enum.map(&String.capitalize/1)
+    end)
     |> Enum.intersperse({:safe, "<wbr>"})
   end
 
