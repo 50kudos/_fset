@@ -30,7 +30,7 @@ jobs:
       - run: mix test
   deploy:
       name: Deploy app
-      if: success()
+      needs: [run_test]
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v2
