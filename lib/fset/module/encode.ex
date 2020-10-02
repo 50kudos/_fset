@@ -5,6 +5,7 @@ defmodule Fset.Module.Encode do
 
   def from_json_schema(sch, opts \\ []) do
     {defs, main} = Sch.pop_defs(sch)
+    main = encode(main)
 
     model_schs =
       for defs_chuck <- chunk_defs(defs, opts[:defs_per_file]) do
@@ -31,7 +32,9 @@ defmodule Fset.Module.Encode do
     |> Enum.sort_by(fn {key, _sch} -> key end)
     |> Enum.chunk_every(chunk_size || @defs_chunk_size)
     |> Enum.map(fn defs_chuck ->
-      Enum.map(defs_chuck, fn {def, sch} -> {def, encode(sch)} end)
+      Enum.map(defs_chuck, fn {def, sch} ->
+        {def, Sch.New.put_anchor(encode(sch), prefix: "model")}
+      end)
     end)
   end
 
@@ -40,7 +43,6 @@ defmodule Fset.Module.Encode do
   defp encode(map, _acc) do
     map
     |> Sch.repair_keywords()
-    |> Sch.New.put_anchor(prefix: "model")
     |> Sch.walk_container(fn sch ->
       cond do
         Sch.object?(sch) -> Sch.ensure_props_order(sch)

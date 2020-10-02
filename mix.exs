@@ -64,7 +64,8 @@ defmodule Fset.MixProject do
       {:stream_data, "~> 0.4"},
       {:randex, "~> 0.4"},
       {:libcluster, "~> 3.2"},
-      {:ex_doc, "~> 0.22", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.22", only: :dev, runtime: false},
+      {:finch, "~> 0.3"}
     ]
   end
 

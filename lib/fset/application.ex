@@ -17,7 +17,8 @@ defmodule Fset.Application do
       FsetWeb.Endpoint,
       # {Cluster.Supervisor, [topo, [name: Fset.ClusterSupervisor]]}
       # Fset.Vault
-      FsetWeb.Presence
+      FsetWeb.Presence,
+      {Finch, name: FsetHttp}
       # Start a worker by calling: Fset.Worker.start_link(arg)
       # {Fset.Worker, arg}
     ]

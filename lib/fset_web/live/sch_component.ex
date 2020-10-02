@@ -51,7 +51,7 @@ defmodule FsetWeb.SchComponent do
     ~L"""
     <label class="block my-1">
       <p class="px-2 py-1 text-xs text-gray-700"></p>
-      <textarea type="text" class="block px-2 py-1 bg-gray-900 shadow w-full"
+      <textarea type="text" class="block px-2 py-1 text-gray-500 bg-gray-900 shadow tracking-wide w-full"
         id="<%= @path <> ~s(_title) %>"
         phx-blur="update_sch"
         phx-hook="autoResize"
@@ -69,7 +69,7 @@ defmodule FsetWeb.SchComponent do
     ~L"""
     <label class="block my-1">
       <p class="px-2 py-1 text-xs text-gray-700"></p>
-      <textarea type="text" class="block px-2 py-1 bg-gray-900 shadow w-full"
+      <textarea type="text" class="block px-2 py-1 text-gray-500 bg-gray-900 shadow tracking-wide w-full"
         id="<%= @path <> ~s(_description) %>"
         phx-blur="update_sch"
         phx-hook="autoResize"

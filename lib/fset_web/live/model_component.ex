@@ -272,35 +272,35 @@ defmodule FsetWeb.ModelComponent do
     cond do
       Sch.object?(assigns.sch) ->
         ~L"""
-        <span class="text-blue-400 mr-2">record</span>
+        <span class="text-blue-500 mr-2">record</span>
         <%= render_key_text(assigns) %>
         <span class="mx-2">=</span>
         """
 
       Sch.array?(assigns.sch, :hetero) ->
         ~L"""
-        <span class="text-blue-400 mr-2">tuple</span>
+        <span class="text-blue-500 mr-2">tuple</span>
         <%= render_key_text(assigns) %>
         <span class="mx-2">=</span>
         """
 
       Sch.array?(assigns.sch, :homo) ->
         ~L"""
-        <span class="text-blue-400 mr-2">list</span>
+        <span class="text-blue-500 mr-2">list</span>
         <%= render_key_text(assigns) %>
         <span class="mx-2">=</span>
         """
 
       Sch.any_of?(assigns.sch) ->
         ~L"""
-        <span class="text-blue-400 mr-2">union</span>
+        <span class="text-blue-500 mr-2">union</span>
         <%= render_key_text(assigns) %>
         <span class="mx-2">=</span>
         """
 
       true ->
         ~L"""
-        <span class="text-blue-400 mr-2">field</span>
+        <span class="text-blue-500 mr-2">field</span>
         <%= render_key_text(assigns) %>
         <span class="mx-2">:</span>
         """
@@ -332,7 +332,7 @@ defmodule FsetWeb.ModelComponent do
   # Current or selected path
   defp render_key_text(%{current_path: name, path: name} = assigns) do
     ~L"""
-    <p class="" style="max-width: 100%"
+    <p class="" style="max-width: <%= if @ui.level == @ui.tab, do: 24, else: 12 %>rem"
       phx-click="edit_sch"
       phx-value-path="<%= @path %>"
       onclick="event.preventDefault()">
@@ -347,7 +347,7 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_key_text(assigns) do
     ~L"""
-    <p class="" style="max-width: 100%"
+    <p class="" style="max-width: <%= if @ui.level == @ui.tab, do: 24, else: 12 %>rem"
       onclick="event.preventDefault()">
       <%= render_key_text_(assigns) %>
     </p>

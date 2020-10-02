@@ -29,8 +29,8 @@ defmodule Fset.Sch do
   def type(sch) when is_map(sch), do: Map.get(sch, @type_)
 
   ## Applicator
-  def items(sch) when is_map(sch), do: Map.get(sch, @items)
-  def properties(sch) when is_map(sch), do: Map.get(sch, @properties)
+  def items(sch) when is_map(sch), do: Map.get(sch, @items, %{})
+  def properties(sch) when is_map(sch), do: Map.get(sch, @properties, %{})
   def any_of(sch) when is_map(sch), do: Map.get(sch, @any_of)
 
   ## Metadata
@@ -208,7 +208,7 @@ defmodule Fset.Sch do
   end
 
   def repair_keywords(map) do
-    case map do
+    walk_container(map, fn
       %{@type_ => @object} ->
         map = Map.put_new(map, @properties, %{})
         _map = Map.put_new(map, @props_order, Map.keys(Map.get(map, @properties)))
@@ -218,7 +218,7 @@ defmodule Fset.Sch do
 
       _ ->
         map
-    end
+    end)
   end
 
   def expand_multi_types(%{@type_ => types} = map) when is_list(types) do

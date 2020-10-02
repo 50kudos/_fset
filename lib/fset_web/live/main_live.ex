@@ -31,6 +31,7 @@ defmodule FsetWeb.MainLive do
             model_sch = Sch.prop_sch(schema, k)
             {k, Sch.anchor(model_sch)}
           end
+          |> Enum.filter(fn {_, sch} -> sch != nil end)
 
         {model_anchor, [%{fi | schema: nil} | acc]}
       end)

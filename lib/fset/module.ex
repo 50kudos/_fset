@@ -24,7 +24,7 @@ defmodule Fset.Module do
 
     main_file = %{
       id: main_file_id,
-      name: Utils.gen_key("main"),
+      name: "main",
       type: :main,
       schema: Sch.new(main_file_id, main)
     }
