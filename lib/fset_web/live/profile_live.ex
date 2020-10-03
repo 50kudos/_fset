@@ -68,7 +68,7 @@ defmodule FsetWeb.ProfileLive do
       <%= hidden_input f, :type, value: @project_form.type %>
       <label class="block space-y-1 my-2">
         <h1 class="text-gray-600 text-sm">Project name</h1>
-        <%= text_input f, :name, class: "px-2 bg-gray-200 rounded text-gray-900", autofocus: true %>
+        <%= text_input f, :name, class: "px-2 py-1 bg-gray-200 rounded text-gray-900", autofocus: true %>
         <%= error_tag f, :name %>
       </label>
       <div class="mt-4">
@@ -85,12 +85,12 @@ defmodule FsetWeb.ProfileLive do
       <%= hidden_input f, :type, value: @project_form.type %>
       <label class="block space-y-1 my-2">
         <h1 class="text-gray-600 text-sm">Project name</h1>
-        <%= text_input f, :name, class: "px-2 bg-gray-200 rounded text-gray-900", autofocus: true %>
+        <%= text_input f, :name, class: "px-2 py-1 bg-gray-200 rounded text-gray-900", autofocus: true %>
         <%= error_tag f, :name %>
       </label>
       <label class="block space-y-1 my-2">
         <h1 class="text-gray-600 text-sm">Import url</h1>
-        <%= url_input f, :url, class: "w-full px-2 bg-gray-200 rounded text-gray-900" %>
+        <%= url_input f, :url, class: "w-full px-2 py-1 bg-gray-200 rounded text-gray-900" %>
         <%= error_tag f, :url %>
       </label>
       <div class="mt-4">

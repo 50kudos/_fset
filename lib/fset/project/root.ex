@@ -19,8 +19,9 @@ defmodule Fset.Project.Root do
   def changeset(project, attrs) do
     project
     |> cast(attrs, [:name])
-    |> cast_assoc(:schs)
+    |> update_change(:name, fn name -> String.replace(name, "/", "-") end)
     |> validate_required([:name])
     |> unique_constraint(:name)
+    |> cast_assoc(:schs)
   end
 end

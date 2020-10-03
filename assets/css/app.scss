@@ -31,21 +31,19 @@
 }
 .sortable-selected,
 .sortable-selected-s {
+  /* leaf node highlight */
   > div {
-    @apply bg-indigo-600 bg-opacity-25
+    @apply bg-gray-600 bg-opacity-25
   }
-}
-.sortable-selected,
-.sortable-selected-s {
-  > details {
-    --bg-opacity: 0.1 !important;
-    @apply bg-indigo-600
-  }
-}
-.sortable-selected,
-.sortable-selected-s {
+
+  /* folder node highlight */
   > details > summary > .dragover-hl {
-    @apply bg-indigo-700 bg-opacity-25
+    @apply bg-gray-700 bg-opacity-25
+  }
+
+  /* folder's body highlight */
+  > details {
+    @apply bg-gray-800 bg-opacity-25
   }
 }
 
