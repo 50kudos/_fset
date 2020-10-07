@@ -30,11 +30,11 @@ defmodule Fset.Project do
     end
   end
 
-  def get_by(attrs) do
+  def get_by!(attrs) do
     Repo.get_by!(Root, attrs) |> Repo.preload(:main_sch)
   end
 
-  def get_file(file_id) do
+  def get_file!(file_id) do
     Repo.get!(Fset.Project.File, file_id)
   end
 
@@ -51,13 +51,13 @@ defmodule Fset.Project do
     Repo.all(user_projects_q)
   end
 
-  def schs_indice(project_id) do
-    schs_indice_q =
+  def all_files(project_id) do
+    all_files_q =
       from f in Fset.Project.File,
         where: f.project_id == ^project_id,
         select: [:id, :name, :type, :project_id, :schema]
 
-    Repo.all(schs_indice_q)
+    Repo.all(all_files_q)
   end
 
   def change_bare_create(attrs \\ %{}) do

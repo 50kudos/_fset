@@ -1,6 +1,6 @@
 <div class="w-full">
   <datalist id="changeable_types">
-    <%= for type_text <- text_val_types(@model_names) do %>
+    <%= for {type_text, _} <- text_val_types(@models_anchors) do %>
       <option class="px-2 py-1 hover:bg-gray-800 hover:text-gray-300 bg-opacity-75 cursor-pointer border-b border-gray-500 last:border-0"
         value="<%= type_text %>">
         <%= type_text %>
@@ -16,12 +16,12 @@
       <aside class="w-1/5 flex flex-col text-gray-500 shadow bg-gray-900">
         <p class="ml-2 text-sm leading-8"><%= @project_name %></p>
         <ul class="overflow-scroll text-sm leading-6 space-y-4">
-          <%= for file <- @files do %>
+          <%= for file <- @files_ids do %>
             <%= if @current_file.id == file.id do %>
               <li class="">
                 <span class="pl-2 block text-black sticky top-0 bg-teal-600 rounded-tl rounded-tr"><%= file.name %></span>
                 <ul class="pl-2 py-2 border border-teal-900 text-xs">
-                  <%= for model_name <- @models_nav do %>
+                  <%= for {model_name, _} <- @models_anchors do %>
                     <li class=""><%= model_name %></li>
                   <% end %>
                 </ul>
@@ -55,8 +55,8 @@
           <%= live_component @socket, ModuleComponent,
             id: @current_file.id,
             name: @current_file.name,
-            models: @models,
-            model_names: @model_names, ui: @ui, path: @current_file.id %>
+            models: @current_models_bodies,
+            model_names: @models_anchors, ui: @ui, path: @current_file.id %>
         </div>
       </nav>
       <aside class="w-2/5 overflow-scroll text-sm">

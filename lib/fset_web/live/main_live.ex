@@ -1,73 +1,19 @@
 defmodule FsetWeb.MainLive do
-  @file_topic "module_update:"
-
   use FsetWeb, :live_view
   alias FsetWeb.{SchComponent, ModuleComponent, ModelBarComponent, Presence}
-  alias Fset.{Sch, Persistence, Module, Project, Accounts, Utils}
+  alias Fset.{Sch, Persistence, Module, Project, Utils}
   import Fset.Main
 
   @impl true
   def mount(params, _session, socket) do
-    user = Accounts.get_user_by_username(params["username"])
-    project = Project.get_by(name: params["project_name"])
-    schs_indice = Project.schs_indice(project.id)
+    assigns = init_data(params)
+    assigns = Map.merge(socket.assigns, assigns) |> Map.drop([:flash])
+    temporary_assigns = []
 
-    current_file =
-      if params["file_id"], do: Project.get_file(params["file_id"]), else: project.main_sch
+    if connected?(socket), do: subscribe_file_update(assigns.current_file)
+    track_user(assigns.current_user, assigns.current_file)
 
-    socket = assign(socket, :current_file, current_file)
-
-    if connected?(socket) do
-      subscribe_file_update(socket.assigns.current_file)
-    end
-
-    {model_names, schs_indice} =
-      Enum.flat_map_reduce(schs_indice, [], fn fi, acc ->
-        fi = Map.update!(fi, :schema, fn root -> Sch.get(root, fi.id) end)
-        schema = fi.schema
-
-        model_anchor =
-          for k <- Sch.order(schema) do
-            model_sch = Sch.prop_sch(schema, k)
-            {k, Sch.anchor(model_sch)}
-          end
-          |> Enum.filter(fn {_, sch} -> sch != nil end)
-
-        {model_anchor, [%{fi | schema: nil} | acc]}
-      end)
-
-    topic = @file_topic <> socket.assigns.current_file.id
-
-    track_user(user, current_file)
-
-    current_file = socket.assigns.current_file
-
-    schema = Sch.get(current_file.schema, current_file.id)
-
-    {models_nav, models} =
-      if current_file.type == :model do
-        models =
-          for key <- Sch.order(schema) do
-            {key, Sch.prop_sch(schema, key)}
-          end
-
-        {Keyword.keys(models), models}
-      else
-        {[], current_file.schema}
-      end
-
-    {
-      :ok,
-      socket
-      |> assign_new(:current_user, fn -> user end)
-      |> assign(:project_name, project.name)
-      |> assign(:files, Enum.reverse(schs_indice))
-      |> assign(:model_names, model_names)
-      |> assign(:models_nav, models_nav)
-      |> assign(:models, models)
-      |> assign(:ui, %{errors: [], topic: topic, user_id: user.id}),
-      temporary_assigns: [models_nav: [], models: []]
-    }
+    {:ok, assign(socket, assigns), temporary_assigns: temporary_assigns}
   end
 
   @impl true
@@ -83,7 +29,7 @@ defmodule FsetWeb.MainLive do
     socket =
       socket
       |> update(:current_file, fn _ -> %{file | schema: new_schema} end)
-      |> update(:models, fn models -> [{added_key, added_sch} | models] end)
+      |> update(:models_anchors, fn models -> [{added_key, added_sch} | models] end)
 
     broadcast_update_sch(assigns.ui.topic, add_path, postsch)
 
@@ -93,7 +39,7 @@ defmodule FsetWeb.MainLive do
   def handle_event("change_type", val, socket) do
     type = Map.get(val, "type") || Map.get(val, "value")
     file = socket.assigns.current_file
-    model_names = socket.assigns.model_names
+    models_anchors = socket.assigns.models_anchors
     current_path = current_path(socket.assigns.ui)
 
     file =
@@ -101,7 +47,7 @@ defmodule FsetWeb.MainLive do
         type in Module.changable_types() ->
           Module.change_type(file, current_path, type)
 
-        {_m, anchor} = Enum.find(model_names, fn {m, _a} -> m == type end) ->
+        {_m, anchor} = Enum.find(models_anchors, fn {m, _a} -> m == type end) ->
           Module.change_type(file, current_path, {:ref, anchor})
 
         true ->
@@ -150,7 +96,7 @@ defmodule FsetWeb.MainLive do
   def handle_event("edit_sch", %{"path" => sch_path}, socket) do
     user = socket.assigns.current_user
 
-    if current_path(socket.assigns.ui) in Enum.map(socket.assigns.files, & &1.id) do
+    if current_path(socket.assigns.ui) in Enum.map(socket.assigns.files_ids, & &1.id) do
     else
       Presence.update(self(), socket.assigns.ui.topic, user.id, fn meta ->
         meta = Map.put(meta, :current_path, sch_path)
@@ -259,7 +205,7 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("module_keyup", val, socket) do
-    if current_path(socket.assigns.ui) in Enum.map(socket.assigns.files, & &1.id) do
+    if current_path(socket.assigns.ui) in Enum.map(socket.assigns.files_ids, & &1.id) do
       {:noreply, socket}
     else
       updated_assigns = module_keyup(val, socket.assigns)
@@ -347,7 +293,7 @@ defmodule FsetWeb.MainLive do
   @impl true
   def handle_info(:update_schema, socket) do
     updated_file = socket.assigns.current_file
-    existing_file = Project.get_file(updated_file.id)
+    existing_file = Project.get_file!(updated_file.id)
 
     existing_schema = existing_file.schema
     updated_schema = Sch.merge(existing_schema, updated_file.schema) |> Sch.sanitize()
@@ -360,7 +306,7 @@ defmodule FsetWeb.MainLive do
   def handle_info({:update_sch, path, sch}, socket) do
     re_render_model(path, sch: sch)
     current_file = socket.assigns.current_file
-    existing_file = Project.get_file(current_file.id)
+    existing_file = Project.get_file!(current_file.id)
 
     current_schema = Sch.replace(current_file.schema, path, sch)
     existing_schema = existing_file.schema
@@ -408,8 +354,8 @@ defmodule FsetWeb.MainLive do
     """
   end
 
-  defp text_val_types(model_names) do
-    Module.changable_types() ++ Enum.map(model_names, fn {key, _} -> key end)
+  defp text_val_types(models_anchors) do
+    Module.changable_types() ++ Enum.map(models_anchors, fn {key, _} -> key end)
   end
 
   def selected?(path, current_path) when is_binary(path) do

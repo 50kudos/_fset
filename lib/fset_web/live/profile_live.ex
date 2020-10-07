@@ -9,7 +9,7 @@ defmodule FsetWeb.ProfileLive do
       if params == :not_mounted_at_router do
         Accounts.get_user!(session["current_user_id"])
       else
-        Accounts.get_user_by_username(params["username"])
+        Accounts.get_user_by_username!(params["username"])
       end
 
     {:ok,

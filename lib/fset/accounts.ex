@@ -25,7 +25,7 @@ defmodule Fset.Accounts do
     Repo.get_by(User, email: email)
   end
 
-  def get_user_by_username(username) when is_binary(username) do
+  def get_user_by_username!(username) when is_binary(username) do
     Repo.get_by!(User, email: username)
   end
 
