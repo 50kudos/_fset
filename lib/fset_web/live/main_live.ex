@@ -18,7 +18,7 @@ defmodule FsetWeb.MainLive do
     socket = assign(socket, :current_file, current_file)
 
     if connected?(socket) do
-      Phoenix.PubSub.subscribe(Fset.PubSub, @file_topic <> socket.assigns.current_file.id)
+      subscribe_file_update(socket.assigns.current_file)
     end
 
     {model_names, schs_indice} =
@@ -38,11 +38,7 @@ defmodule FsetWeb.MainLive do
 
     topic = @file_topic <> socket.assigns.current_file.id
 
-    Presence.track(self(), topic, user.id, %{
-      current_path: current_file.id,
-      current_edit: nil,
-      pid: self()
-    })
+    track_user(user, current_file)
 
     current_file = socket.assigns.current_file
 
@@ -218,17 +214,22 @@ defmodule FsetWeb.MainLive do
       end
 
     schema = Sch.move(schema, src_indices, dst_indices)
-    schema = Sch.get(schema, file.id)
-
-    models =
-      for key <- Sch.order(schema) do
-        {key, Sch.prop_sch(schema, key)}
-      end
 
     socket =
-      socket
-      |> update(:current_file, fn _ -> %{file | schema: schema} end)
-      |> assign(:models, models)
+      if file.type == :model do
+        schema = Sch.get(schema, file.id)
+
+        models =
+          for key <- Sch.order(schema) do
+            {key, Sch.prop_sch(schema, key)}
+          end
+
+        assign(socket, :models, models)
+      else
+        socket
+      end
+
+    socket = update(socket, :current_file, fn _ -> %{file | schema: schema} end)
 
     section_sch = socket.assigns.current_file.schema
 

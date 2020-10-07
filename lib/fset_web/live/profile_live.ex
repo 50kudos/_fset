@@ -27,12 +27,12 @@ defmodule FsetWeb.ProfileLive do
       <%= render FsetWeb.LayoutView, "_header.html", assigns %>
       <section class="mt-4 min-h-screen flex flex-wrap container mx-auto">
         <aside class="w-full md:w-1/3 text-center md:text-left">
-          <div class="relative inline-block">
+          <div class="relative inline-block w-64 h-64 rounded-full border border-gray-600 bg-gray-800">
             <span
               class="absolute text-6xl text-gray-500 tracking-widest transform -translate-x-1/2 -translate-y-1/2"
               style="top: 50%; left: 50%;"
             ><%= String.slice(@username, 0..1) %></span>
-            <img src="" alt="" class="block w-64 h-64 rounded-full border border-gray-600 bg-gray-800">
+            <img src="" alt="" class="block">
           </div>
           <dl class="mt-8">
             <dt class="text-gray-600">Email</dt>

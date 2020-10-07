@@ -1,11 +1,25 @@
 defmodule Fset.Main do
   @moduledoc """
   Main Fset application works on highest level closed to web framework such as
-  Liveview event handler.
+  Liveview event handler. And only manage inputs from boundary, feed into a blackbox
+  layer, then manage output to be returned.
   """
   @file_topic "module_update:"
 
   alias Fset.Module
+  alias FsetWeb.Presence
+
+  def subscribe_file_update(file) do
+    Phoenix.PubSub.subscribe(Fset.PubSub, @file_topic <> file.id)
+  end
+
+  def track_user(user, file) do
+    Presence.track(self(), @file_topic <> file.id, user.id, %{
+      current_path: file.id,
+      current_edit: nil,
+      pid: self()
+    })
+  end
 
   @doc """
   Add a sch to a container sch such as object, array or union.
