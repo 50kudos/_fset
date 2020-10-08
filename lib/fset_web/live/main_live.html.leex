@@ -12,7 +12,7 @@
     <%= for error <- @ui.errors do %>
       <span class="w-full text-red-600"><%= error.payload.msg %></span>
     <% end %>
-    <section class="flex flex-grow overflow-scroll space-x-4">
+    <section class="flex flex-grow overflow-scroll space-x-4 h-full">
       <aside class="w-1/5 flex flex-col text-gray-500 shadow bg-gray-900">
         <p class="ml-2 text-sm leading-8"><%= @project_name %></p>
         <ul class="overflow-scroll text-sm leading-6 space-y-4">

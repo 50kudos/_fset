@@ -7,7 +7,6 @@ defmodule FsetWeb.MainLive do
   @impl true
   def mount(params, _session, socket) do
     assigns = init_data(params)
-    assigns = Map.merge(socket.assigns, assigns) |> Map.drop([:flash])
     temporary_assigns = []
 
     if connected?(socket), do: subscribe_file_update(assigns.current_file)
@@ -17,23 +16,10 @@ defmodule FsetWeb.MainLive do
   end
 
   @impl true
-  def handle_event("add_model", %{"model" => model}, socket) do
-    assigns = socket.assigns
-    file = assigns.current_file
-    add_path = file.id
-    {_, postsch, new_schema} = add_model(file.schema, add_path, model)
+  def handle_event("add_model", params, socket) do
+    assigns = add_model(socket.assigns, params)
 
-    [added_key | _] = Sch.order(postsch)
-    added_sch = Sch.get(postsch, added_key)
-
-    socket =
-      socket
-      |> update(:current_file, fn _ -> %{file | schema: new_schema} end)
-      |> update(:models_anchors, fn models -> [{added_key, added_sch} | models] end)
-
-    broadcast_update_sch(assigns.ui.topic, add_path, postsch)
-
-    {:noreply, socket}
+    {:noreply, assign(socket, assigns)}
   end
 
   def handle_event("change_type", val, socket) do

@@ -45,16 +45,20 @@ defmodule Fset.Main do
     {_pre, _post, _new_schema} = Module.add_field(schema, path, model_type)
   end
 
-  def add_model(schema, path, model_type) do
-    {_pre, _post, _new_schema} = Module.add_model(schema, path, model_type)
-  end
+  def add_model(assigns, %{"model" => model}) do
+    file = assigns.current_file
+    add_path = file.id
 
-  def broadcast_update_sch(topic, path, sch) when is_binary(topic) do
-    Phoenix.PubSub.broadcast!(
-      Fset.PubSub,
-      topic,
-      {:update_sch, path, sch}
-    )
+    {_pre, postsch, new_schema} = Module.add_model(file.schema, add_path, model)
+
+    [added_key | _] = Sch.order(postsch)
+    added_sch = Sch.get(postsch, added_key)
+
+    broadcast_update_sch(file, add_path, postsch)
+
+    %{}
+    |> Map.put(:current_file, %{file | schema: new_schema})
+    |> Map.put(:models_anchors, [{added_key, added_sch} | assigns.models_anchors])
   end
 
   def broadcast_update_sch(%_{id: id}, path, sch) do

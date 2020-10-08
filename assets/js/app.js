@@ -29,7 +29,7 @@ let liveSocket = new LiveSocket("/live", Socket, {
 // Show progress bar on live navigation and form submits
 let indigo500 = "rgba(102, 126, 234, 1)"
 let indigo700 = "rgba(102, 126, 234, 1)"
-topbar.config({ barColors: [indigo500, indigo700] })
+topbar.config({ barColors: [indigo700, indigo500], barThickness: 2 })
 window.addEventListener("phx:page-loading-start", info => topbar.show())
 window.addEventListener("phx:page-loading-stop", info => topbar.hide())
 
