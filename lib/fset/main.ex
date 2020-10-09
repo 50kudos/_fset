@@ -83,11 +83,13 @@ defmodule Fset.Main do
     Map.put(%{}, :current_file, %{file | schema: new_schema})
   end
 
-  defp models_bodies(%{type: :main} = file), do: file.schema
+  defp models_bodies(%{type: :main} = file), do: Sch.get(file.schema, file.id)
 
   defp models_bodies(%{type: :model} = file) do
-    for key <- Sch.order(file.schema) do
-      {key, Sch.prop_sch(file.schema, key)}
+    schema = Sch.get(file.schema, file.id)
+
+    for key <- Sch.order(schema) do
+      {key, Sch.prop_sch(schema, key)}
     end
   end
 

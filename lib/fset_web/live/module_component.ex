@@ -49,7 +49,7 @@ defmodule FsetWeb.ModuleComponent do
       <%= live_component(@socket, ModelComponent,
         id: @path,
         key: @name,
-        sch: Sch.get(Map.new(@models), @id),
+        sch: @models,
         ui: @ui,
         path: @path
       ) %>

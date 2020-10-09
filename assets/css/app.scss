@@ -25,12 +25,10 @@
   @apply py-0 border border-gray-700 border-dashed
 }*/
 .sort-handle [phx-click="add_field"] { @apply hidden }
-.sort-handle.sortable-selected,
-.sort-handle.sortable-selected-s {
+.sort-handle.sortable-selected {
   > details > summary [phx-click="add_field"] { @apply inline }
 }
-.sortable-selected,
-.sortable-selected-s {
+.sortable-selected {
   /* leaf node highlight */
   > div {
     @apply bg-gray-600 bg-opacity-25
