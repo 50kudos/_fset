@@ -10,20 +10,10 @@ defmodule FsetWeb.ModelComponent do
   end
 
   @impl true
-  def handle_event("add_field", %{"field" => field}, socket) do
-    assigns = socket.assigns
-    schema = Sch.new(assigns.key, assigns.sch)
+  def handle_event("add_field", params, socket) do
+    assigns = add_field(socket.assigns, params)
 
-    {_, postsch, new_schema} = add_field(schema, assigns.key, field)
-
-    # Note: if we decide to move renderer to frontend, change the handle_info
-    # from calling send_update to push_event with same parameters for client to patch
-    # the DOM.
-    # broadcast_and_persist!(file, add_path, postsch)
-    broadcast_update_sch(assigns.ui.topic, assigns.path, postsch)
-
-    # async_update_schema()
-    {:noreply, assign(socket, :sch, Sch.get(new_schema, assigns.key))}
+    {:noreply, assign(socket, assigns)}
   end
 
   @impl true

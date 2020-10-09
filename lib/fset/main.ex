@@ -3,6 +3,9 @@ defmodule Fset.Main do
   Main Fset application works on highest level closed to web framework such as
   Liveview event handler. And only manage inputs from boundary, feed into a blackbox
   layer, then manage output to be returned.
+
+  It also depend on applications started under main supervision tree such as
+  Fset.PubSub and FsetWeb.Presence
   """
   @file_topic "module_update:"
 
@@ -26,23 +29,20 @@ defmodule Fset.Main do
     end
   end
 
-  def subscribe_file_update(file) do
-    Phoenix.PubSub.subscribe(Fset.PubSub, @file_topic <> file.id)
-  end
-
-  def track_user(user, file) do
-    Presence.track(self(), @file_topic <> file.id, user.id, %{
-      current_path: file.id,
-      current_edit: nil,
-      pid: self()
-    })
-  end
-
   @doc """
   Add a sch to a container sch such as object, array or union.
   """
-  def add_field(schema, path, model_type) do
-    {_pre, _post, _new_schema} = Module.add_field(schema, path, model_type)
+  def add_field(assigns, %{"field" => field, "path" => add_path}) do
+    schema = Sch.new("temp_parent", assigns.sch)
+    {_pre, postsch, _new_schema} = Module.add_field(schema, "temp_parent", field)
+
+    # Note: if we decide to move renderer to frontend, change the handle_info
+    # from calling send_update to push_event with same parameters for client to patch
+    # the DOM.
+    @file_topic <> file_id = assigns.ui.topic
+    broadcast_update_sch(%{id: file_id}, add_path, postsch)
+
+    Map.put(%{}, :sch, postsch)
   end
 
   def add_model(assigns, %{"model" => model}) do
@@ -83,14 +83,6 @@ defmodule Fset.Main do
     Map.put(%{}, :current_file, %{file | schema: new_schema})
   end
 
-  def broadcast_update_sch(%_{id: id}, path, sch) do
-    Phoenix.PubSub.broadcast!(
-      Fset.PubSub,
-      @file_topic <> id,
-      {:update_sch, path, sch}
-    )
-  end
-
   defp models_bodies(%{type: :main} = file), do: file.schema
 
   defp models_bodies(%{type: :model} = file) do
@@ -120,5 +112,27 @@ defmodule Fset.Main do
 
   defp get_current_file(project, file_id) do
     if file_id, do: Project.get_file!(file_id), else: project.main_sch
+  end
+
+  # Process or application dependent functions
+  #
+  def subscribe_file_update(file) do
+    Phoenix.PubSub.subscribe(Fset.PubSub, @file_topic <> file.id)
+  end
+
+  def broadcast_update_sch(%{id: id}, path, sch) when is_binary(id) do
+    Phoenix.PubSub.broadcast!(
+      Fset.PubSub,
+      @file_topic <> id,
+      {:update_sch, path, sch}
+    )
+  end
+
+  def track_user(user, file) do
+    Presence.track(self(), @file_topic <> file.id, user.id, %{
+      current_path: file.id,
+      current_edit: nil,
+      pid: self()
+    })
   end
 end
