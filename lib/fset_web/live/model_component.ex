@@ -361,12 +361,12 @@ defmodule FsetWeb.ModelComponent do
 
       assigns.ui.level == assigns.ui.tab ->
         ~L"""
-        <span class="break-words text-teal-500"><%= Utils.word_break_html(@key) %></span>
+        <span class="break-words text-indigo-400"><%= Utils.word_break_html(@key) %></span>
         """
 
       true ->
         ~L"""
-        <span class="break-words opacity-75"><%= Utils.word_break_html(@key) %></span>
+        <span class="break-words text-gray-300 opacity-75"><%= Utils.word_break_html(@key) %></span>
         """
     end
   end
@@ -436,12 +436,12 @@ defmodule FsetWeb.ModelComponent do
     cond do
       Sch.object?(assigns.sch, :empty) ->
         ~L"""
-        <span class="self-center cursor-pointer text-sm select-none text-blue-500">{any}</span>
+        <span class="self-center cursor-pointer text-sm select-none">{any}</span>
         """
 
       Sch.object?(assigns.sch) ->
         ~L"""
-        <span class="self-center cursor-pointer text-sm select-none text-blue-500">{  }</span>
+        <span class="self-center cursor-pointer text-sm select-none">{  }</span>
         """
 
       Sch.array?(assigns.sch, :empty) ->
@@ -456,7 +456,7 @@ defmodule FsetWeb.ModelComponent do
 
       Sch.array?(assigns.sch, :hetero) ->
         ~L"""
-        <span class="self-center cursor-pointer text-sm select-none text-blue-500">(  )</span>
+        <span class="self-center cursor-pointer text-sm select-none">(  )</span>
         """
 
       Sch.leaf?(assigns.sch) ->
@@ -490,7 +490,7 @@ defmodule FsetWeb.ModelComponent do
   #   """
   # endÍ
 
-  defp read_type(sch, ui) when is_map(sch) do
+  def read_type(sch, ui) when is_map(sch) do
     cond do
       Sch.object?(sch) -> "record"
       Sch.array?(sch, :homo) -> "list"
@@ -538,7 +538,7 @@ defmodule FsetWeb.ModelComponent do
         assigns = %{k: k}
 
         ~L"""
-        <span class='text-teal-500'><%= Utils.word_break_html(k) %></span>
+        <span class='text-indigo-400'><%= Utils.word_break_html(k) %></span>
         """
       end
     end) || "#invalid_type"

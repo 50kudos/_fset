@@ -12,15 +12,15 @@
     <%= for error <- @ui.errors do %>
       <span class="w-full text-red-600"><%= error.payload.msg %></span>
     <% end %>
-    <section class="flex flex-grow overflow-scroll space-x-4 h-full">
-      <aside class="w-1/5 flex flex-col text-gray-500 shadow bg-gray-900">
+    <section class="flex flex-grow overflow-scroll h-full">
+      <aside class="w-1/5 mx-4 flex flex-col text-gray-500 bg-gray-900">
         <p class="ml-2 text-sm leading-8"><%= @project_name %></p>
         <ul class="overflow-scroll text-sm leading-6 space-y-4">
           <%= for file <- @files_ids do %>
             <%= if @current_file.id == file.id do %>
               <li class="">
-                <span class="pl-2 block text-black sticky top-0 bg-teal-600 rounded-tl rounded-tr"><%= file.name %></span>
-                <ul class="pl-2 py-2 border border-teal-900 text-xs">
+                <span class="pl-2 block text-black sticky top-0 bg-indigo-600 rounded-tl rounded-tr"><%= file.name %></span>
+                <ul class="pl-2 py-2 border border-indigo-900 text-xs">
                   <%= for {model_name, _} <- @models_anchors do %>
                     <li class=""><%= model_name %></li>
                   <% end %>
@@ -28,7 +28,7 @@
               </li>
             <% else %>
               <%= live_redirect to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id), class: "block" do %>
-                <li class="pl-2 hover:text-black hover:bg-teal-600">
+                <li class="pl-2 hover:text-black hover:bg-indigo-600">
                   <%= file.name %>
                 </li>
               <% end %>
@@ -59,9 +59,9 @@
             model_names: @models_anchors, ui: @ui, path: @current_file.id %>
         </div>
       </nav>
-      <aside class="w-2/5 overflow-scroll text-sm">
+      <aside class="w-2/5 overflow-scroll text-sm pl-3 pr-5">
         <%= if !is_list(current_path(@ui)) do %>
-          <%= live_component @socket, SchComponent, id: @current_file.id, sch: Sch.get(@current_file.schema, current_path(@ui)), ui: @ui, path: current_path(@ui) %>
+          <%= live_component @socket, SchComponent, id: @current_file.id, sch: Sch.get(@current_file.schema, current_path(@ui)), ui: Map.put(@ui, :model_names, @models_anchors), path: current_path(@ui) %>
         <% end %>
       </aside>
     </section>

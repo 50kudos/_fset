@@ -86,7 +86,7 @@ Hooks.autoResize = {
   autoHeight() {
     let setHeight = () => {
       this.el.scrollTop = this.el.scrollHeight
-      this.el.style.height = this.el.scrollHeight + "px"
+      this.el.style.height = this.el.scrollHeight + 2 + "px"
     }
 
     setHeight()

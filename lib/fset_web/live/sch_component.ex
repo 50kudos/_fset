@@ -9,7 +9,7 @@ defmodule FsetWeb.SchComponent do
       <%=# render_header(assigns) %>
       <%=# render_required(assigns) %>
 
-      <h1 class="px-2 text-teal-600 text-2xl"><%= List.last(Sch.split_path(@path)) %></h1>
+      <h1 class="text-2xl text-indigo-400"><%= List.last(Sch.split_path(@path)) %></h1>
       <%= render_title(assigns) %>
       <%= render_description(assigns) %>
       <%= render_sch(assigns) %>
@@ -49,17 +49,17 @@ defmodule FsetWeb.SchComponent do
 
   defp render_title(assigns) do
     ~L"""
-    <label class="block my-1">
-      <p class="px-2 py-1 text-xs text-gray-700"></p>
-      <textarea type="text" class="block px-2 py-1 text-gray-500 bg-gray-900 shadow tracking-wide w-full"
+    <label class="block my-2 bg-gray-800 bg-opacity-25 text-gray-600 focus-within:text-blue-500">
+      <p class="px-2 py-1 text-xs">Title</p>
+      <textarea type="text"
+        class="block px-2 py-1 text-gray-500 bg-transparent tracking-wide w-full h-full outline-none border-b border-gray-700 focus:border-blue-500"
         id="<%= @path <> ~s(_title) %>"
         phx-blur="update_sch"
         phx-hook="autoResize"
         phx-value-key="title"
         phx-value-path="<%= @path %>"
-        rows="2"
+        rows="1"
         spellcheck="false"
-        placeholder="Title"
         ><%= @title %></textarea>
     </label>
     """
@@ -67,17 +67,17 @@ defmodule FsetWeb.SchComponent do
 
   defp render_description(assigns) do
     ~L"""
-    <label class="block my-1">
-      <p class="px-2 py-1 text-xs text-gray-700"></p>
-      <textarea type="text" class="block px-2 py-1 text-gray-500 bg-gray-900 shadow tracking-wide w-full"
+    <label class="block my-2 bg-gray-800 bg-opacity-25 text-gray-600 focus-within:text-blue-500">
+      <p class="px-2 py-1 text-xs">Description</p>
+      <textarea type="text"
+        class="block px-2 py-1 text-gray-500 bg-transparent tracking-wide w-full h-full outline-none border-b border-gray-700 focus:border-blue-500"
         id="<%= @path <> ~s(_description) %>"
         phx-blur="update_sch"
         phx-hook="autoResize"
         phx-value-key="description"
         phx-value-path="<%= @path %>"
-        rows="2"
+        rows="1"
         spellcheck="false"
-        placeholder="Description"
         ><%= @description %></textarea>
     </label>
     """
@@ -99,37 +99,42 @@ defmodule FsetWeb.SchComponent do
   defp render_object(assigns) do
     ~L"""
       <section class="">
+        <div class="grid grid-cols-2">
+          <label class="border border-gray-800">
+            <p class="px-2 py-1 text-xs text-gray-600">Max Properties</p>
+            <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
+              phx-hook="updateSch"
+              phx-value-key="maxProperties"
+              phx-value-path="<%= @path %>"
+              value="<%= Sch.max_properties(@sch) %>"
+              class="px-2 py-1 bg-gray-900 shadow w-full"
+              id="updateSch__maxProperties_<%= @path %>">
+          </label>
+          <label class="border border-gray-800">
+            <p class="px-2 py-1 text-xs text-gray-600">Min Properties</p>
+            <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
+              phx-hook="updateSch"
+              phx-value-key="minProperties"
+              phx-value-path="<%= @path %>"
+              value="<%= Sch.min_properties(@sch) %>"
+              class="px-2 py-1 bg-gray-900 shadow w-full"
+              id="updateSch__minProperties_<%= @path %>">
+          </label>
+        </div>
+        <h1 class="mt-12 mb-6 text-gray-600 underline text-lg">Properties</h1>
         <%= for prop <- Sch.order(@sch) do %>
-          <article class="my-10">
-            <h1 class="px-2 text-xl text-yellow-600"><%= prop %></h1>
+          <article class="mb-8">
+            <h1 class="mb-3 text-base">
+              <span><%= prop %></span>
+              <span class="px-2 rounded text-blue-500 text-sm">
+                <%= FsetWeb.ModelComponent.read_type(Sch.get(@sch, prop), @ui) %>
+              </span>
+            </h1>
             <%= render_title(%{assigns | sch: Sch.get(@sch, prop), path: input_name(@path, prop), title: Sch.get(@sch, prop) |> Sch.title() }) %>
             <%= render_description(%{assigns | sch: Sch.get(@sch, prop), path: input_name(@path, prop), description: Sch.get(@sch, prop) |> Sch.description() }) %>
           </article>
-          <hr class="border-gray-800">
         <% end %>
       </section>
-      <div class="grid grid-cols-2">
-        <label class="border border-gray-800">
-          <p class="px-2 py-1 text-xs text-gray-600">Max Properties</p>
-          <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
-            phx-hook="updateSch"
-            phx-value-key="maxProperties"
-            phx-value-path="<%= @path %>"
-            value="<%= Sch.max_properties(@sch) %>"
-            class="px-2 py-1 bg-gray-900 shadow w-full"
-            id="updateSch__maxProperties_<%= @path %>">
-        </label>
-        <label class="border border-gray-800">
-          <p class="px-2 py-1 text-xs text-gray-600">Min Properties</p>
-          <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
-            phx-hook="updateSch"
-            phx-value-key="minProperties"
-            phx-value-path="<%= @path %>"
-            value="<%= Sch.min_properties(@sch) %>"
-            class="px-2 py-1 bg-gray-900 shadow w-full"
-            id="updateSch__minProperties_<%= @path %>">
-        </label>
-      </div>
     """
   end
 
