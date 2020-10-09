@@ -18,9 +18,10 @@ defmodule Fset.ProjectTest do
     %{files: files}
   end
 
-  test "#create", %{files: files} do
-    {:ok, project} = create(files)
-    assert length(project.schs) == 3
+  test "#create" do
+    user = user_fixture()
+    {:ok, project} = create(user.id, %{"type" => "bare", "name" => "a.json"})
+    assert length(project.schs) == 1
 
     for file <- project.schs do
       assert Sch.get(file.schema, file.id) != nil
@@ -29,7 +30,7 @@ defmodule Fset.ProjectTest do
 
   test "#create_with_user successfully", %{files: files} do
     user = user_fixture()
-    {:ok, project} = create_with_user(files, user.id)
+    {:ok, project} = create_with_user!(files, user.id)
     project = Fset.Repo.preload(project, :users)
 
     assert length(project.schs) == 3
@@ -41,22 +42,23 @@ defmodule Fset.ProjectTest do
     [main | models] = files
     files = [%{main | type: :invalid_type} | models]
 
-    {:error, changeset} = create_with_user(files, user.id)
-    assert %{schs: [%{type: ["is invalid"]}, %{}, %{}]} = errors_on(changeset)
+    assert_raise Ecto.InvalidChangesetError, fn ->
+      create_with_user!(files, user.id)
+    end
   end
 
   test "#all", %{files: files} do
     user = user_fixture()
-    {:ok, project} = create_with_user(files, user.id)
+    {:ok, project} = create_with_user!(files, user.id)
 
     assert project.id in Enum.map(all(user.id), & &1.id)
   end
 
-  test "#schs_indice", %{files: files} do
+  test "#all_files", %{files: files} do
     user = user_fixture()
-    {:ok, project} = create_with_user(files, user.id)
+    {:ok, project} = create_with_user!(files, user.id)
 
-    [main | models] = schs_indice(project.id)
+    [main | models] = all_files(project.id)
 
     for model <- models do
       assert model.project_id == project.id
@@ -78,14 +80,14 @@ defmodule Fset.ProjectTest do
       path: Path.expand("../../test/support/fixtures/json_schema/draft_7.json", __DIR__)
     }
 
-    {:ok, map} = load(file, encoder: &Module.encode/1)
+    {:ok, map} = load(file, &Module.encode/1)
     assert %{main_sch: _, model_schs: _} = map
   end
 
   test "#load bad json format" do
-    {:error, error_struct} = load("{#}", encoder: &Module.encode/1)
+    {:error, [json: {msg, meta}]} = load("{#}", &Module.encode/1)
 
-    assert error_struct.data == "{#}"
-    assert error_struct.position == 1
+    assert msg == "invalid json at position 1"
+    assert meta[:data] == "{#}"
   end
 end

@@ -22,8 +22,8 @@ defmodule Fset.Project do
          %{main_sch: _, model_schs: _} = map <- encoder.(map) do
       {:ok, map}
     else
-      {:error, %Jason.EncodeError{message: msg}} ->
-        {:error, [json: {msg, []}]}
+      {:error, %Jason.DecodeError{data: d, position: pos}} ->
+        {:error, [json: {"invalid json at position #{pos}", [data: d]}]}
 
       {:error, _err_struct} ->
         {:error, [encoder: {"schema encoding is not completed", []}]}

@@ -1,6 +1,13 @@
 defmodule Fset.Module.Encode do
   alias Fset.Sch
 
+  @moduledoc """
+  Encode a single schema file into multiple model files and one main file.
+
+  Main file is without any definition with type as is.
+  Model files for each stores the definitions chunk as Sch object type as its root.
+  """
+
   @defs_chunk_size 100
 
   def from_json_schema(sch, opts \\ []) do
