@@ -205,7 +205,10 @@ defmodule FsetWeb.ModelComponent do
         </div>
       </summary>
       <ul class="details-menu absolute mt-1 z-10 bg-gray-300 text-gray-800 border border-gray-900 rounded text-xs">
-        <li><input type="text" autofocus list="changeable_types" phx-keyup="change_type" phx-key="Enter" style="min-width: 30vw" ></li>
+        <li><input type="text" autofocus list="changeable_types" style="min-width: 30vw"
+          phx-keyup="change_type"
+          phx-key="Enter"
+          phx-value-path="<%= @path %>"></li>
       </ul>
     </details>
     """

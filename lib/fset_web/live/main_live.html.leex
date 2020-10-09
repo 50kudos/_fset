@@ -1,6 +1,6 @@
 <div class="w-full">
   <datalist id="changeable_types">
-    <%= for {type_text, _} <- text_val_types(@models_anchors) do %>
+    <%= for type_text <- text_val_types(@models_anchors) do %>
       <option class="px-2 py-1 hover:bg-gray-800 hover:text-gray-300 bg-opacity-75 cursor-pointer border-b border-gray-500 last:border-0"
         value="<%= type_text %>">
         <%= type_text %>

@@ -22,28 +22,10 @@ defmodule FsetWeb.MainLive do
     {:noreply, assign(socket, assigns)}
   end
 
-  def handle_event("change_type", val, socket) do
-    type = Map.get(val, "type") || Map.get(val, "value")
-    file = socket.assigns.current_file
-    models_anchors = socket.assigns.models_anchors
-    current_path = current_path(socket.assigns.ui)
+  def handle_event("change_type", params, socket) do
+    assigns = change_type(socket.assigns, params)
 
-    file =
-      cond do
-        type in Module.changable_types() ->
-          Module.change_type(file, current_path, type)
-
-        {_m, anchor} = Enum.find(models_anchors, fn {m, _a} -> m == type end) ->
-          Module.change_type(file, current_path, {:ref, anchor})
-
-        true ->
-          file
-      end
-
-    socket = update(socket, :current_file, fn _ -> file end)
-
-    async_update_schema()
-    {:noreply, socket}
+    {:noreply, assign(socket, assigns)}
   end
 
   def handle_event("select_sch", %{"paths" => sch_path}, socket) do

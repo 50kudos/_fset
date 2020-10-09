@@ -61,6 +61,28 @@ defmodule Fset.Main do
     |> Map.put(:models_anchors, [{added_key, added_sch} | assigns.models_anchors])
   end
 
+  def change_type(assigns, %{"value" => type, "path" => path}) do
+    file = assigns.current_file
+
+    new_schema =
+      cond do
+        type in Module.changable_types() ->
+          {_pre, postsch, new_schema} = Module.change_type(file.schema, path, type)
+          broadcast_update_sch(file, path, postsch)
+          new_schema
+
+        {_m, anchor} = Enum.find(assigns.models_anchors, fn {m, _a} -> m == type end) ->
+          {_pre, postsch, new_schema} = Module.change_type(file.schema, path, {:ref, anchor})
+          broadcast_update_sch(file, path, postsch)
+          new_schema
+
+        true ->
+          file.schema
+      end
+
+    Map.put(%{}, :current_file, %{file | schema: new_schema})
+  end
+
   def broadcast_update_sch(%_{id: id}, path, sch) do
     Phoenix.PubSub.broadcast!(
       Fset.PubSub,

@@ -54,7 +54,7 @@ defmodule Fset.Module do
     ~w(record list tuple string bool number null union value)
   end
 
-  def change_type(%_{schema: root} = file, path, type) do
+  def change_type(root, path, type) do
     to_type =
       case type do
         "record" -> New.object()
@@ -69,7 +69,7 @@ defmodule Fset.Module do
         {:ref, anchor} -> Sch.New.ref(anchor)
       end
 
-    %{file | schema: Sch.change_type(root, path, to_type)}
+    Sch.change_type(root, path, to_type)
   end
 
   def add_model(root, path, model) do

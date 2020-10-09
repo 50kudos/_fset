@@ -45,9 +45,6 @@ Hooks.focusOnOpen = {
       if (event.target.open) { this.focusFirstInput() }
     })
   },
-  updated() {
-    Utils.onDetailsTagState.update(this)
-  },
   focusFirstInput() {
     let field = this.el.querySelector("input[autofocus]")
     field.focus()

@@ -161,43 +161,64 @@ defmodule Fset.Sch do
   end
 
   def change_type(map, path, %{@type_ => type} = new_sch) when type in @types do
-    update_in(map, access_path(path), fn sch ->
-      Map.merge(sch, new_sch, fn
-        @type_, _v1, v2 -> v2
-        @items, _v1, v2 -> v2
-        # TODO: When prefixItem is added (draft-8 patch), add @prefixItems here.
-        _k, v1, _v2 -> v1
+    {pre, new_map} =
+      get_and_update_in(map, access_path(path), fn sch ->
+        {sch,
+         Map.merge(sch, new_sch, fn
+           @type_, _v1, v2 -> v2
+           @items, _v1, v2 -> v2
+           # TODO: When prefixItem is added (draft-8 patch), add @prefixItems here.
+           _k, v1, _v2 -> v1
+         end)
+         |> case do
+           %{@type_ => @object} = sch ->
+             Map.take(sch, [@type_, @properties, @props_order, @anchor])
+
+           %{@type_ => @array} = sch ->
+             Map.take(sch, [@type_, @items, @anchor])
+
+           sch ->
+             sch
+         end}
       end)
-      |> case do
-        %{@type_ => @object} = sch -> Map.take(sch, [@type_, @properties, @props_order, @anchor])
-        %{@type_ => @array} = sch -> Map.take(sch, [@type_, @items, @anchor])
-        sch -> sch
-      end
-    end)
+
+    {pre, _post = get(new_map, path), new_map}
   end
 
   def change_type(map, path, %{@any_of => schs}) when is_list(schs) and length(schs) > 0 do
-    update_in(map, access_path(path), fn sch ->
-      sch
-      |> Map.update(@any_of, schs, fn old_schs -> old_schs end)
-      |> Map.take([@any_of, @anchor])
-    end)
+    {pre, new_map} =
+      get_and_update_in(map, access_path(path), fn sch ->
+        {sch,
+         sch
+         |> Map.update(@any_of, schs, fn old_schs -> old_schs end)
+         |> Map.take([@any_of, @anchor])}
+      end)
+
+    {pre, _post = get(new_map, path), new_map}
   end
 
   def change_type(map, path, %{@ref => ref}) do
-    update_in(map, access_path(path), fn sch ->
-      sch
-      |> Map.put(@ref, ref)
-      |> Map.take([@ref, @anchor])
-    end)
+    {pre, new_map} =
+      get_and_update_in(map, access_path(path), fn sch ->
+        {sch,
+         sch
+         |> Map.put(@ref, ref)
+         |> Map.take([@ref, @anchor])}
+      end)
+
+    {pre, _post = get(new_map, path), new_map}
   end
 
   def change_type(map, path, %{@const => const}) do
-    update_in(map, access_path(path), fn sch ->
-      sch
-      |> Map.put(@const, const)
-      |> Map.take([@const, @anchor])
-    end)
+    {pre, new_map} =
+      get_and_update_in(map, access_path(path), fn sch ->
+        {sch,
+         sch
+         |> Map.put(@const, const)
+         |> Map.take([@const, @anchor])}
+      end)
+
+    {pre, _post = get(new_map, path), new_map}
   end
 
   def enum_to_union_value(%{@enum => enum} = map) when is_list(enum) do
