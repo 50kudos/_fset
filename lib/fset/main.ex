@@ -137,4 +137,11 @@ defmodule Fset.Main do
       pid: self()
     })
   end
+
+  def track_user_update(user, file, data) do
+    Presence.update(self(), @file_topic <> file.id, user.id, fn meta ->
+      new_meta = Map.take(Enum.into(data, %{}), [:current_path, :current_edit, :pid])
+      _meta = Map.merge(meta, new_meta)
+    end)
+  end
 end

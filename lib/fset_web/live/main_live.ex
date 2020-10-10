@@ -28,50 +28,43 @@ defmodule FsetWeb.MainLive do
     {:noreply, assign(socket, assigns)}
   end
 
+  # TODO: Completely move select state to client side. Tracking current_path is
+  # problematic, things get impured. Instead, we want to always send path on every
+  # operation to server when it is needed.
   def handle_event("select_sch", %{"paths" => sch_path}, socket) do
     {:memory, mem} = Process.info(socket.root_pid, :memory)
     IO.inspect("#{mem / (1024 * 1024)} MB", label: "MEMORY")
 
     user = socket.assigns.current_user
     file = socket.assigns.current_file
-    previous_path = current_path(socket.assigns.ui)
     sch_path = Utils.unwrap(sch_path, file.id)
 
-    Presence.update(self(), socket.assigns.ui.topic, user.id, fn meta ->
-      meta = Map.put(meta, :current_path, sch_path)
-      _meta = Map.put(meta, :pid, socket.root_pid)
-    end)
+    # Stash current path and update a new one
+    previous_path = List.wrap(current_path(socket.assigns.ui))
+    track_user_update(user, file, current_path: sch_path, pid: socket.root_pid)
 
-    send_update(ModelBarComponent, id: :model_bar, paths: List.wrap(sch_path) -- [file.id])
-    re_render_model(previous_path)
+    sch_path = List.wrap(sch_path) -- [file.id]
 
-    case List.wrap(sch_path) do
-      [path] when is_binary(path) ->
-        sch = Sch.get(file.schema, path)
+    send_update(ModelBarComponent, id: :model_bar, paths: sch_path)
+    re_render_model(previous_path ++ sch_path)
 
-        send_update(FsetWeb.ModelComponent, id: path)
-        send_update(FsetWeb.SchComponent, id: file.id, sch: sch, path: path)
-
-      paths when is_list(paths) ->
-        for path <- paths do
-          send_update(FsetWeb.ModelComponent, id: path)
-        end
+    if length(sch_path) == 1 do
+      sch = Sch.get(file.schema, hd(sch_path))
+      send_update(FsetWeb.SchComponent, id: file.id, sch: sch, path: hd(sch_path))
     end
 
     {:noreply, socket}
   end
 
+  # TODO: See "select_sch" todo
   def handle_event("edit_sch", %{"path" => sch_path}, socket) do
     user = socket.assigns.current_user
+    file = socket.assigns.current_file
+    root_model_paths = Enum.map(socket.assigns.files_ids, & &1.id)
 
-    if current_path(socket.assigns.ui) in Enum.map(socket.assigns.files_ids, & &1.id) do
-    else
-      Presence.update(self(), socket.assigns.ui.topic, user.id, fn meta ->
-        meta = Map.put(meta, :current_path, sch_path)
-        _meta = Map.put(meta, :current_edit, sch_path)
-      end)
-
-      send_update(FsetWeb.ModelComponent, id: sch_path)
+    unless current_path(socket.assigns.ui) in root_model_paths do
+      track_user_update(user, file, current_path: sch_path, current_edit: sch_path)
+      re_render_model(sch_path)
     end
 
     {:noreply, socket}
