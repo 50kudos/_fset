@@ -83,6 +83,16 @@ defmodule Fset.Main do
     Map.put(%{}, :current_file, %{file | schema: new_schema})
   end
 
+  def update_sch(assigns, %{"key" => key, "path" => sch_path} = params) do
+    value = Map.get(params, "value")
+    file = assigns.current_file
+
+    {_pre, postsch, new_schema} = Sch.update(file.schema, sch_path, key, value)
+    broadcast_update_sch(file, sch_path, postsch)
+
+    Map.put(%{}, :current_file, %{file | schema: new_schema})
+  end
+
   defp models_bodies(%{type: :main} = file), do: Sch.get(file.schema, file.id)
 
   defp models_bodies(%{type: :model} = file) do

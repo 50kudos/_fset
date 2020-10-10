@@ -71,15 +71,9 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("update_sch", params, socket) do
-    %{"key" => key, "path" => sch_path} = params
-    value = Map.get(params, "value")
+    assigns = update_sch(socket.assigns, params)
 
-    file = socket.assigns.current_file
-    schema = Sch.update(file.schema, sch_path, key, value)
-    socket = update(socket, :current_file, fn _ -> %{file | schema: schema} end)
-
-    async_update_schema()
-    {:noreply, socket}
+    {:noreply, assign(socket, assigns)}
   end
 
   def handle_event("rename_key", params, socket) do

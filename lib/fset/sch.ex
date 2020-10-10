@@ -757,41 +757,53 @@ defmodule Fset.Sch do
   def update(map, path, key, val) when is_binary(key) do
     cond do
       key in [@title, @description, @id] and is_binary(val) ->
-        update_in(map, access_path(path), fn parent ->
-          Map.put(parent, key, val)
-        end)
+        {pre, new_map} =
+          get_and_update_in(map, access_path(path), fn parent ->
+            {parent, Map.put(parent, key, val)}
+          end)
+
+        {pre, _post = get(new_map, path), new_map}
 
       key == @required ->
         parent = find_parent(path)
 
-        update_in(map, access_path(parent.path), fn
-          %{@type_ => @object} = object ->
-            cond do
-              # Previous value is false
-              val in ["false"] ->
-                Map.update(object, key, [], fn required ->
-                  Enum.uniq([parent.child_key | required])
-                end)
+        {pre, new_map} =
+          get_and_update_in(map, access_path(parent.path), fn
+            %{@type_ => @object} = object ->
+              {object,
+               cond do
+                 # Previous value is false
+                 val in ["false"] ->
+                   Map.update(object, key, [], fn required ->
+                     Enum.uniq([parent.child_key | required])
+                   end)
 
-              # Previous value is true (unchecked input have no value set; i.e. nil)
-              val in [nil] ->
-                Map.update(object, key, [], fn required ->
-                  List.delete(required, parent.child_key)
-                end)
+                 # Previous value is true (unchecked input have no value set; i.e. nil)
+                 val in [nil] ->
+                   Map.update(object, key, [], fn required ->
+                     List.delete(required, parent.child_key)
+                   end)
 
-              true ->
-                object
-            end
+                 true ->
+                   object
+               end}
 
-          object ->
-            object
-        end)
+            object ->
+              {object, object}
+          end)
+
+        {pre, _post = get(new_map, parent.path), new_map}
 
       is_binary(key) ->
-        update_in(map, access_path(path), fn parent -> update(parent, key, val) end)
+        {pre, new_map} =
+          get_and_update_in(map, access_path(path), fn parent ->
+            {parent, update(parent, key, val)}
+          end)
+
+        {pre, _post = get(new_map, path), new_map}
 
       true ->
-        map
+        {nil, nil, map}
     end
   end
 
