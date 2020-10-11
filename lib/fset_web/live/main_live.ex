@@ -77,27 +77,9 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("rename_key", params, socket) do
-    %{"parent_path" => parent_path, "old_key" => old_key, "value" => new_key} = params
+    assigns = rename_key(socket.assigns, params)
 
-    old_key = String.slice(old_key, 0, min(255, String.length(old_key)))
-    new_key = String.slice(new_key, 0, min(255, String.length(new_key)))
-
-    user = socket.assigns.current_user
-    file = socket.assigns.current_file
-    file = Module.rename_key(file, parent_path, old_key, new_key)
-
-    socket = update(socket, :current_file, fn _ -> file end)
-
-    new_key = if new_key == "", do: old_key, else: new_key
-    new_path = input_name(parent_path, new_key)
-
-    Presence.update(self(), socket.assigns.ui.topic, user.id, fn meta ->
-      meta = Map.put(meta, :current_path, new_path)
-      _meta = Map.put(meta, :current_edit, nil)
-    end)
-
-    async_update_schema()
-    {:noreply, socket}
+    {:noreply, assign(socket, assigns)}
   end
 
   def handle_event("move", payload, socket) do
@@ -111,7 +93,9 @@ defmodule FsetWeb.MainLive do
 
     schema =
       for {current_path, ref} <- paths_refs, reduce: file.schema do
-        acc -> Sch.update(acc, current_path, "$id", ref)
+        acc ->
+          {_, _, new_map} = Sch.update(acc, current_path, "$id", ref)
+          new_map
       end
 
     schema = Sch.move(schema, src_indices, dst_indices)

@@ -368,6 +368,8 @@ defmodule Fset.Sch do
   end
 
   def rename_key(map, parent_path, old_key, new_key) do
+    new_key = String.trim(new_key)
+    old_key = String.trim(old_key)
     new_key = if new_key == "", do: old_key, else: new_key
 
     src_path = dst_path = parent_path
@@ -376,7 +378,8 @@ defmodule Fset.Sch do
 
     src_indices = [%{"from" => src_path, "index" => index}]
     dst_indices = [%{"to" => dst_path, "index" => index, "rename" => new_key}]
-    move(map, src_indices, dst_indices)
+    new_schema = move(map, src_indices, dst_indices)
+    {_pre = sch, _post = get(new_schema, parent_path), new_schema}
   end
 
   def get_paths(map, dst_indices) when is_list(dst_indices) and is_map(map) do

@@ -90,8 +90,4 @@ defmodule Fset.Module do
 
     Sch.put(root, path, Utils.gen_key(), model, 0)
   end
-
-  def rename_key(%_{schema: root} = file, path, old_key, new_key) do
-    %{file | schema: Sch.rename_key(root, path, old_key, new_key)}
-  end
 end

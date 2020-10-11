@@ -93,6 +93,27 @@ defmodule Fset.Main do
     Map.put(%{}, :current_file, %{file | schema: new_schema})
   end
 
+  def rename_key(assigns, %{
+        "parent_path" => parent_path,
+        "old_key" => old_key,
+        "value" => new_key
+      }) do
+    # String max length < 255
+    old_key = String.slice(old_key, 0, min(255, String.length(old_key)))
+    new_key = String.slice(new_key, 0, min(255, String.length(new_key)))
+
+    user = assigns.current_user
+    file = assigns.current_file
+    {_pre, postsch, new_schema} = Sch.rename_key(file.schema, parent_path, old_key, new_key)
+
+    new_key = if new_key == "", do: old_key, else: new_key
+    new_path = parent_path <> "[" <> new_key <> "]"
+    broadcast_update_sch(file, parent_path, postsch)
+    track_user_update(user, file, current_path: new_path, current_edit: nil)
+
+    Map.put(%{}, :current_file, %{file | schema: new_schema})
+  end
+
   defp models_bodies(%{type: :main} = file), do: Sch.get(file.schema, file.id)
 
   defp models_bodies(%{type: :model} = file) do
