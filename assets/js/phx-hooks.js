@@ -75,11 +75,12 @@ Hooks.updateSch = {
   updateSch() {
     return (event) => this.pushEvent("update_sch", {
       key: this.el.getAttribute("phx-value-key"),
+      path: this.el.getAttribute("phx-value-path"),
       value: event.target.value
     })
   },
   mounted() {
-    this.el.addEventListener("change", this.updateSch(), true)
+    this.el.addEventListener("blur", this.updateSch(), true)
   }
 }
 
