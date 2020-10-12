@@ -25,6 +25,9 @@
   @apply py-0 border border-gray-700 border-dashed
 }*/
 .sort-handle [phx-click="add_field"] { @apply hidden }
+.sort-handle.sortable-selected.multi {
+  > details > summary [phx-click="add_field"] { @apply hidden }
+}
 .sort-handle.sortable-selected {
   > details > summary [phx-click="add_field"] { @apply inline }
 }

@@ -22,6 +22,7 @@ defmodule Fset.Main do
       |> Map.put(:project_name, project.name)
       |> Map.put(:current_user, user)
       |> Map.put(:current_file, current_file)
+      |> Map.put(:current_path, [current_file.id])
       |> Map.put(:files_ids, files_ids)
       |> Map.put(:models_anchors, models_anchors)
       |> Map.put(:current_models_bodies, models_bodies)
@@ -136,7 +137,7 @@ defmodule Fset.Main do
         broadcast_update_sch(file, file.id, Sch.get(file.schema, file.id))
     end
 
-    Process.send(self(), {:re_render_current_path, moved_paths}, [:noconnect])
+    push_current_path(moved_paths)
     return_assigns
   end
 
@@ -200,5 +201,9 @@ defmodule Fset.Main do
       new_meta = Map.take(Enum.into(data, %{}), [:current_path, :current_edit, :pid])
       _meta = Map.merge(meta, new_meta)
     end)
+  end
+
+  def push_current_path(sch_path) when is_binary(sch_path) or is_list(sch_path) do
+    Process.send(self(), {:re_render_current_path, List.wrap(sch_path)}, [:noconnect])
   end
 end

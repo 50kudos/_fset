@@ -157,6 +157,7 @@ Hooks.moveable = {
       item.multiDragKeyDown = false
       Sortable.utils.select(item)
 
+      if (currentPaths.length > 1) { item.classList.add("multi") }
       if (root.dataset.path != item.dataset.path) {
         // item.scrollIntoView({ behavior: "smooth", block: "center" })
       }
@@ -239,10 +240,9 @@ Hooks.moveable = {
 
         // Remove add_field buttons on multi-select, otherwise they do not look good.
         if (evt.items.length > 1) {
-          evt.items.forEach(a => {
-            let btn = a.querySelector("[phx-click='add_field']")
-            btn && btn.remove()
-          })
+          evt.items.forEach(item => item.classList.add("multi"))
+        } else {
+          evt.item.classList.remove("multi")
         }
 
         // PushEvent only when necessary

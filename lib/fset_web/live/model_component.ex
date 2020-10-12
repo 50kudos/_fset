@@ -1,8 +1,6 @@
 defmodule FsetWeb.ModelComponent do
   use FsetWeb, :live_component
   alias Fset.{Sch, Utils}
-  alias FsetWeb.MainLive, as: M
-  import Fset.Main
 
   @impl true
   def mount(socket) do
@@ -11,7 +9,7 @@ defmodule FsetWeb.ModelComponent do
 
   @impl true
   def handle_event("add_field", params, socket) do
-    assigns = add_field(socket.assigns, params)
+    assigns = Fset.Main.add_field(socket.assigns, params)
 
     {:noreply, assign(socket, assigns)}
   end
@@ -25,8 +23,6 @@ defmodule FsetWeb.ModelComponent do
       :ok,
       socket
       |> assign(assigns)
-      |> assign(:current_path, M.current_path(assigns.ui))
-      |> assign(:current_edit, M.current_edit(assigns.ui))
       |> assign_new(:errors, fn -> assigns.ui.errors end)
       |> update(:sch, fn sch -> Map.delete(sch, "examples") end)
       |> update(:ui, fn ui -> Map.put_new(ui, :level, ui.tab) end)
@@ -51,7 +47,6 @@ defmodule FsetWeb.ModelComponent do
   defp render_folder(assigns) do
     ~L"""
     <nav class="sort-handle
-      <%= if M.selected?(@path, @current_path), do: 'sortable-selected' %>
       <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow' %>"
       data-path="<%= @path %>">
 
@@ -74,12 +69,10 @@ defmodule FsetWeb.ModelComponent do
   defp render_folder_header(%{ui: %{level: _}} = assigns) do
     ~L"""
     <div class="relative dragover-hl flex flex-wrap items-start w-full">
-      <%= if M.selected?(@path, @current_path, :single) do %>
-        <p class="absolute m-1 leading-4 text-gray-900 font-mono text-xs">
-          <span class="close-marker cursor-pointer select-none">+</span>
-          <span class="open-marker cursor-pointer select-none">-</span>
-        </p>
-      <% end %>
+      <p class="absolute m-1 leading-4 text-gray-900 font-mono text-xs">
+        <span class="close-marker cursor-pointer select-none">+</span>
+        <span class="open-marker cursor-pointer select-none">-</span>
+      </p>
       <%= render_key_type_pair(assigns) %>
     </div>
     """
@@ -145,7 +138,6 @@ defmodule FsetWeb.ModelComponent do
   defp render_file(assigns) do
     ~L"""
     <nav class="sort-handle
-      <%= if M.selected?(@path, @current_path), do: 'sortable-selected' %>
       <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow' %>"
       data-path="<%= @path %>">
 
@@ -164,25 +156,14 @@ defmodule FsetWeb.ModelComponent do
         onclick="event.preventDefault()">
       </div>
 
-      <%= if M.selected?(@path, @current_path, :single) do %>
-        <%= render_key(assigns) %>
-        <%= render_type_options(assigns) %>
-      <% else %>
-        <%= render_key(assigns) %>
-        <%= render_type(assigns) %>
-      <% end %>
+      <%= render_key(assigns) %>
+      <%= render_type_options(assigns) %>
 
       <div class="flex-1 px-1 text-right" onclick="event.preventDefault()">
-        <div class="<%= if M.selected?(@path, @current_path, :multi), do: 'hidden' %>">
-          <%= render_add_button(assigns) %>
-        </div>
-        <% if M.selected?(@path, @current_path, :single) do %>
-        <% else %>
-          &nbsp;
-        <% end %>
+        <%= render_add_button(assigns) %>
       </div>
     </div>
-    <%# render_doc(assigns) %>
+    <%=# render_doc(assigns) %>
     """
   end
 
@@ -256,6 +237,7 @@ defmodule FsetWeb.ModelComponent do
     <div class="flex items-start text-sm"
       onclick="event.preventDefault()">
       <%= render_key_(assigns) %>
+      <template><%= render_textarea(assigns) %></template>
     </div>
     """
   end
@@ -322,26 +304,10 @@ defmodule FsetWeb.ModelComponent do
     end
   end
 
-  # Current or selected path
-  defp render_key_text(%{current_path: name, path: name} = assigns) do
-    ~L"""
-    <p class="" style="_max-width: <%= if @ui.level == @ui.tab, do: 24, else: 12 %>rem"
-      phx-click="edit_sch"
-      phx-value-path="<%= @path %>"
-      onclick="event.preventDefault()">
-      <%= if @current_edit == @path && is_binary(@key) do %>
-        <%= render_textarea(assigns) %>
-      <% else %>
-        <%= render_key_text_(assigns) %>
-      <% end %>
-    </p>
-    """
-  end
-
   defp render_key_text(assigns) do
     ~L"""
     <p class="" style="_max-width: <%= if @ui.level == @ui.tab, do: 24, else: 12 %>rem"
-      onclick="event.preventDefault()">
+      phx-value-path="<%= @path %>">
       <%= render_key_text_(assigns) %>
     </p>
     """
@@ -379,13 +345,13 @@ defmodule FsetWeb.ModelComponent do
     """
   end
 
-  defp render_type(assigns) do
-    ~L"""
-    <p class="text-blue-500 text-sm break-words whitespace-no-wrap" onclick="event.preventDefault()">
-      <%= render_type_(assigns) %>
-    </p>
-    """
-  end
+  # defp render_type(assigns) do
+  #   ~L"""
+  #   <p class="text-blue-500 text-sm break-words whitespace-no-wrap" onclick="event.preventDefault()">
+  #     <%= render_type_(assigns) %>
+  #   </p>
+  #   """
+  # end
 
   # Top/root level model. Level does not start at 0 but specified tab.
   defp render_type_(%{ui: %{level: l, tab: t}} = assigns) when l == t do
@@ -483,12 +449,12 @@ defmodule FsetWeb.ModelComponent do
 
   # defp render_doc(assigns) do
   #   ~L"""
-  #   <div class="w-full text-xs text-orange-500 opacity-75 leading-6" style="padding-left: <%= @uiÍ.level * 1.25 %>rem" onclick="event.preventDefault()">
+  #   <div class="mb-2 w-full text-xs text-pink-400 opacity-75 leading-6" style="padding-left: <%= @ui.level * 1.25 %>rem" onclick="event.preventDefault()">
   #     <p><%= Sch.title(@sch) %></p>
   #     <p><%= Sch.description(@sch) %></p>
   #   </div>
   #   """
-  # endÍ
+  # end
 
   def read_type(sch, ui) when is_map(sch) do
     cond do

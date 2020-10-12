@@ -10,6 +10,8 @@ defmodule FsetWeb.MainLive do
     temporary_assigns = []
 
     if connected?(socket), do: subscribe_file_update(assigns.current_file)
+
+    push_current_path(assigns.current_file.id)
     track_user(assigns.current_user, assigns.current_file)
 
     {:ok, assign(socket, assigns), temporary_assigns: temporary_assigns}
@@ -38,18 +40,16 @@ defmodule FsetWeb.MainLive do
     user = socket.assigns.current_user
     file = socket.assigns.current_file
 
-    sch_path = Utils.unwrap(sch_path, file.id)
+    assigns = Map.put(%{}, :current_path, sch_path)
     track_user_update(user, file, current_path: sch_path, pid: socket.root_pid)
-
-    sch_path = List.wrap(sch_path) -- [file.id]
-    Process.send(self(), {:re_render_current_path, sch_path}, [:noconnect])
+    push_current_path(sch_path)
 
     if length(sch_path) == 1 do
       sch = Sch.get(file.schema, hd(sch_path))
       send_update(FsetWeb.SchComponent, id: file.id, sch: sch, path: hd(sch_path))
     end
 
-    {:noreply, socket}
+    {:noreply, assign(socket, assigns)}
   end
 
   # TODO: See "select_sch" todo

@@ -49,7 +49,7 @@
       </aside>
       <nav class="w-2/5 overflow-scroll pr-3">
         <div class="text-xs px-2 h-8 bg-gray-900 sticky top-0 z-10">
-          <%= live_component @socket, ModelBarComponent, id: :model_bar, paths: List.wrap(current_path(@ui)) -- [@current_file.id] %>
+          <%= live_component @socket, ModelBarComponent, id: :model_bar, paths: List.wrap(@current_path) -- [@current_file.id] %>
         </div>
         <div class="min-h-full" phx-window-keyup="module_keyup">
           <%= live_component @socket, ModuleComponent,
@@ -60,13 +60,13 @@
         </div>
       </nav>
       <aside class="w-2/5 overflow-scroll text-sm pl-3 pr-5">
-        <%= if !is_list(current_path(@ui)) do %>
-          <%= live_component @socket, SchComponent, id: @current_file.id, sch: Sch.get(@current_file.schema, current_path(@ui)), ui: Map.put(@ui, :model_names, @models_anchors), path: current_path(@ui) %>
+        <%= if length(@current_path) == 1 do %>
+          <%= live_component @socket, SchComponent, id: @current_file.id, sch: Sch.get(@current_file.schema, hd(@current_path)), ui: Map.put(@ui, :model_names, @models_anchors), path: hd(@current_path) %>
         <% end %>
       </aside>
     </section>
     <footer class="flex items-center justify-center py-1 text-sm bg-gray-900 border-t border-gray-800">
-      <p class="text-xs text-gray-500 max-w-full break-words"><%= if !is_list(current_path(@ui)), do: current_path(@ui), else: "multi-paths" %></p>
+      <p class="text-xs text-gray-500 max-w-full break-words"><%= if length(@current_path) == 1, do: @current_path, else: "multi-paths" %></p>
     </footer>
   </section>
 </div>
