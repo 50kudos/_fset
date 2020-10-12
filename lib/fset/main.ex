@@ -9,7 +9,7 @@ defmodule Fset.Main do
   """
   @file_topic "module_update:"
 
-  alias Fset.{Accounts, Project, Module, Sch}
+  alias Fset.{Accounts, Project, Module, Sch, Utils}
   alias FsetWeb.Presence
 
   def init_data(params) do
@@ -114,6 +114,26 @@ defmodule Fset.Main do
     Map.put(%{}, :current_file, %{file | schema: new_schema})
   end
 
+  def move(assigns, %{"oldIndices" => src_indices, "newIndices" => dst_indices}) do
+    user = assigns.current_user
+    file = assigns.current_file
+
+    {moved_paths, new_schema} = Sch.move(file.schema, src_indices, dst_indices)
+    file = %{file | schema: new_schema}
+    return_assigns = Map.put(%{}, :current_file, file)
+    return_assigns = Map.put(return_assigns, :current_models_bodies, models_bodies(file))
+
+    track_user_update(user, file, current_path: Utils.unwrap(moved_paths))
+
+    for {key, model_sch} <- Map.get(return_assigns, :current_models_bodies) do
+      model_path = file.id <> "[" <> key <> "]"
+      broadcast_update_sch(file, model_path, model_sch)
+    end
+
+    Process.send(self(), {:re_render_current_path, moved_paths}, [:noconnect])
+    return_assigns
+  end
+
   defp models_bodies(%{type: :main} = file), do: Sch.get(file.schema, file.id)
 
   defp models_bodies(%{type: :model} = file) do
@@ -153,11 +173,11 @@ defmodule Fset.Main do
     Phoenix.PubSub.subscribe(Fset.PubSub, @file_topic <> file.id)
   end
 
-  def broadcast_update_sch(%{id: id}, path, sch) when is_binary(id) do
+  def broadcast_update_sch(%{id: id}, path, sch, opts \\ []) when is_binary(id) do
     Phoenix.PubSub.broadcast!(
       Fset.PubSub,
       @file_topic <> id,
-      {:update_sch, path, sch}
+      {:update_sch, path, sch, opts}
     )
   end
 

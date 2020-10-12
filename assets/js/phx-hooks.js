@@ -109,10 +109,12 @@ Hooks.updateSch = {
 Hooks.moveable = {
   mounted() {
     this.setupSortable()
+    this.handleEvent("current_path", ({ paths }) => {
+      this.selectCurrentItems(paths)
+    })
   },
   updated() {
     this.setupSortable()
-    this.selectCurrentItems()
   },
   destroyed() {
     Sortable.get(this.el).destroy()
@@ -138,35 +140,29 @@ Hooks.moveable = {
     let indentEl = item.querySelector(this.indentClass)
     indentEl.style.paddingLeft = box.dataset.indent
   },
-  itemPath(item) {
-    return Sortable.utils.closest(item, "[data-path]").dataset.path
+  itemPath(el) {
+    return Sortable.utils.closest(el, "[data-path]").dataset.path
   },
-  selectCurrentItems() {
+  selectCurrentItems(paths) {
     const root = document.querySelector("[data-group='body']")
-    const data = document.querySelector("[data-current-paths]")
-    const currentPaths = data.dataset.currentPaths
+    const currentPaths = paths
+    const itemBox = this.el
 
-    if (currentPaths) {
-      Sortable.get(this.el).multiDrag._deselectMultiDrag()
+    Sortable.get(itemBox).multiDrag._deselectMultiDrag()
+    currentPaths.forEach(currentPath => {
+      let item = itemBox.querySelector("[data-path='" + currentPath + "']")
+      if (!item) { return }
 
-      JSON.parse(currentPaths).forEach(currentPath => {
-        let item = root.querySelector("[data-path='" + currentPath + "']") || root
-        let itemBox = Sortable.utils.closest(item, "[phx-hook='moveable']")
+      item.from = itemBox
+      item.multiDragKeyDown = false
+      Sortable.utils.select(item)
 
-        item.from = itemBox
-        item.multiDragKeyDown = false
-        Sortable.utils.select(item)
-
-        if (root.dataset.path != item.dataset.path) {
-          // item.scrollIntoView({ behavior: "smooth", block: "center" })
-        }
-      })
-    }
+      if (root.dataset.path != item.dataset.path) {
+        // item.scrollIntoView({ behavior: "smooth", block: "center" })
+      }
+    })
   },
   movedItems(drop) {
-    // Frontend needs to use 1 based index due to technical limitation that we use <summary>
-    // tag as first child so that draghover can insert right after it, otherwise we could not
-    // drag it right after a list header as a first child (visually).
     let newIndexItem = [{ to: this.itemPath(drop.to), index: drop.newIndex }]
     let oldIndexItem = [{ from: this.itemPath(drop.from), index: drop.oldIndex }]
 

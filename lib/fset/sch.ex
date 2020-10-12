@@ -312,10 +312,28 @@ defmodule Fset.Sch do
     end)
   end
 
+  def put_moved_items_id(put_payloads) do
+    {ids, put_payloads} =
+      Enum.map_reduce(put_payloads, %{}, fn {dst, raw_schs}, acc ->
+        ids_raw_schs =
+          for raw_sch <- raw_schs do
+            id = Ecto.UUID.generate()
+            raw_sch = %{raw_sch | sch: Map.put(raw_sch[:sch], @id, id)}
+
+            {id, raw_sch}
+          end
+
+        {ids, raw_schs} = Enum.unzip(ids_raw_schs)
+        {ids, Map.put(acc, dst, raw_schs)}
+      end)
+
+    {List.flatten(ids), put_payloads}
+  end
+
   def move(map, src_indices, dst_indices)
       when is_list(src_indices) and is_list(dst_indices) and is_map(map) do
     zipped_indices = Enum.zip(src_indices, dst_indices)
-    {ids, map} = put_dst_id(map, dst_indices)
+    {dst_ids, map} = put_dst_id(map, dst_indices)
 
     {popped_zips, remained} =
       zipped_indices
@@ -329,16 +347,27 @@ defmodule Fset.Sch do
       end)
 
     put_payloads = unzip_popped_with_dst(popped_zips)
+    {moved_ids, put_payloads} = put_moved_items_id(put_payloads)
 
-    Enum.reduce(put_payloads, remained, fn {dst, raw_schs}, acc ->
-      case get(acc, dst) do
-        nil ->
-          attempt_put_schs(acc, dst, raw_schs, ids)
+    new_schema =
+      Enum.reduce(put_payloads, remained, fn {dst, raw_schs}, acc ->
+        case get(acc, dst) do
+          nil ->
+            # There exists a case where given dst is no longer point to a sch.
+            # In a scenario that we move a sibling sch [1] into a sibling container [2],
+            # and [1] index is less than [2], poping [1] results in [2] index located at [1],
+            # So dst point to [2] no longer able to get the sch.
 
-        _ ->
-          update_in(acc, access_path(dst), fn parent -> put_schs(parent, raw_schs) end)
-      end
-    end)
+            attempt_put_schs(acc, dst, raw_schs, dst_ids)
+
+          _ ->
+            update_in(acc, access_path(dst), fn parent -> put_schs(parent, raw_schs) end)
+        end
+      end)
+
+    moved_paths = Enum.map(moved_ids, &find_path_by_id(new_schema, &1))
+
+    {moved_paths, new_schema}
   end
 
   defp zip_popped_with_dst(map, src, popped, indices_zip) do
@@ -378,7 +407,7 @@ defmodule Fset.Sch do
 
     src_indices = [%{"from" => src_path, "index" => index}]
     dst_indices = [%{"to" => dst_path, "index" => index, "rename" => new_key}]
-    new_schema = move(map, src_indices, dst_indices)
+    {_moved_paths, new_schema} = move(map, src_indices, dst_indices)
     {_pre = sch, _post = get(new_schema, parent_path), new_schema}
   end
 

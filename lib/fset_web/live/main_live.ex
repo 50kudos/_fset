@@ -37,16 +37,12 @@ defmodule FsetWeb.MainLive do
 
     user = socket.assigns.current_user
     file = socket.assigns.current_file
-    sch_path = Utils.unwrap(sch_path, file.id)
 
-    # Stash current path and update a new one
-    previous_path = List.wrap(current_path(socket.assigns.ui))
+    sch_path = Utils.unwrap(sch_path, file.id)
     track_user_update(user, file, current_path: sch_path, pid: socket.root_pid)
 
     sch_path = List.wrap(sch_path) -- [file.id]
-
-    send_update(ModelBarComponent, id: :model_bar, paths: sch_path)
-    re_render_model(previous_path ++ sch_path)
+    Process.send(self(), {:re_render_current_path, sch_path}, [:noconnect])
 
     if length(sch_path) == 1 do
       sch = Sch.get(file.schema, hd(sch_path))
@@ -82,57 +78,10 @@ defmodule FsetWeb.MainLive do
     {:noreply, assign(socket, assigns)}
   end
 
-  def handle_event("move", payload, socket) do
-    %{"oldIndices" => src_indices, "newIndices" => dst_indices} = payload
+  def handle_event("move", params, socket) do
+    assigns = move(socket.assigns, params)
 
-    user = socket.assigns.current_user
-    file = socket.assigns.current_file
-
-    paths_refs =
-      Enum.map(List.wrap(current_path(socket.assigns.ui)), fn p -> {p, Ecto.UUID.generate()} end)
-
-    schema =
-      for {current_path, ref} <- paths_refs, reduce: file.schema do
-        acc ->
-          {_, _, new_map} = Sch.update(acc, current_path, "$id", ref)
-          new_map
-      end
-
-    schema = Sch.move(schema, src_indices, dst_indices)
-
-    socket =
-      if file.type == :model do
-        schema = Sch.get(schema, file.id)
-
-        models =
-          for key <- Sch.order(schema) do
-            {key, Sch.prop_sch(schema, key)}
-          end
-
-        assign(socket, :models, models)
-      else
-        socket
-      end
-
-    socket = update(socket, :current_file, fn _ -> %{file | schema: schema} end)
-
-    section_sch = socket.assigns.current_file.schema
-
-    current_paths =
-      for ref <- Keyword.values(paths_refs) do
-        Sch.find_path(section_sch, fn sch -> Map.get(sch, "$id") == ref end)
-      end
-
-    current_paths = Enum.filter(current_paths, fn p -> p != "" end)
-    current_paths = if length(current_paths) == 1, do: hd(current_paths), else: current_paths
-    # current_paths = Sch.get_paths(section_sch, dst_indices)
-
-    Presence.update(self(), socket.assigns.ui.topic, user.id, fn meta ->
-      _meta = Map.put(meta, :current_path, current_paths)
-    end)
-
-    async_update_schema()
-    {:noreply, socket}
+    {:noreply, assign(socket, assigns)}
   end
 
   def handle_event("escape", _val, socket) do
@@ -242,7 +191,7 @@ defmodule FsetWeb.MainLive do
     {:noreply, socket}
   end
 
-  def handle_info({:update_sch, path, sch}, socket) do
+  def handle_info({:update_sch, path, sch, _opts}, socket) do
     re_render_model(path, sch: sch)
     current_file = socket.assigns.current_file
     existing_file = Project.get_file!(current_file.id)
@@ -254,6 +203,10 @@ defmodule FsetWeb.MainLive do
 
     socket = assign(socket, :current_file, file)
     {:noreply, socket}
+  end
+
+  def handle_info({:re_render_current_path, paths}, socket) do
+    {:noreply, push_event(socket, "current_path", %{paths: paths})}
   end
 
   def handle_info(%{event: "presence_diff", payload: _payload}, socket) do

@@ -5,7 +5,6 @@ defmodule FsetWeb.ModelBarComponent do
   def render(assigns) do
     ~L"""
     <div class="flex items-center h-full space-x-2">
-      <span data-current-paths="<%= Jason.encode!(@paths) %>"></span>
       <%= if selected_count = selected_count(@paths) do %>
         <button phx-click="escape" class="text-gray-600 hover:text-gray-300" title="Deselect">&times;</button>
         <span>selected <%= selected_count %></span>
