@@ -6,22 +6,6 @@ import 'highlight.js/styles/agate.css';
 let Hooks = {}
 let Utils = {}
 
-Utils.onDetailsTagState = {
-  mount(storeEl) {
-    let detailsTag = storeEl.el.closest("details")
-    if (detailsTag) {
-      storeEl.expand = detailsTag.open
-      detailsTag.addEventListener("toggle", event => {
-        storeEl.expand = event.target.open
-      })
-    }
-  },
-  update(storeEl) {
-    let detailsTag = storeEl.el.closest("details")
-    if (detailsTag) { detailsTag.open = storeEl.expand }
-  }
-}
-
 hljs.registerLanguage('json', json);
 Hooks.syntaxHighlight = {
   mounted() {
@@ -32,15 +16,8 @@ Hooks.syntaxHighlight = {
   }
 }
 
-Hooks.openable = {
-  mounted() { Utils.onDetailsTagState.mount(this) },
-  updated() { Utils.onDetailsTagState.update(this) },
-}
-
 Hooks.focusOnOpen = {
   mounted() {
-    Utils.onDetailsTagState.mount(this)
-
     this.el.closest("details").addEventListener("toggle", event => {
       if (event.target.open) { this.focusFirstInput() }
     })

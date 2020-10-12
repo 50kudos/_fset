@@ -50,7 +50,7 @@ defmodule FsetWeb.ModelComponent do
       <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow' %>"
       data-path="<%= @path %>">
 
-      <details phx-hook="openable" id="openable__<%= @path %>" <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>>
+      <details <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>>
         <summary class="flex flex-col" >
           <%= render_folder_header(assigns) %>
         </summary>
