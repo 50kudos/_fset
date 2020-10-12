@@ -1,7 +1,6 @@
 defmodule FsetWeb.ModuleComponent do
   use FsetWeb, :live_component
   alias FsetWeb.ModelComponent
-  alias Fset.Sch
 
   @impl true
   def update(assigns, socket) do

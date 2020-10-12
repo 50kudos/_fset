@@ -1,5 +1,6 @@
 defmodule Fset.Sch do
   use Fset.Sch.Vocab
+  @temp_pointer_to_item :pointer_to_item
 
   # Accessor
   ## Core
@@ -312,13 +313,13 @@ defmodule Fset.Sch do
     end)
   end
 
-  def put_moved_items_id(put_payloads) do
+  defp put_moved_items_id(put_payloads) do
     {ids, put_payloads} =
       Enum.map_reduce(put_payloads, %{}, fn {dst, raw_schs}, acc ->
         ids_raw_schs =
           for raw_sch <- raw_schs do
             id = Ecto.UUID.generate()
-            raw_sch = %{raw_sch | sch: Map.put(raw_sch[:sch], @id, id)}
+            raw_sch = %{raw_sch | sch: Map.put(raw_sch[:sch], @temp_pointer_to_item, id)}
 
             {id, raw_sch}
           end
@@ -328,6 +329,10 @@ defmodule Fset.Sch do
       end)
 
     {List.flatten(ids), put_payloads}
+  end
+
+  defp delete_moved_items_id(map, _ids) do
+    walk_container(map, fn sch -> Map.delete(sch, @temp_pointer_to_item) end)
   end
 
   def move(map, src_indices, dst_indices)
@@ -366,6 +371,7 @@ defmodule Fset.Sch do
       end)
 
     moved_paths = Enum.map(moved_ids, &find_path_by_id(new_schema, &1))
+    new_schema = delete_moved_items_id(new_schema, moved_ids)
 
     {moved_paths, new_schema}
   end

@@ -211,8 +211,8 @@ defmodule Fset.SchTest do
     {_, _, root} = put(root, "root", "b", New.string())
     assert get(root, "root") |> order() == ["a", "y", "b"]
 
-    root = rename_key(root, "root", "b", "x")
-    root = rename_key(root, "root", "a", "a")
+    {_, _, root} = rename_key(root, "root", "b", "x")
+    {_, _, root} = rename_key(root, "root", "a", "a")
     assert get(root, "root[a]") == New.string()
     assert get(root, "root[y]") == New.string()
     assert get(root, "root[x]") == New.string()
@@ -238,7 +238,7 @@ defmodule Fset.SchTest do
       dst_item("root[a]", 1)
     ]
 
-    moved_up = move(root, src_indices, dst_indices)
+    {_, moved_up} = move(root, src_indices, dst_indices)
 
     src_indices = [
       src_item("root[a]", 0),
@@ -250,7 +250,7 @@ defmodule Fset.SchTest do
       dst_item("root[a][b]", 1)
     ]
 
-    moved_down = move(moved_up, src_indices, dst_indices)
+    {_, moved_down} = move(moved_up, src_indices, dst_indices)
 
     assert get(moved_up, "root[a]") |> order() == ["0", "1", "b"]
     assert get(moved_down, "root[a][b]") |> items() == [New.string(), New.string(), New.any()]
@@ -269,7 +269,7 @@ defmodule Fset.SchTest do
 
     dst_indices = [dst_item("root", 1), dst_item("root", 0)]
     src_indices = [src_item("root[a]", 1), src_item("root[b]", 0)]
-    root = move(root, src_indices, dst_indices)
+    {_, root} = move(root, src_indices, dst_indices)
 
     assert get(root, "root") |> order() == ["0", "1", "a", "b"]
   end
@@ -280,7 +280,7 @@ defmodule Fset.SchTest do
 
     dst_indices = [dst_item("root[tuple]", 1)]
     src_indices = [src_item("root[tuple]", 0)]
-    root = move(root, src_indices, dst_indices)
+    {_, root} = move(root, src_indices, dst_indices)
 
     assert get(root, "root[tuple]") |> items() |> length() == 2
   end
@@ -296,7 +296,7 @@ defmodule Fset.SchTest do
     dst_indices = [dst_item("root[arr_key][][3][][1]", 1)]
     src_indices = [src_item("root[arr_key]", 2)]
 
-    root = move(root, src_indices, dst_indices)
+    {_, root} = move(root, src_indices, dst_indices)
     assert get(root, "root[arr_key][][2][][1]") |> items() == [New.string(), New.null()]
   end
 
@@ -317,7 +317,7 @@ defmodule Fset.SchTest do
       dst_item("root", 1)
     ]
 
-    root = move(root, src_indices, dst_indices)
+    {_, root} = move(root, src_indices, dst_indices)
 
     assert get_paths(root, dst_indices) == ["root[0]", "root[1]"]
   end
