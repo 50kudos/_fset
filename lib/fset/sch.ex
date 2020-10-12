@@ -306,7 +306,7 @@ defmodule Fset.Sch do
 
       acc =
         update_in(acc, access_path(dst), fn dst_sch ->
-          Map.put(dst_sch, @id, id)
+          Map.put(dst_sch, @temp_pointer_to_item, id)
         end)
 
       {%{dst => id}, acc}
@@ -331,7 +331,7 @@ defmodule Fset.Sch do
     {List.flatten(ids), put_payloads}
   end
 
-  defp delete_moved_items_id(map, _ids) do
+  defp delete_temp_pointer(map, _ids) do
     walk_container(map, fn sch -> Map.delete(sch, @temp_pointer_to_item) end)
   end
 
@@ -371,7 +371,7 @@ defmodule Fset.Sch do
       end)
 
     moved_paths = Enum.map(moved_ids, &find_path_by_id(new_schema, &1))
-    new_schema = delete_moved_items_id(new_schema, moved_ids)
+    new_schema = delete_temp_pointer(new_schema, moved_ids)
 
     {moved_paths, new_schema}
   end
@@ -469,7 +469,7 @@ defmodule Fset.Sch do
   end
 
   def find_path_by_id(map, id) do
-    find_path(map, fn sch -> Map.get(sch, @id) == id end)
+    find_path(map, fn sch -> Map.get(sch, @temp_pointer_to_item) == id end)
   end
 
   @doc """
