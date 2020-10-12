@@ -125,9 +125,15 @@ defmodule Fset.Main do
 
     track_user_update(user, file, current_path: Utils.unwrap(moved_paths))
 
-    for {key, model_sch} <- Map.get(return_assigns, :current_models_bodies) do
-      model_path = file.id <> "[" <> key <> "]"
-      broadcast_update_sch(file, model_path, model_sch)
+    case file.type do
+      :model ->
+        for {key, model_sch} <- Map.get(return_assigns, :current_models_bodies) do
+          model_path = file.id <> "[" <> key <> "]"
+          broadcast_update_sch(file, model_path, model_sch)
+        end
+
+      :main ->
+        broadcast_update_sch(file, file.id, Sch.get(file.schema, file.id))
     end
 
     Process.send(self(), {:re_render_current_path, moved_paths}, [:noconnect])
