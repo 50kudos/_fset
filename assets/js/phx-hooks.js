@@ -128,7 +128,7 @@ Hooks.moveable = {
 
     Sortable.get(itemBox).multiDrag._deselectMultiDrag()
     currentPaths.forEach(currentPath => {
-      let item = itemBox.querySelector("[data-path='" + currentPath + "']")
+      let item = itemBox.querySelector(`[data-path='${currentPath}']`)
       if (!item) { return }
 
       item.from = itemBox
@@ -175,7 +175,6 @@ Hooks.moveable = {
       revertOnSpill: true,
 
       onEnd: (evt) => {
-        this.el.classList.add(this.cursorLoadingStyle)
         this.pushEvent("move", this.movedItems(evt))
         evt.items.forEach(item => this.setItemIndent(item, evt.to))
         this.resetHighLight()
@@ -250,7 +249,7 @@ Hooks.moveable = {
     Sortable.get(sortableEl) || new Sortable(sortableEl, sortableOpts)
   }
 }
-
+window.Sortable = Sortable
 Sortable.mount(new MultiDrag())
 
 export default Hooks

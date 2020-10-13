@@ -92,105 +92,30 @@ defmodule FsetWeb.MainLive do
     handle_event("module_keyup", %{"key" => "Delete"}, socket)
   end
 
-  def handle_event("module_keyup", val, socket) do
+  def handle_event("module_keyup", params, socket) do
+    # Prevent operations on file level
     if current_path(socket.assigns.ui) in Enum.map(socket.assigns.files_ids, & &1.id) do
       {:noreply, socket}
     else
-      updated_assigns = module_keyup(val, socket.assigns)
-      socket = assign(socket, updated_assigns)
+      assigns =
+        case params do
+          %{"key" => "Escape"} ->
+            escape(socket.assigns, params)
 
-      {:noreply, socket}
+          %{"key" => "Delete"} ->
+            delete(socket.assigns, params)
+
+          # send_update(ModelBarComponent, id: :model_bar, paths: new_current_paths -- [file.id])
+
+          _ ->
+            %{}
+        end
+
+      {:noreply, assign(socket, assigns)}
     end
   end
 
-  defp module_keyup(%{"key" => key}, assigns) do
-    user = assigns.current_user
-    file = assigns.current_file
-    current_path = current_path(assigns.ui)
-
-    assigns =
-      case key do
-        "Delete" ->
-          async_update_schema()
-
-          # Referential integrity
-
-          referrers =
-            Enum.map(List.wrap(current_path), fn path ->
-              if sch = Sch.get(file.schema, path) do
-                Sch.find_path(file.schema, fn sch_ ->
-                  if ref = Sch.ref(sch_) do
-                    "#" <> ref = ref
-                    ref == Sch.anchor(sch)
-                  end
-                end)
-              end
-            end)
-            |> Enum.reject(fn a -> is_nil(a) || a == "" end)
-
-          if Enum.empty?(referrers) do
-            schema = Sch.delete(file.schema, current_path)
-            new_current_paths = Map.keys(Sch.find_parents(current_path))
-
-            Presence.update(self(), assigns.ui.topic, user.id, fn meta ->
-              _meta = Map.put(meta, :current_path, new_current_paths)
-            end)
-
-            send_update(ModelBarComponent, id: :model_bar, paths: new_current_paths -- [file.id])
-
-            if length(new_current_paths) == 1 do
-              send_update(FsetWeb.SchComponent,
-                id: file.id,
-                sch: schema,
-                path: hd(new_current_paths)
-              )
-            end
-
-            assigns
-            |> put_in([:current_file], %{file | schema: schema})
-          else
-            assigns
-            |> put_in([:ui, :errors], [
-              %{
-                type: :reference,
-                payload: %{msg: "Deleting models being referenced!", path: referrers}
-              }
-            ])
-          end
-
-        "Escape" ->
-          previous_path = current_path(assigns.ui)
-
-          Presence.update(self(), assigns.ui.topic, user.id, fn meta ->
-            meta = Map.put(meta, :current_path, file.id)
-            _meta = Map.put(meta, :current_edit, nil)
-          end)
-
-          re_render_model(previous_path)
-          send_update(FsetWeb.SchComponent, id: file.id, sch: file.schema, path: file.id)
-          send_update(ModelBarComponent, id: :model_bar, paths: List.wrap(file.id) -- [file.id])
-          assigns
-
-        _ ->
-          assigns
-      end
-
-    Map.take(assigns, [:current_file, :ui])
-  end
-
   @impl true
-  def handle_info(:update_schema, socket) do
-    updated_file = socket.assigns.current_file
-    existing_file = Project.get_file!(updated_file.id)
-
-    existing_schema = existing_file.schema
-    updated_schema = Sch.merge(existing_schema, updated_file.schema) |> Sch.sanitize()
-    file = Persistence.replace_file(existing_file, schema: updated_schema)
-
-    socket = assign(socket, :current_file, file)
-    {:noreply, socket}
-  end
-
   def handle_info({:update_sch, path, sch, _opts}, socket) do
     re_render_model(path, sch: sch)
     current_file = socket.assigns.current_file
@@ -211,10 +136,6 @@ defmodule FsetWeb.MainLive do
 
   def handle_info(%{event: "presence_diff", payload: _payload}, socket) do
     {:noreply, socket}
-  end
-
-  defp async_update_schema() do
-    Process.send_after(self(), :update_schema, Enum.random(200..300))
   end
 
   defp percent(byte_size, :per_mb, quota) do

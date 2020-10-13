@@ -443,9 +443,10 @@ defmodule Fset.Sch do
   def delete(map, paths) when is_binary(paths) or is_list(paths) do
     parent_paths_children_keys = find_parents(paths)
 
-    for {parent_path, children_keys} <- parent_paths_children_keys, reduce: map do
-      acc -> pop_schs(acc, parent_path, children_keys) |> elem(1)
-    end
+    Enum.map_reduce(parent_paths_children_keys, map, fn {parent_path, children_keys}, acc ->
+      {_popped, new_map} = pop_schs(acc, parent_path, children_keys)
+      {parent_path, new_map}
+    end)
   end
 
   def follow_lead(dst_indices) when is_list(dst_indices) do

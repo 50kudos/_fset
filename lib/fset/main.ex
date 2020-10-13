@@ -41,6 +41,7 @@ defmodule Fset.Main do
     # from calling send_update to push_event with same parameters for client to patch
     # the DOM.
     @file_topic <> file_id = assigns.ui.topic
+    push_current_path(add_path)
     broadcast_update_sch(%{id: file_id}, add_path, postsch)
 
     Map.put(%{}, :sch, postsch)
@@ -139,6 +140,60 @@ defmodule Fset.Main do
 
     push_current_path(moved_paths)
     return_assigns
+  end
+
+  def escape(assigns, %{"key" => "Escape"}) do
+    file = assigns.current_file
+    user = assigns.current_user
+    current_path = [file.id]
+
+    track_user_update(user, file, current_path: current_path, current_edit: nil)
+    push_current_path(current_path)
+    Map.put(%{}, :current_path, current_path)
+  end
+
+  def delete(assigns, %{"key" => "Delete"}) do
+    file = assigns.current_file
+    user = assigns.current_user
+    current_path = assigns.current_path
+
+    # Referential integrity
+    referrers =
+      Enum.map(List.wrap(current_path), fn path ->
+        if sch = Sch.get(file.schema, path) do
+          Sch.find_path(file.schema, fn sch_ ->
+            if ref = Sch.ref(sch_) do
+              "#" <> ref = ref
+              ref == Sch.anchor(sch)
+            end
+          end)
+        end
+      end)
+      |> Enum.reject(fn a -> is_nil(a) || a == "" end)
+
+    if Enum.empty?(referrers) do
+      {parents_of_deleted, new_schema} = Sch.delete(file.schema, current_path)
+      new_current_paths = Map.keys(Sch.find_parents(current_path))
+
+      for parent_path <- parents_of_deleted do
+        broadcast_update_sch(file, parent_path, Sch.get(new_schema, parent_path))
+      end
+
+      track_user_update(user, file, current_path: parents_of_deleted)
+
+      %{}
+      |> Map.put(:current_file, %{file | schema: new_schema})
+      |> Map.put(:current_path, new_current_paths)
+    else
+      %{}
+      |> Map.put(:ui, assigns.ui)
+      |> put_in([:ui, :errors], [
+        %{
+          type: :reference,
+          payload: %{msg: "Deleting models being referenced!", path: referrers}
+        }
+      ])
+    end
   end
 
   defp models_bodies(%{type: :main} = file), do: Sch.get(file.schema, file.id)
