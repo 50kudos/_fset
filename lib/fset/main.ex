@@ -111,7 +111,7 @@ defmodule Fset.Main do
     new_key = if new_key == "", do: old_key, else: new_key
     new_path = parent_path <> "[" <> new_key <> "]"
     broadcast_update_sch(file, parent_path, postsch)
-    track_user_update(user, file, current_path: new_path, current_edit: nil)
+    track_user_update(user, file, current_path: new_path)
 
     Map.put(%{}, :current_file, %{file | schema: new_schema})
   end
@@ -122,8 +122,12 @@ defmodule Fset.Main do
 
     {moved_paths, new_schema} = Sch.move(file.schema, src_indices, dst_indices)
     file = %{file | schema: new_schema}
-    return_assigns = Map.put(%{}, :current_file, file)
-    return_assigns = Map.put(return_assigns, :current_models_bodies, models_bodies(file))
+
+    return_assigns =
+      %{}
+      |> Map.put(:current_file, file)
+      |> Map.put(:current_path, moved_paths)
+      |> Map.put(:current_models_bodies, models_bodies(file))
 
     track_user_update(user, file, current_path: Utils.unwrap(moved_paths))
 
@@ -147,7 +151,7 @@ defmodule Fset.Main do
     user = assigns.current_user
     current_path = [file.id]
 
-    track_user_update(user, file, current_path: current_path, current_edit: nil)
+    track_user_update(user, file, current_path: current_path)
     push_current_path(current_path)
     Map.put(%{}, :current_path, current_path)
   end
@@ -246,14 +250,13 @@ defmodule Fset.Main do
   def track_user(user, file) do
     Presence.track(self(), @file_topic <> file.id, user.id, %{
       current_path: file.id,
-      current_edit: nil,
       pid: self()
     })
   end
 
   def track_user_update(user, file, data) do
     Presence.update(self(), @file_topic <> file.id, user.id, fn meta ->
-      new_meta = Map.take(Enum.into(data, %{}), [:current_path, :current_edit, :pid])
+      new_meta = Map.take(Enum.into(data, %{}), [:current_path, :pid])
       _meta = Map.merge(meta, new_meta)
     end)
   end

@@ -52,20 +52,6 @@ defmodule FsetWeb.MainLive do
     {:noreply, assign(socket, assigns)}
   end
 
-  # TODO: See "select_sch" todo
-  def handle_event("edit_sch", %{"path" => sch_path}, socket) do
-    user = socket.assigns.current_user
-    file = socket.assigns.current_file
-    root_model_paths = Enum.map(socket.assigns.files_ids, & &1.id)
-
-    unless current_path(socket.assigns.ui) in root_model_paths do
-      track_user_update(user, file, current_path: sch_path, current_edit: sch_path)
-      re_render_model(sch_path)
-    end
-
-    {:noreply, socket}
-  end
-
   def handle_event("update_sch", params, socket) do
     assigns = update_sch(socket.assigns, params)
 
@@ -104,8 +90,6 @@ defmodule FsetWeb.MainLive do
 
           %{"key" => "Delete"} ->
             delete(socket.assigns, params)
-
-          # send_update(ModelBarComponent, id: :model_bar, paths: new_current_paths -- [file.id])
 
           _ ->
             %{}
@@ -191,14 +175,6 @@ defmodule FsetWeb.MainLive do
     meta = Enum.find(metas, fn meta -> meta.pid == self() end)
     meta = meta || hd(metas)
     meta.current_path
-  end
-
-  def current_edit(ui) do
-    %{metas: metas} = Presence.get_by_key(ui.topic, ui.user_id)
-
-    meta = Enum.find(metas, fn meta -> meta.pid == self() end)
-    meta = meta || hd(metas)
-    meta.current_edit
   end
 
   def re_render_model(path_, opts \\ []) do
