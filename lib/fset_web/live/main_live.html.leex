@@ -17,22 +17,9 @@
         <p class="ml-2 text-sm leading-8"><%= @project_name %></p>
         <ul class="overflow-scroll text-sm leading-6 space-y-4">
           <%= for file <- @files_ids do %>
-            <%= if @current_file.id == file.id do %>
-              <li class="">
-                <span class="pl-2 block text-black sticky top-0 bg-indigo-600 rounded-tl rounded-tr"><%= file.name %></span>
-                <ul class="pl-2 py-2 border border-indigo-900 text-xs">
-                  <%= for {model_name, _} <- @models_anchors do %>
-                    <li class=""><%= model_name %></li>
-                  <% end %>
-                </ul>
-              </li>
-            <% else %>
-              <%= live_redirect to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id), class: "block" do %>
-                <li class="pl-2 hover:text-black hover:bg-indigo-600">
-                  <%= file.name %>
-                </li>
-              <% end %>
-            <% end %>
+            <li class="">
+              <%= render_file_nav(assigns, file) %>
+            </li>
           <% end %>
         </ul>
         <div class="text-sm p-2 border-t border-gray-900">

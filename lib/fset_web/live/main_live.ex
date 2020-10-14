@@ -151,22 +151,36 @@ defmodule FsetWeb.MainLive do
     """
   end
 
+  def render_file_nav(assigns, file) do
+    ~L"""
+    <%= if @current_file.id == file.id do %>
+      <span class="pl-2 block sticky top-0 text-black bg-indigo-600 rounded-tl rounded-tr"><%= file.name %></span>
+      <ul class="pl-2 py-2 border border-indigo-900 text-xs">
+        <%= if file.type == :model do %>
+          <%= for {model_name, _} <- @current_models_bodies do %>
+            <li class=""><%= model_name %></li>
+          <% end %>
+        <% else %>
+          <%= for {model_name, _} <- [] do %>
+            <li class=""><%= model_name %></li>
+          <% end %>
+        <% end %>
+      </ul>
+    <% else %>
+      <%= live_redirect to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id), class: "block" do %>
+        <span class="pl-2 block sticky top-0 hover:text-black hover:text-indigo-500 bg-gray-800 rounded-tl rounded-tr"><%= file.name %></span>
+      <% end %>
+      <ul class="px-2 py-2 border border-gray-800 text-xs space-y-1">
+        <%= for model_name <- ["", "", ""] do %>
+          <li class="bg-gray-800 bg-opacity-50 h-4 rounded-lg"><%= model_name %></li>
+        <% end %>
+      </ul>
+    <% end %>
+    """
+  end
+
   defp text_val_types(models_anchors) do
     Module.changable_types() ++ Enum.map(models_anchors, fn {key, _} -> key end)
-  end
-
-  def selected?(path, current_path) when is_binary(path) do
-    path in List.wrap(current_path)
-  end
-
-  def selected?(path, current_path, :single) do
-    current_path = List.wrap(current_path)
-    path in current_path && Enum.count(current_path) == 1
-  end
-
-  def selected?(path, current_path, :multi) do
-    current_path = List.wrap(current_path)
-    path in current_path && Enum.count(current_path) > 1
   end
 
   def current_path(ui) do

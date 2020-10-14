@@ -212,9 +212,10 @@ defmodule Fset.Main do
 
   defp get_project_meta(project_id) do
     all_files = Project.all_files(project_id)
+    {[main_file], model_files} = Enum.split_with(all_files, fn fi -> fi.type == :main end)
 
-    {_models_anchors, _files_ids} =
-      Enum.flat_map_reduce(all_files, [], fn fi, acc ->
+    {models_anchors, files_ids} =
+      Enum.flat_map_reduce(model_files, [], fn fi, acc ->
         fi = Map.update!(fi, :schema, &Sch.get(&1, fi.id))
         schema = fi.schema
 
@@ -223,10 +224,12 @@ defmodule Fset.Main do
             model_sch = Sch.prop_sch(schema, k)
             {k, Sch.anchor(model_sch)}
           end
-          |> Enum.filter(fn {_, sch} -> sch != nil end)
 
         {model_anchor, [%{fi | schema: nil} | acc]}
       end)
+
+    main_file = %{main_file | schema: nil}
+    {models_anchors, [main_file | files_ids]}
   end
 
   defp get_current_file(project, file_id) do
