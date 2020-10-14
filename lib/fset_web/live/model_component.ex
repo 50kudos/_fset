@@ -46,10 +46,9 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_folder(assigns) do
     ~L"""
-    <nav class="sort-handle
+    <nav id="<%= @path %>" class="sort-handle
       <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow' %>"
-      data-path="<%= @path %>">
-
+    >
       <details <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>>
         <summary class="flex flex-col" >
           <%= render_folder_header(assigns) %>
@@ -137,10 +136,9 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_file(assigns) do
     ~L"""
-    <nav class="sort-handle
+    <nav id="<%= @path %>" class="sort-handle
       <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow' %>"
-      data-path="<%= @path %>">
-
+    >
       <%= render_key_type_pair(assigns) %>
     </nav>
     """
@@ -339,7 +337,7 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_type(assigns, :no_prevent) do
     ~L"""
-    <p class="text-blue-500 text-sm break-words whitespace-no-wrap">
+    <p class="text-blue-500 text-sm break-words" style="min-width: 2ch">
       <%= render_type_(assigns) %>
     </p>
     """
@@ -347,7 +345,7 @@ defmodule FsetWeb.ModelComponent do
 
   # defp render_type(assigns) do
   #   ~L"""
-  #   <p class="text-blue-500 text-sm break-words whitespace-no-wrap" onclick="event.preventDefault()">
+  #   <p class="text-blue-500 text-sm break-words" onclick="event.preventDefault()">
   #     <%= render_type_(assigns) %>
   #   </p>
   #   """

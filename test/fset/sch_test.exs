@@ -333,7 +333,7 @@ defmodule Fset.SchTest do
       |> put("root[b]", New.number())
       |> put("root[b]", New.string())
 
-    root = delete(root, ["root[a][][1]", "root[b][][0]"])
+    {_, root} = delete(root, ["root[a][][1]", "root[b][][0]"])
 
     assert get(root, "root[a]") |> items() == New.string()
     assert get(root, "root[b]") |> items() == New.string()

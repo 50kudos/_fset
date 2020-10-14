@@ -116,19 +116,22 @@ Hooks.moveable = {
   },
   setItemIndent(item, box) {
     let indentEl = item.querySelector(this.indentClass)
-    indentEl.style.paddingLeft = box.dataset.indent
+    if (indentEl) { indentEl.style.paddingLeft = box.dataset.indent || "0rem" }
+  },
+  sortableRoot() {
+    return document.querySelector("[data-group='body']")
   },
   itemPath(el) {
-    return Sortable.utils.closest(el, "[data-path]").dataset.path
+    let item = Sortable.utils.closest(el, this.itemClass) || this.sortableRoot()
+    return item.id
   },
   selectCurrentItems(paths) {
-    const root = document.querySelector("[data-group='body']")
     const currentPaths = paths
     const itemBox = this.el
 
     Sortable.get(itemBox).multiDrag._deselectMultiDrag()
     currentPaths.forEach(currentPath => {
-      let item = itemBox.querySelector(`[data-path='${currentPath}']`)
+      let item = itemBox.querySelector(`[id='${currentPath}']`)
       if (!item) { return }
 
       item.from = itemBox
@@ -136,9 +139,7 @@ Hooks.moveable = {
       Sortable.utils.select(item)
 
       if (currentPaths.length > 1) { item.classList.add("multi") }
-      if (root.dataset.path != item.dataset.path) {
-        // item.scrollIntoView({ behavior: "smooth", block: "center" })
-      }
+      // item.scrollIntoView({ behavior: "smooth", block: "center" })
     })
   },
   movedItems(drop) {
@@ -227,7 +228,7 @@ Hooks.moveable = {
         const isMetaSelect = evt.item.multiDragKeyDown
 
         if (ShiftSelect || isMetaSelect || evt.items.length == 1) {
-          this.pushEvent("select_sch", { paths: evt.items.map(this.itemPath) })
+          this.pushEvent("select_sch", { paths: evt.items.map(a => this.itemPath(a)) })
         }
 
       },

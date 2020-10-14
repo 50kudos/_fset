@@ -42,7 +42,6 @@ defmodule FsetWeb.MainLive do
 
     assigns = Map.put(%{}, :current_path, sch_path)
     track_user_update(user, file, current_path: sch_path, pid: socket.root_pid)
-    push_current_path(sch_path)
 
     if length(sch_path) == 1 do
       sch = Sch.get(file.schema, hd(sch_path))
@@ -157,8 +156,10 @@ defmodule FsetWeb.MainLive do
       <span class="pl-2 block sticky top-0 text-black bg-indigo-600 rounded-tl rounded-tr"><%= file.name %></span>
       <ul class="pl-2 py-2 border border-indigo-900 text-xs">
         <%= if file.type == :model do %>
-          <%= for {model_name, _} <- @current_models_bodies do %>
-            <li class=""><%= model_name %></li>
+          <%= for {{model_name, _}, i} <- Enum.with_index(@current_models_bodies) do %>
+            <li class="sort-handle" id="<%= input_id(%{id: i}, file.name) %>">
+              <a href="#<%= input_name(file.id, model_name) %>"><%= model_name %></a>
+            </li>
           <% end %>
         <% else %>
           <%= for {model_name, _} <- [] do %>

@@ -25,7 +25,7 @@ defmodule FsetWeb.ModuleComponent do
 
   defp render_model(assigns) do
     ~L"""
-    <div id="moveable__<%= @path %>" phx-hook="moveable" data-group="body" data-path="<%= @path %>" phx-update="prepend"
+    <div id="<%= @path %>" phx-hook="moveable" data-group="body" phx-update="prepend" data-indent="1.25rem"
       phx-capture-click="select_sch" phx-value-paths="<%= @path %>" class="grid grid-cols-fit py-6 h-full gap-4">
       <%= for {key, sch} <- @models do %>
         <%= live_component(@socket, ModelComponent,
@@ -43,7 +43,7 @@ defmodule FsetWeb.ModuleComponent do
 
   defp render_main(assigns) do
     ~L"""
-    <main id="moveable__<%= @path %>" phx-hook="moveable" data-group="body" data-path="<%= @path %>"
+    <main id="<%= @path %>" phx-hook="moveable" data-group="body" data-indent="1.25rem"
       phx-capture-click="select_sch" phx-value-paths="<%= @path %>" class="grid grid-cols-fit py-6 h-full gap-x-6">
       <%= live_component(@socket, ModelComponent,
         id: @path,
