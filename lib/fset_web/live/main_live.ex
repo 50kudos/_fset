@@ -17,6 +17,14 @@ defmodule FsetWeb.MainLive do
     {:ok, assign(socket, assigns), temporary_assigns: temporary_assigns}
   end
 
+  # @impl true
+  # def handle_params(params, uri, socket) do
+  #   socket = Phoenix.LiveView.Utils.clear_changed(socket)
+  #   assigns = change_file_data(socket.assigns, params)
+
+  #   {:noreply, assign(socket, assigns)}
+  # end
+
   @impl true
   def handle_event("add_model", params, socket) do
     assigns = add_model(socket.assigns, params)
@@ -99,8 +107,8 @@ defmodule FsetWeb.MainLive do
   end
 
   @impl true
-  def handle_info({:update_sch, path, sch, _opts}, socket) do
-    re_render_model(path, sch: sch)
+  def handle_info({:update_sch, path, sch, opts}, socket) do
+    re_render_model(path, Keyword.put(opts, :sch, sch))
     current_file = socket.assigns.current_file
     existing_file = Project.get_file!(current_file.id)
 

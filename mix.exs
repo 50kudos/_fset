@@ -48,7 +48,7 @@ defmodule Fset.MixProject do
       {:ecto, "~> 3.5.0-rc.0", override: true},
       {:ecto_sql, "~> 3.5.0-rc.0"},
       {:postgrex, ">= 0.0.0"},
-      {:phoenix_live_view, "~> 0.14.4",
+      {:phoenix_live_view, "~> 0.15.0-dev",
        github: "phoenixframework/phoenix_live_view", override: true},
       {:floki, ">= 0.0.0", only: :test},
       {:phoenix_html, "~> 2.11", github: "phoenixframework/phoenix_html", override: true},

@@ -30,6 +30,16 @@ defmodule Fset.Main do
     end
   end
 
+  # def change_file_data(assigns, params) do
+  #   with current_file <- Project.get_file!(params["file_id"]),
+  #        models_bodies <- models_bodies(current_file) do
+  #     %{}
+  #     |> Map.put(:current_file, current_file)
+  #     |> Map.put(:current_path, [current_file.id])
+  #     |> Map.put(:current_models_bodies, models_bodies)
+  #   end
+  # end
+
   @doc """
   Add a sch to a container sch such as object, array or union.
   """
@@ -216,8 +226,7 @@ defmodule Fset.Main do
 
     {models_anchors, files_ids} =
       Enum.flat_map_reduce(model_files, [], fn fi, acc ->
-        fi = Map.update!(fi, :schema, &Sch.get(&1, fi.id))
-        schema = fi.schema
+        schema = Sch.get(fi.schema, fi.id)
 
         model_anchor =
           for k <- Sch.order(schema) do
