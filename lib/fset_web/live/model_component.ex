@@ -167,7 +167,7 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_type_options(assigns) do
     ~L"""
-    <details class="relative min-w-0" phx-hook="focusOnOpen" id="change_type_input">
+    <details class="relative min-w-0">
       <summary class="block">
         <div class="break-words rounded cursor-pointer select-none text-gray-500 text-xs">
           <%= render_type(assigns, :no_prevent) %>

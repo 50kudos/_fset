@@ -110,7 +110,15 @@ defmodule FsetWeb.ProfileLive do
     socket =
       case Project.create(assigns.current_user.id, params["create"]) do
         {:ok, project} ->
-          project_page = Routes.main_path(socket, :index, assigns.username, project.name)
+          project_page =
+            Routes.main_path(
+              socket,
+              :show,
+              assigns.username,
+              project.name,
+              project.main_sch.id
+            )
+
           push_redirect(socket, to: project_page)
 
         {:error, changeset} ->

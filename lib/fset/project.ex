@@ -137,10 +137,12 @@ defmodule Fset.Project do
   def create_with_user!(files, user_id, filename \\ nil)
 
   def create_with_user!(files, user_id, filename) do
+    [main_file | _] = files
+
     Repo.transaction(fn ->
       project = create!(files, filename)
       _project_user = add_member!(project.id, user_id)
-      project
+      %{project | main_sch: main_file}
     end)
   end
 
