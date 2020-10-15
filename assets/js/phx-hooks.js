@@ -206,6 +206,7 @@ Hooks.moveable = {
       draggable: this.itemClass,
       // direction: "horizontal",
       revertOnSpill: true,
+      forceFallback: true,
 
       onEnd: (evt) => {
         this.pushEvent("move", this.movedItems(evt))

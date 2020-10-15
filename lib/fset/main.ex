@@ -143,8 +143,10 @@ defmodule Fset.Main do
 
     case file.type do
       :model ->
-        for {key, model_sch} <- Map.get(return_assigns, :current_models_bodies) do
-          model_path = file.id <> "[" <> key <> "]"
+        keyed_model_schs = Map.get(return_assigns, :current_models_bodies)
+        pathed_models = match_models(file.id, src_indices, dst_indices, keyed_model_schs)
+
+        for {model_path, model_sch} <- pathed_models do
           broadcast_update_sch(file, model_path, model_sch)
         end
 
@@ -275,5 +277,17 @@ defmodule Fset.Main do
 
   def push_current_path(sch_path) when is_binary(sch_path) or is_list(sch_path) do
     Process.send(self(), {:re_render_current_path, List.wrap(sch_path)}, [:noconnect])
+  end
+
+  defp match_models(file_id, src_indices, dst_indices, keyed_model_schs) do
+    srcs = Enum.map(src_indices, fn src -> src["from"] end)
+    dsts = Enum.map(dst_indices, fn src -> src["to"] end)
+
+    for path <- Enum.uniq(dsts ++ srcs) do
+      Enum.find_value(keyed_model_schs, fn {key, model_sch} ->
+        model_path = file_id <> "[" <> key <> "]"
+        if String.starts_with?(path, model_path), do: {model_path, model_sch}
+      end)
+    end
   end
 end
