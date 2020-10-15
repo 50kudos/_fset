@@ -14,7 +14,7 @@ defmodule Fset.Main do
 
   def init_data(params) do
     with project <- Project.get_by!(name: params["project_name"]),
-         current_file <- get_current_file(project, params["file_id"]),
+         current_file <- get_current_file(params["file_id"], project.main_sch),
          {models_anchors, files_ids} <- get_project_meta(project.id),
          models_bodies <- models_bodies(current_file),
          user <- Accounts.get_user_by_username!(params["username"]) do
@@ -30,8 +30,8 @@ defmodule Fset.Main do
     end
   end
 
-  def change_file_data(_assigns, params) do
-    with current_file <- Project.get_file!(params["file_id"]),
+  def change_file_data(assigns, params) do
+    with current_file <- get_current_file(params["file_id"], Map.get(assigns, :current_file)),
          models_bodies <- models_bodies(current_file) do
       %{}
       |> Map.put(:current_file, current_file)
@@ -241,8 +241,8 @@ defmodule Fset.Main do
     {models_anchors, [main_file | files_ids]}
   end
 
-  defp get_current_file(project, file_id) do
-    if file_id, do: Project.get_file!(file_id), else: project.main_sch
+  defp get_current_file(file_id, default) do
+    if file_id, do: Project.get_file!(file_id), else: default
   end
 
   # Process or application dependent functions
