@@ -30,7 +30,7 @@ defmodule Fset.Main do
     end
   end
 
-  def change_file_data(assigns, params) do
+  def change_file_data(_assigns, params) do
     with current_file <- Project.get_file!(params["file_id"]),
          models_bodies <- models_bodies(current_file) do
       %{}

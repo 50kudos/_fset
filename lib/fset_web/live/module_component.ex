@@ -2,17 +2,25 @@ defmodule FsetWeb.ModuleComponent do
   use FsetWeb, :live_component
   alias FsetWeb.ModelComponent
 
+  @items_per_chuck 10
+
   @impl true
   def update(assigns, socket) do
-    init_ui = Map.merge(assigns.ui, %{tab: 1, parent_path: assigns.path})
+    assigns = Map.merge(socket.assigns, assigns)
+    assigns = Map.take(assigns, [:name, :models, :model_names, :ui, :path, :items_per_viewport])
 
-    {
-      :ok,
+    socket =
       socket
       |> assign(assigns)
-      |> assign(:ui, init_ui)
-      |> update(:ui, fn ui -> Map.put(ui, :model_names, assigns.model_names) end)
-    }
+      |> assign_new(:items_per_viewport, fn -> Range.new(0, @items_per_chuck - 1) end)
+      |> update(:ui, fn ui ->
+        ui
+        |> Map.put(:model_names, assigns.model_names)
+        |> Map.put(:tab, 1)
+        |> Map.put(:parent_path, assigns.path)
+      end)
+
+    {:ok, socket}
   end
 
   @impl true
@@ -25,14 +33,14 @@ defmodule FsetWeb.ModuleComponent do
 
   defp render_model(assigns) do
     ~L"""
-    <div id="<%= @path %>" phx-hook="moveable" data-group="body" phx-update="prepend" data-indent="1.25rem"
+    <div id="<%= @path %>" phx-hook="moveable" data-group="body" data-indent="1.25rem" phx-update="append"
       phx-capture-click="select_sch" phx-value-paths="<%= @path %>" class="grid grid-cols-fit py-6 h-full gap-4">
-      <%= for {key, sch} <- @models do %>
+      <%= for {key, sch} <- Enum.slice(@models, @items_per_viewport) do %>
         <%= live_component(@socket, ModelComponent,
           id: input_name(@path, key),
           key: key,
           sch: sch,
-          parent: %{"type" => "object", "properties" => %{}},
+          parent: Fset.Sch.New.object(),
           ui: @ui,
           path: input_name(@path, key)
         ) %>
@@ -53,5 +61,22 @@ defmodule FsetWeb.ModuleComponent do
       ) %>
     </main>
     """
+  end
+
+  def load_models(assigns, %{"page" => page}) do
+    models_count = Enum.count(assigns.current_models_bodies)
+    chucks_count = max(1, div(models_count, @items_per_chuck))
+
+    chuck_start = page * @items_per_chuck
+    chuck_end = (page + 1) * @items_per_chuck
+
+    {page, items_per_viewport} =
+      cond do
+        page <= chucks_count -> {page, Range.new(chuck_start, chuck_end - 1)}
+        page > chucks_count -> {:done, Range.new(0, -1)}
+      end
+
+    assigns = Map.put(%{}, :page, page)
+    _assigns = Map.put(assigns, :items_per_viewport, items_per_viewport)
   end
 end

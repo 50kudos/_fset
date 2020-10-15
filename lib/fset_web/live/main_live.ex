@@ -18,7 +18,7 @@ defmodule FsetWeb.MainLive do
   end
 
   @impl true
-  def handle_params(params, uri, socket) do
+  def handle_params(params, _uri, socket) do
     assigns = change_file_data(socket.assigns, params)
 
     {:noreply, assign(socket, assigns)}
@@ -105,6 +105,17 @@ defmodule FsetWeb.MainLive do
     end
   end
 
+  def handle_event("load_models", %{"page" => _page} = params, socket) do
+    assigns = ModuleComponent.load_models(socket.assigns, params)
+
+    send_update(ModuleComponent,
+      id: socket.assigns.current_file.id,
+      items_per_viewport: assigns.items_per_viewport
+    )
+
+    {:noreply, push_event(socket, "load_models", %{"modelState" => assigns.page})}
+  end
+
   @impl true
   def handle_info({:update_sch, path, sch, opts}, socket) do
     re_render_model(path, Keyword.put(opts, :sch, sch))
@@ -179,7 +190,7 @@ defmodule FsetWeb.MainLive do
         <span class="pl-2 block sticky top-0 hover:text-black hover:text-indigo-500 bg-gray-800 rounded-tl rounded-tr"><%= file.name %></span>
       <% end %>
       <ul class="px-2 py-2 border border-gray-800 text-xs space-y-1">
-        <%= for model_name <- ["", "", ""] do %>
+        <%= for model_name <- [""] do %>
           <li class="bg-gray-800 bg-opacity-50 h-4 rounded-lg"><%= model_name %></li>
         <% end %>
       </ul>

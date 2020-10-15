@@ -6,6 +6,19 @@ import 'highlight.js/styles/agate.css';
 let Hooks = {}
 let Utils = {}
 
+Utils.throttle = (func, limit) => {
+  let inThrottle
+  return function () {
+    const args = arguments
+    const context = this
+    if (!inThrottle) {
+      func.apply(context, args)
+      inThrottle = true
+      setTimeout(() => inThrottle = false, limit)
+    }
+  }
+}
+
 hljs.registerLanguage('json', json);
 Hooks.syntaxHighlight = {
   mounted() {
@@ -13,6 +26,25 @@ Hooks.syntaxHighlight = {
   },
   updated() {
     hljs.highlightBlock(this.el)
+  }
+}
+
+Hooks.InfiniteScroll = {
+  load_model() {
+    return Utils.throttle(e => {
+      let page = Math.round(this.el.scrollTop / 1500)
+      this.pushEvent("load_models", { page: page })
+    }, 300)
+  },
+  mounted() {
+    let load_fun = this.load_model()
+
+    this.el.addEventListener("scroll", load_fun, true)
+    this.handleEvent("load_models", ({ modelState }) => {
+      if (modelState == "done") {
+        this.el.removeEventListener("scroll", load_fun, true)
+      }
+    })
   }
 }
 
