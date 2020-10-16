@@ -47,6 +47,17 @@
     @apply bg-gray-800 bg-opacity-25
   }
 }
+.model_number {
+  > .sort-handle { @apply flex relative }
+  > .sort-handle > * { @apply w-full }
+
+  counter-reset: model;
+  > nav::before {
+    counter-increment: model;
+    content: "#" counter(model);
+    @apply absolute text-xs leading-6 mx-4 text-gray-600
+  }
+}
 
 textarea { resize: none; }
 details > summary::-webkit-details-marker {

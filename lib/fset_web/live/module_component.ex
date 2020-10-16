@@ -15,9 +15,14 @@ defmodule FsetWeb.ModuleComponent do
       |> assign_new(:items_per_viewport, fn -> Range.new(0, @items_per_chuck - 1) end)
       |> update(:ui, fn ui ->
         ui
+        |> Map.put_new(:tab, 1)
+        |> Map.put_new(:model_number, false)
         |> Map.put(:model_names, assigns.model_names)
-        |> Map.put(:tab, 1)
         |> Map.put(:parent_path, assigns.path)
+        |> case do
+          %{model_number: true} = ui -> %{ui | tab: 3}
+          ui -> ui
+        end
       end)
 
     {:ok, socket}
@@ -33,8 +38,14 @@ defmodule FsetWeb.ModuleComponent do
 
   defp render_model(assigns) do
     ~L"""
-    <div id="<%= @path %>" phx-hook="moveable" data-group="body" data-indent="1.25rem" phx-update="append"
-      phx-capture-click="select_sch" phx-value-paths="<%= @path %>" class="grid grid-cols-fit py-6 h-full gap-4">
+    <div id="<%= @path %>" class="grid grid-cols-fit py-6 h-full gap-4 <%= if @ui.model_number, do: 'model_number' %>"
+      phx-capture-click="select_sch"
+      phx-value-paths="<%= @path %>"
+      phx-hook="moveable"
+      data-group="body"
+      data-indent="1.25rem"
+      phx-update="append"
+    >
       <%= for {key, sch} <- Enum.slice(@models, @items_per_viewport) do %>
         <%= live_component(@socket, ModelComponent,
           id: input_name(@path, key),

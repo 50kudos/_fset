@@ -127,7 +127,8 @@ Hooks.moveable = {
     this.setupSortable()
   },
   destroyed() {
-    Sortable.get(this.el).destroy()
+    let sortableEl = Sortable.get(this.el)
+    sortableEl && sortableEl.destroy()
   },
   // User defined functions and properties
   itemClass: ".sort-handle",
@@ -160,8 +161,9 @@ Hooks.moveable = {
   selectCurrentItems(paths) {
     const currentPaths = paths
     const itemBox = this.el
+    const sortableEl = Sortable.get(itemBox)
 
-    Sortable.get(itemBox).multiDrag._deselectMultiDrag()
+    sortableEl && sortableEl.multiDrag._deselectMultiDrag()
     currentPaths.forEach(currentPath => {
       let item = itemBox.querySelector(`[id='${currentPath}']`)
       if (!item) { return }
@@ -192,7 +194,6 @@ Hooks.moveable = {
       group: this.el.dataset.group || "nested",
       // group: "nested",
       // disabled: !!this.el.dataset.group,
-      fallbackOnBody: true,
       // swapThreshold: 0.1,
       // invertedSwapThreshold: 0.2,
       // invertSwap: true,
@@ -207,6 +208,8 @@ Hooks.moveable = {
       // direction: "horizontal",
       revertOnSpill: true,
       forceFallback: true,
+      fallbackOnBody: true,
+      fallbackTolerance: 8,
 
       onEnd: (evt) => {
         this.pushEvent("move", this.movedItems(evt))

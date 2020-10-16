@@ -1,7 +1,7 @@
 defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
   alias FsetWeb.{SchComponent, ModuleComponent, ModelBarComponent, Presence}
-  alias Fset.{Sch, Persistence, Module, Project}
+  alias Fset.{Sch, Persistence, Module, Project, Utils}
   import Fset.Main
 
   @impl true
@@ -47,6 +47,7 @@ defmodule FsetWeb.MainLive do
     user = socket.assigns.current_user
     file = socket.assigns.current_file
 
+    sch_path = List.wrap(sch_path)
     assigns = Map.put(%{}, :current_path, sch_path)
     track_user_update(user, file, current_path: sch_path, pid: socket.root_pid)
 
@@ -176,12 +177,14 @@ defmodule FsetWeb.MainLive do
         <%= if file.type == :model do %>
           <%= for {{model_name, _}, i} <- Enum.with_index(@current_models_bodies) do %>
             <li class="sort-handle" id="<%= input_id(%{id: i}, file.name) %>">
-              <a href="#<%= input_name(file.id, model_name) %>"><%= model_name %></a>
+              <a href="#<%= input_name(file.id, model_name) %>">
+                <span class="text-gray-600"><%= "#{i + 1}" %>.</span> <%= Utils.word_break_html(model_name) %>
+              </a>
             </li>
           <% end %>
         <% else %>
           <%= for {model_name, _} <- [] do %>
-            <li class=""><%= model_name %></li>
+            <li class=""><%= Utils.word_break_html(model_name) %></li>
           <% end %>
         <% end %>
       </ul>
