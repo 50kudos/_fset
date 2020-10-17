@@ -15,3 +15,6 @@
   overflow-wrap: break-word;
   word-wrap: break-word;
 }
+.content-invisible { content-visibility: hidden; }
+.content-visible { content-visibility: visible; }
+.content-vis-auto { content-visibility: auto; }

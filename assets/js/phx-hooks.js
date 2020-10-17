@@ -122,9 +122,11 @@ Hooks.moveable = {
     this.handleEvent("current_path", ({ paths }) => {
       this.selectCurrentItems(paths)
     })
+    this.computeContainIntrinsicSize()
   },
   updated() {
     this.setupSortable()
+    this.computeContainIntrinsicSize()
   },
   destroyed() {
     let sortableEl = Sortable.get(this.el)
@@ -137,6 +139,12 @@ Hooks.moveable = {
   indentClass: ".indent",
   cursorLoadingStyle: "phx-click-loading",
 
+  computeContainIntrinsicSize() {
+    if (this.el.classList.contains("content-vis-auto")) {
+      let boxHeight = this.el.querySelectorAll(this.itemClass).length + 1
+      this.el.style.containIntrinsicSize = `${this.el.offsetWidth}px ${boxHeight * 24}px`
+    }
+  },
   resetHighLight() {
     document.querySelectorAll(this.highlightClass).forEach(a => a.classList.remove(...this.heighlightStyle))
   },
