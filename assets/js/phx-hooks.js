@@ -215,7 +215,7 @@ Hooks.moveable = {
       draggable: this.itemClass,
       // direction: "horizontal",
       revertOnSpill: true,
-      forceFallback: true,
+      // forceFallback: true,
       fallbackOnBody: true,
       fallbackTolerance: 8,
 
