@@ -999,14 +999,14 @@ defmodule Fset.Sch do
     end)
   end
 
-  def walk_container(map, fun) when is_map(map) and is_function(fun) do
+  def reduce(map, acc, fun) when is_map(map) and is_function(fun) do
     case map do
       %{@type_ => @object, @properties => properties} ->
         for {k, sch} <- properties, reduce: map do
           acc ->
             acc
             |> Map.update(@properties, %{}, fn props ->
-              Map.put(props, k, walk_container(sch, fun))
+              Map.put(props, k, reduce(sch, fun.(sch, acc), fun))
             end)
         end
 
@@ -1015,7 +1015,7 @@ defmodule Fset.Sch do
           acc ->
             acc
             |> Map.update(@patternProperties, %{}, fn props ->
-              Map.put(props, k, walk_container(sch, fun))
+              Map.put(props, k, reduce(sch, fun.(sch, acc), fun))
             end)
         end
 
@@ -1023,22 +1023,26 @@ defmodule Fset.Sch do
         items =
           case items(map) do
             item when is_map(item) ->
-              walk_container(item, fun)
+              reduce(item, fun.(item, acc), fun)
 
             items when is_list(items) ->
-              for {sch, _i} <- Enum.with_index(items), do: walk_container(sch, fun)
+              for {sch, _i} <- Enum.with_index(items), do: reduce(sch, fun.(sch, acc), fun)
           end
 
         Map.put(map, @items, items)
 
       %{@any_of => schs} ->
-        schs = for {sch, _i} <- Enum.with_index(schs), do: walk_container(sch, fun)
+        schs = for {sch, _i} <- Enum.with_index(schs), do: reduce(sch, fun.(sch, acc), fun)
         Map.put(map, @any_of, schs)
 
       _ ->
         map
     end
-    |> fun.()
+    |> fun.(acc)
+  end
+
+  def walk_container(map, fun) when is_map(map) and is_function(fun) do
+    reduce(map, nil, fn a, _ -> fun.(a) end)
   end
 
   # Helpers

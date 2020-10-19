@@ -106,6 +106,11 @@ defmodule FsetWeb.MainLive do
     end
   end
 
+  # def handle_event("scroll", params, socket) do
+  #   %{"viewportHeight" => height, "offset" => offset} = params
+  #   {:noreply, socket}
+  # end
+
   def handle_event("load_models", %{"page" => _page} = params, socket) do
     assigns = ModuleComponent.load_models(socket.assigns, params)
 
@@ -189,7 +194,7 @@ defmodule FsetWeb.MainLive do
         <% end %>
       </ul>
     <% else %>
-      <%= live_patch to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id), class: "block" do %>
+      <%= live_redirect to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id), class: "block" do %>
         <span class="pl-2 block sticky top-0 hover:text-black hover:text-indigo-500 bg-gray-800 rounded-tl rounded-tr"><%= file.name %></span>
       <% end %>
       <ul class="px-2 py-2 border border-gray-800 text-xs space-y-1">

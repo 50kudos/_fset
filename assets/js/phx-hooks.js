@@ -29,11 +29,17 @@ Hooks.syntaxHighlight = {
   }
 }
 
-Hooks.InfiniteScroll = {
+Hooks.virtualscroll = {
   load_model() {
     return Utils.throttle(e => {
       let page = Math.round(this.el.scrollTop / 1500)
       this.pushEvent("load_models", { page: page })
+
+      // this.pushEvent("scroll", {
+      //   offset: this.el.scrollTop,
+      //   viewportHeight: this.el.offsetHeight
+      // })
+
     }, 300)
   },
   mounted() {

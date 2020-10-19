@@ -14,9 +14,10 @@ import "../css/app.scss"
 //
 import "phoenix_html"
 import { Socket } from "phoenix"
-import topbar from "topbar"
 import { LiveSocket } from "phoenix_live_view"
 import phxHooks from "./phx-hooks"
+
+import topbar from "topbar"
 import "./menu"
 
 

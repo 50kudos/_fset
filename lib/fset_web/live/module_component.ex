@@ -46,7 +46,7 @@ defmodule FsetWeb.ModuleComponent do
       data-indent="1.25rem"
       phx-update="append"
     >
-      <%= for {key, sch} <- @models do %>
+      <%= for {key, sch} <- Enum.slice(@models, @items_per_viewport) do %>
         <%= live_component(@socket, ModelComponent,
           id: input_name(@path, key),
           key: key,
