@@ -2,6 +2,7 @@ import Sortable, { MultiDrag } from "sortablejs"
 import hljs from 'highlight.js/lib/core';
 import json from 'highlight.js/lib/languages/json';
 import 'highlight.js/styles/agate.css';
+import { Elm } from "../elm/elm-main.js"
 
 let Hooks = {}
 let Utils = {}
@@ -16,6 +17,19 @@ Utils.throttle = (func, limit) => {
       inThrottle = true
       setTimeout(() => inThrottle = false, limit)
     }
+  }
+}
+
+Hooks.elm = {
+  mounted() {
+    let elmNode = document.createElement("div")
+
+    this.handleEvent("model_file", ({ currentFile }) => {
+      var app = Elm.Main.init({
+        node: this.el.appendChild(elmNode),
+        flags: currentFile
+      })
+    })
   }
 }
 
@@ -300,6 +314,7 @@ Hooks.moveable = {
     Sortable.get(sortableEl) || new Sortable(sortableEl, sortableOpts)
   }
 }
+
 window.Sortable = Sortable
 Sortable.mount(new MultiDrag())
 

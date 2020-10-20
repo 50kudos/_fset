@@ -20,6 +20,7 @@ RUN mix do deps.get, deps.compile
 
 # build assets
 COPY assets/package.json assets/package-lock.json ./assets/
+COPY fmodel/elm-main.js ./assets/elm/
 RUN npm --prefix ./assets ci --progress=false --no-audit --loglevel=error
 
 ENV NODE_ENV=production

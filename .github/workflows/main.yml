@@ -34,6 +34,18 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v2
+        - uses: actions/checkout@v2
+          with:
+            repository: 50kudos/fmodel
+            ref: refs/heads/master
+            path: ./fmodel
+        - uses: jorelali/setup-elm@v2
+          with:
+            elm-version: 0.19.1
+        - run: |
+            cd fmodel
+            elm make ./src/Main.elm --optimize --output=elm-main.js
+            cd -
         - uses: superfly/flyctl-actions@1.1
           with:
             args: "-v deploy --dockerfile ./Dockerfile"

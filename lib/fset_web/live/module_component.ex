@@ -30,10 +30,19 @@ defmodule FsetWeb.ModuleComponent do
 
   @impl true
   def render(assigns) do
-    case assigns do
-      %{models: models} when is_map(models) -> render_main(assigns)
-      %{models: models} when is_list(models) -> render_model(assigns)
+    case {connected?(assigns.socket), assigns} do
+      {true, %{models: models}} when is_map(models) -> render_main(assigns)
+      {false, %{models: models}} when is_map(models) -> render_main(assigns)
+      {true, %{models: models}} when is_list(models) -> render_elm_model(assigns)
+      {false, %{models: models}} when is_list(models) -> render_model(assigns)
     end
+  end
+
+  defp render_elm_model(assigns) do
+    ~L"""
+    <section id="elm_<%= @path %>" phx-hook="elm">
+    </section>
+    """
   end
 
   defp render_model(assigns) do
