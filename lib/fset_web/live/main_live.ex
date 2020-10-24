@@ -20,7 +20,11 @@ defmodule FsetWeb.MainLive do
   @impl true
   def handle_params(params, _uri, socket) do
     assigns = change_file_data(socket.assigns, params)
-    model_file_sch = %{"currentFile" => assigns.current_file.schema}
+
+    model_file_sch = %{
+      "currentFile" => Map.new(assigns.current_models_bodies),
+      "fileId" => assigns.current_file.id
+    }
 
     socket = assign(socket, assigns)
     socket = push_event(socket, "model_file", model_file_sch)
@@ -37,7 +41,14 @@ defmodule FsetWeb.MainLive do
   def handle_event("change_type", params, socket) do
     assigns = change_type(socket.assigns, params)
 
-    {:noreply, assign(socket, assigns)}
+    model_file_sch = %{
+      "currentFile" => Map.new(assigns.current_models_bodies),
+      "fileId" => assigns.current_file.id
+    }
+
+    socket = assign(socket, assigns)
+    socket = push_event(socket, "model_file", model_file_sch)
+    {:noreply, socket}
   end
 
   # TODO: Completely move select state to client side. Tracking current_path is
@@ -51,15 +62,15 @@ defmodule FsetWeb.MainLive do
     file = socket.assigns.current_file
 
     sch_path = List.wrap(sch_path)
-    assigns = Map.put(%{}, :current_path, sch_path)
+    # assigns = Map.put(%{}, :current_path, sch_path)
     track_user_update(user, file, current_path: sch_path, pid: socket.root_pid)
 
     if length(sch_path) == 1 do
       sch = Sch.get(file.schema, hd(sch_path))
-      send_update(FsetWeb.SchComponent, id: file.id, sch: sch, path: hd(sch_path))
+      send_update(FsetWeb.SchComponent, id: :sch_meta, sch: sch, path: hd(sch_path))
     end
 
-    {:noreply, assign(socket, assigns)}
+    {:noreply, socket}
   end
 
   def handle_event("update_sch", params, socket) do
@@ -77,7 +88,14 @@ defmodule FsetWeb.MainLive do
   def handle_event("move", params, socket) do
     assigns = move(socket.assigns, params)
 
-    {:noreply, assign(socket, assigns)}
+    model_file_sch = %{
+      "currentFile" => Map.new(assigns.current_models_bodies),
+      "fileId" => assigns.current_file.id
+    }
+
+    socket = assign(socket, assigns)
+    socket = push_event(socket, "model_file", model_file_sch)
+    {:noreply, socket}
   end
 
   def handle_event("escape", _val, socket) do
@@ -109,11 +127,6 @@ defmodule FsetWeb.MainLive do
     end
   end
 
-  # def handle_event("scroll", params, socket) do
-  #   %{"viewportHeight" => height, "offset" => offset} = params
-  #   {:noreply, socket}
-  # end
-
   def handle_event("load_models", %{"page" => _page} = params, socket) do
     assigns = ModuleComponent.load_models(socket.assigns, params)
 
@@ -127,7 +140,7 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def handle_info({:update_sch, path, sch, opts}, socket) do
-    re_render_model(path, Keyword.put(opts, :sch, sch))
+    # re_render_model(path, Keyword.put(opts, :sch, sch))
     current_file = socket.assigns.current_file
     existing_file = Project.get_file!(current_file.id)
 
@@ -136,7 +149,7 @@ defmodule FsetWeb.MainLive do
     updated_schema = Sch.merge(existing_schema, current_schema)
     file = Persistence.replace_file(existing_file, schema: updated_schema)
 
-    socket = assign(socket, :current_file, file)
+    # socket = assign(socket, :current_file, file)
     {:noreply, socket}
   end
 
@@ -185,7 +198,7 @@ defmodule FsetWeb.MainLive do
         <%= if file.type == :model do %>
           <%= for {{model_name, _}, i} <- Enum.with_index(@current_models_bodies) do %>
             <li class="sort-handle" id="<%= input_id(%{id: i}, file.name) %>">
-              <a href="#<%= input_name(file.id, model_name) %>">
+              <a href="#[<%= model_name %>]">
                 <span class="text-gray-600"><%= "#{i + 1}" %>.</span> <%= Utils.word_break_html(model_name) %>
               </a>
             </li>

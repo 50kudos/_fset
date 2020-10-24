@@ -92,7 +92,11 @@ defmodule Fset.Main do
           file.schema
       end
 
-    Map.put(%{}, :current_file, %{file | schema: new_schema})
+    new_file = %{file | schema: new_schema}
+
+    %{}
+    |> Map.put(:current_file, new_file)
+    |> Map.put(:current_models_bodies, models_bodies(new_file))
   end
 
   def update_sch(assigns, %{"key" => key, "path" => sch_path} = params) do

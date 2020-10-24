@@ -24,12 +24,23 @@ Hooks.elm = {
   mounted() {
     let elmNode = document.createElement("div")
 
-    this.handleEvent("model_file", ({ currentFile }) => {
+    this.handleEvent("model_file", ({ currentFile, fileId }) => {
       var app = Elm.Main.init({
-        node: this.el.appendChild(elmNode),
+        node: this.el,
         flags: currentFile
       })
+      let moveableHookEls = document.querySelectorAll("[phx-hook='moveable']")
+      let phx = this
+
+      moveableHookEls.forEach(el => {
+        phx.el = el
+        phx.fileId = fileId
+        Utils.Sortable.findOrCreate(phx)
+      })
     })
+  },
+  destroyed() {
+    Utils.Sortable.destroy(this)
   }
 }
 
@@ -138,20 +149,16 @@ Hooks.updateSch = {
 
 Hooks.moveable = {
   mounted() {
-    this.setupSortable()
-    this.handleEvent("current_path", ({ paths }) => {
-      this.selectCurrentItems(paths)
-    })
-    this.computeContainIntrinsicSize()
+    Utils.Sortable.findOrCreate(this)
   },
   updated() {
-    this.setupSortable()
-    this.computeContainIntrinsicSize()
+    Utils.Sortable.findOrCreate(this)
   },
   destroyed() {
-    let sortableEl = Sortable.get(this.el)
-    sortableEl && sortableEl.destroy()
-  },
+    Utils.Sortable.destroy(this)
+  }
+}
+Utils.Sortable = {
   // User defined functions and properties
   itemClass: ".sort-handle",
   highlightClass: ".dragover-hl",
@@ -159,6 +166,21 @@ Hooks.moveable = {
   indentClass: ".indent",
   cursorLoadingStyle: "phx-click-loading",
 
+  findOrCreate(phx) {
+    this.phx = phx
+    this.el = phx.el
+
+    this.setupSortable()
+    this.computeContainIntrinsicSize()
+    this.phx.handleEvent("current_path", ({ paths }) => {
+      this.selectCurrentItems(paths)
+    })
+  },
+  destroy(phx) {
+    this.el = phx.el
+    let sortableEl = Sortable.get(this.el)
+    sortableEl && sortableEl.destroy()
+  },
   computeContainIntrinsicSize() {
     if (this.el.classList.contains("content-vis-auto")) {
       let boxHeight = this.el.querySelectorAll(this.itemClass).length + 1
@@ -184,7 +206,7 @@ Hooks.moveable = {
   },
   itemPath(el) {
     let item = Sortable.utils.closest(el, this.itemClass) || this.sortableRoot()
-    return item.id
+    return this.phx.fileId + item.id
   },
   selectCurrentItems(paths) {
     const currentPaths = paths
@@ -240,7 +262,7 @@ Hooks.moveable = {
       fallbackTolerance: 8,
 
       onEnd: (evt) => {
-        this.pushEvent("move", this.movedItems(evt))
+        this.phx.pushEvent("move", this.movedItems(evt))
         evt.items.forEach(item => this.setItemIndent(item, evt.to))
         this.resetHighLight()
       },
@@ -292,7 +314,7 @@ Hooks.moveable = {
         const isMetaSelect = evt.item.multiDragKeyDown
 
         if (ShiftSelect || isMetaSelect || evt.items.length == 1) {
-          this.pushEvent("select_sch", { paths: evt.items.map(a => this.itemPath(a)) })
+          this.phx.pushEvent("select_sch", { paths: evt.items.map(a => this.itemPath(a)) })
         }
 
       },
@@ -311,6 +333,7 @@ Hooks.moveable = {
       },
     }
 
+    console.log(sortableEl)
     Sortable.get(sortableEl) || new Sortable(sortableEl, sortableOpts)
   }
 }

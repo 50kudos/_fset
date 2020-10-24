@@ -48,7 +48,7 @@
       </nav>
       <aside class="w-2/5 overflow-scroll text-sm pl-3 pr-5">
         <%= if length(@current_path) == 1 do %>
-          <%= live_component @socket, SchComponent, id: @current_file.id, sch: Sch.get(@current_file.schema, hd(@current_path)), ui: Map.put(@ui, :model_names, @models_anchors), path: hd(@current_path) %>
+          <%= live_component @socket, SchComponent, id: :sch_meta, sch: Sch.get(@current_file.schema, hd(@current_path)), ui: Map.put(@ui, :model_names, @models_anchors), path: hd(@current_path) %>
         <% end %>
       </aside>
     </section>
