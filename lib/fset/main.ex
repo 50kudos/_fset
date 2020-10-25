@@ -148,7 +148,7 @@ defmodule Fset.Main do
     case file.type do
       :model ->
         keyed_model_schs = Map.get(return_assigns, :current_models_bodies)
-        pathed_models = match_models(file.id, src_indices, dst_indices, keyed_model_schs)
+        pathed_models = models_target(file.id, src_indices, dst_indices, keyed_model_schs)
 
         for {model_path, model_sch} <- pathed_models do
           broadcast_update_sch(file, model_path, model_sch)
@@ -283,7 +283,7 @@ defmodule Fset.Main do
     Process.send(self(), {:re_render_current_path, List.wrap(sch_path)}, [:noconnect])
   end
 
-  defp match_models(file_id, src_indices, dst_indices, keyed_model_schs) do
+  defp models_target(file_id, src_indices, dst_indices, keyed_model_schs) do
     srcs = Enum.map(src_indices, fn src -> src["from"] end)
     dsts = Enum.map(dst_indices, fn src -> src["to"] end)
 

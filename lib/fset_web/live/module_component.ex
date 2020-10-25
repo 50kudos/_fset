@@ -33,14 +33,14 @@ defmodule FsetWeb.ModuleComponent do
     case {connected?(assigns.socket), assigns} do
       {true, %{models: models}} when is_map(models) -> render_main(assigns)
       {false, %{models: models}} when is_map(models) -> render_main(assigns)
-      {true, %{models: models}} when is_list(models) -> render_elm_model(assigns)
+      {true, %{models: models}} when is_list(models) -> render_model(assigns)
       {false, %{models: models}} when is_list(models) -> render_model(assigns)
     end
   end
 
   defp render_elm_model(assigns) do
     ~L"""
-    <div phx-hook="elm">
+    <div id="<%= @path %>" phx-hook="elm">
     </div>
     """
   end
@@ -54,14 +54,14 @@ defmodule FsetWeb.ModuleComponent do
       data-group="body"
       data-indent="1.25rem"
     >
-      <%= for {key, sch} <- Enum.slice(@models, @items_per_viewport) do %>
+      <%= for {key, sch} <- @models do %>
         <%= live_component(@socket, ModelComponent,
-          id: input_name(@path, key),
+          id: key,
           key: key,
           sch: sch,
           parent: Fset.Sch.New.object(),
           ui: @ui,
-          path: input_name(@path, key)
+          path: input_name("", key)
         ) %>
       <% end %>
     </div>

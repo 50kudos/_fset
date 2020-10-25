@@ -27,7 +27,7 @@ defmodule FsetWeb.MainLive do
     }
 
     socket = assign(socket, assigns)
-    socket = push_event(socket, "model_file", model_file_sch)
+    socket = push_event(socket, "file_change", model_file_sch)
     {:noreply, socket}
   end
 
@@ -41,14 +41,7 @@ defmodule FsetWeb.MainLive do
   def handle_event("change_type", params, socket) do
     assigns = change_type(socket.assigns, params)
 
-    model_file_sch = %{
-      "currentFile" => Map.new(assigns.current_models_bodies),
-      "fileId" => assigns.current_file.id
-    }
-
-    socket = assign(socket, assigns)
-    socket = push_event(socket, "model_file", model_file_sch)
-    {:noreply, socket}
+    {:noreply, assign(socket, assigns)}
   end
 
   # TODO: Completely move select state to client side. Tracking current_path is
@@ -88,14 +81,7 @@ defmodule FsetWeb.MainLive do
   def handle_event("move", params, socket) do
     assigns = move(socket.assigns, params)
 
-    model_file_sch = %{
-      "currentFile" => Map.new(assigns.current_models_bodies),
-      "fileId" => assigns.current_file.id
-    }
-
-    socket = assign(socket, assigns)
-    socket = push_event(socket, "model_file", model_file_sch)
-    {:noreply, socket}
+    {:noreply, socket = assign(socket, assigns)}
   end
 
   def handle_event("escape", _val, socket) do
@@ -141,6 +127,19 @@ defmodule FsetWeb.MainLive do
   @impl true
   def handle_info({:update_sch, path, sch, opts}, socket) do
     # re_render_model(path, Keyword.put(opts, :sch, sch))
+    send(self(), {:async_get_and_update, path, sch})
+
+    socket =
+      push_event(socket, "model_change", %{
+        path: path,
+        sch: sch,
+        fileId: socket.assigns.current_file.id
+      })
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:async_get_and_update, path, sch}, socket) do
     current_file = socket.assigns.current_file
     existing_file = Project.get_file!(current_file.id)
 
@@ -149,7 +148,7 @@ defmodule FsetWeb.MainLive do
     updated_schema = Sch.merge(existing_schema, current_schema)
     file = Persistence.replace_file(existing_file, schema: updated_schema)
 
-    # socket = assign(socket, :current_file, file)
+    socket = assign(socket, :current_file, file)
     {:noreply, socket}
   end
 

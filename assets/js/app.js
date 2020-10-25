@@ -19,8 +19,6 @@ import phxHooks from "./phx-hooks"
 
 import topbar from "topbar"
 import "./menu"
-import { Elm } from "../elm/elm-main.js"
-
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
