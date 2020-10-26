@@ -21,13 +21,13 @@ defmodule FsetWeb.MainLive do
   def handle_params(params, _uri, socket) do
     assigns = change_file_data(socket.assigns, params)
 
-    model_file_sch = %{
-      "currentFile" => Map.new(assigns.current_models_bodies),
-      "fileId" => assigns.current_file.id
-    }
+    current_file =
+      assigns.current_file
+      |> Map.from_struct()
+      |> Map.take([:id, :schema])
 
     socket = assign(socket, assigns)
-    socket = push_event(socket, "file_change", model_file_sch)
+    socket = push_event(socket, "file_change", current_file)
     {:noreply, socket}
   end
 

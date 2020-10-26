@@ -33,7 +33,7 @@ defmodule FsetWeb.ModuleComponent do
     case {connected?(assigns.socket), assigns} do
       {true, %{models: models}} when is_map(models) -> render_main(assigns)
       {false, %{models: models}} when is_map(models) -> render_main(assigns)
-      {true, %{models: models}} when is_list(models) -> render_model(assigns)
+      {true, %{models: models}} when is_list(models) -> render_elm_model(assigns)
       {false, %{models: models}} when is_list(models) -> render_model(assigns)
     end
   end
