@@ -117,7 +117,7 @@ export default class PhxSortable {
       draggable: this.itemClass,
       // direction: "horizontal",
       revertOnSpill: true,
-      // forceFallback: true,
+      forceFallback: navigator.userAgent.indexOf("Safari") !== -1,
       fallbackOnBody: true,
       fallbackTolerance: 8,
 

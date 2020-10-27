@@ -13,7 +13,7 @@
       <span class="w-full text-red-600"><%= error.payload.msg %></span>
     <% end %>
     <section class="flex flex-grow overflow-scroll h-full">
-      <aside class="w-1/5 mx-4 flex flex-col text-gray-500 bg-gray-900">
+      <aside class="w-1/5 px-4 flex flex-col text-gray-500 bg-gray-900">
         <p class="ml-2 text-sm leading-8"><%= @project_name %></p>
         <ul class="overflow-scroll text-sm leading-6 space-y-4">
           <%= for file <- @files_ids do %>

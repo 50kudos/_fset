@@ -40,7 +40,7 @@ defmodule FsetWeb.ModuleComponent do
 
   defp render_elm_model(assigns) do
     ~L"""
-    <div id="<%= @path %>" phx-hook="elm">
+    <div id="<%= @path %>" phx-hook="elm" phx-update="ignore">
     </div>
     """
   end
@@ -54,7 +54,7 @@ defmodule FsetWeb.ModuleComponent do
       data-group="body"
       data-indent="1.25rem"
     >
-      <%= for {key, sch} <- @models do %>
+      <%= for {key, sch} <- Enum.slice(@models, 0..10) do %>
         <%= live_component(@socket, ModelComponent,
           id: key,
           key: key,

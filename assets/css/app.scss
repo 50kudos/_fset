@@ -18,7 +18,7 @@
 /* version 1 */
 .sortable-ghost {
   /* > * { @apply hidden } */
-  @apply h-full py-0 border border-green-600 border-dashed -my-px
+  @apply h-full py-0 border border-green-600 border-dashed -my-px -ml-px
 }
 /* version 2 */
 /*.sortable-ghost {

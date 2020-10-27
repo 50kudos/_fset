@@ -165,7 +165,7 @@ Hooks.moveable = {
     // let phxSortable = new PhxSortable(this)
   },
   destroyed() {
-    console.log(PhxSortable.destroy(this))
+    PhxSortable.destroy(this)
   }
 }
 
