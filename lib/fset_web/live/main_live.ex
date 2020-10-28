@@ -26,8 +26,18 @@ defmodule FsetWeb.MainLive do
       |> Map.from_struct()
       |> Map.take([:id, :schema])
 
+    anchors_models =
+      Enum.map(socket.assigns.models_anchors, fn {model_name, anchor} ->
+        [anchor, model_name]
+      end)
+
+    push_file_change = %{
+      "currentFile" => current_file,
+      "anchorsModels" => anchors_models
+    }
+
     socket = assign(socket, assigns)
-    socket = push_event(socket, "file_change", current_file)
+    socket = push_event(socket, "file_change", push_file_change)
     {:noreply, socket}
   end
 

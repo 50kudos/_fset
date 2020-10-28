@@ -25,11 +25,11 @@ Hooks.elm = {
   mounted() {
     let elmMain = Elm.Main.init({
       node: this.el.appendChild(document.createElement("div")),
-      flags: { id: "", schema: {} }
+      flags: { currentFile: { id: "", schema: {} }, anchorsModels: [] }
     })
-    this.handleEvent("file_change", ({ id, schema }) => {
-      elmMain.ports.stateUpdate.send({ id, schema })
-      this.rebindSortable(id)
+    this.handleEvent("file_change", ({ currentFile, anchorsModels }) => {
+      elmMain.ports.stateUpdate.send({ currentFile, anchorsModels })
+      this.rebindSortable(currentFile.id)
     })
 
     this.handleEvent("model_change", ({ path, sch, fileId }) => {

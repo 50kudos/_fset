@@ -15,7 +15,7 @@
     <section class="flex flex-grow overflow-scroll h-full">
       <aside class="w-1/5 px-4 flex flex-col text-gray-500 bg-gray-900">
         <p class="ml-2 text-sm leading-8"><%= @project_name %></p>
-        <ul class="overflow-scroll text-sm leading-6 space-y-4">
+        <ul class="overflow-scroll text-sm leading-6 space-y-4" style="transform: translate3d(0,0,0)">
           <%= for file <- @files_ids do %>
             <li class="">
               <%= render_file_nav(assigns, file) %>
