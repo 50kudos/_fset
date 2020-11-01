@@ -32,9 +32,9 @@ Hooks.elm = {
       this.rebindSortable(currentFile.id)
     })
 
-    this.handleEvent("model_change", ({ path, sch, fileId }) => {
-      elmMain.ports.stateUpdate.send({ fileId, path, sch })
-      this.rebindSortable(fileId)
+    this.handleEvent("model_change", ({ path, sch, id }) => {
+      elmMain.ports.stateUpdate.send({ id, path, sch })
+      this.rebindSortable(id)
     })
   },
   destroyed() {

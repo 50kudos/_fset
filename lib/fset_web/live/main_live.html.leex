@@ -17,7 +17,7 @@
         <p class="ml-2 text-sm leading-8"><%= @project_name %></p>
         <ul class="overflow-scroll text-sm leading-6 space-y-4" style="transform: translate3d(0,0,0)">
           <%= for file <- @files_ids do %>
-            <li class="">
+            <li class="border border-gray-800 bg-gray-800 bg-opacity-25 rounded-tl rounded-tr">
               <%= render_file_nav(assigns, file) %>
             </li>
           <% end %>

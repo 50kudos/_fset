@@ -141,9 +141,9 @@ defmodule FsetWeb.MainLive do
 
     socket =
       push_event(socket, "model_change", %{
+        id: socket.assigns.current_file.id,
         path: path,
-        sch: sch,
-        fileId: socket.assigns.current_file.id
+        sch: sch
       })
 
     {:noreply, socket}
@@ -202,13 +202,13 @@ defmodule FsetWeb.MainLive do
   def render_file_nav(assigns, file) do
     ~L"""
     <%= if @current_file.id == file.id do %>
-      <span class="pl-2 block sticky top-0 text-black bg-indigo-600 rounded-tl rounded-tr"><%= file.name %></span>
-      <ul class="pl-2 py-2 border border-indigo-900 text-xs">
+      <span class="pl-2 pt-2 block _sticky top-0 text-indigo-400"><%= file.name %></span>
+      <ul class="pl-2 py-2 text-xs">
         <%= if file.type == :model do %>
           <%= for {{model_name, _}, i} <- Enum.with_index(@current_models_bodies) do %>
             <li class="sort-handle" id="<%= input_id(%{id: i}, file.name) %>">
               <a href="#[<%= model_name %>]">
-                <span class="text-gray-600"><%= "#{i + 1}" %>.</span> <%= Utils.word_break_html(model_name) %>
+                <span class="text-gray-600 font-mono"><%= "#{i + 1}" %>.</span> <%= Utils.word_break_html(model_name) %>
               </a>
             </li>
           <% end %>
@@ -220,9 +220,9 @@ defmodule FsetWeb.MainLive do
       </ul>
     <% else %>
       <%= live_patch to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id), class: "block" do %>
-        <span class="pl-2 block sticky top-0 hover:text-black hover:text-indigo-500 bg-gray-800 rounded-tl rounded-tr"><%= file.name %></span>
+        <span class="pl-2 block sticky top-0 hover:text-black hover:text-indigo-500 bg-gray-800"><%= file.name %></span>
       <% end %>
-      <ul class="px-2 py-2 border border-gray-800 text-xs space-y-1">
+      <ul class="px-2 py-2 text-xs space-y-1">
         <%= for model_name <- [""] do %>
           <li class="bg-gray-800 bg-opacity-50 h-4 rounded-lg"><%= model_name %></li>
         <% end %>
