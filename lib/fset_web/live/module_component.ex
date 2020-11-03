@@ -7,7 +7,9 @@ defmodule FsetWeb.ModuleComponent do
   @impl true
   def update(assigns, socket) do
     assigns = Map.merge(socket.assigns, assigns)
-    assigns = Map.take(assigns, [:name, :models, :model_names, :ui, :path, :items_per_viewport])
+
+    assigns =
+      Map.take(assigns, [:id, :name, :models, :model_names, :ui, :path, :items_per_viewport])
 
     socket =
       socket
@@ -17,6 +19,7 @@ defmodule FsetWeb.ModuleComponent do
         ui
         |> Map.put_new(:tab, 1)
         |> Map.put_new(:model_number, false)
+        |> Map.put_new(:file_id, assigns.id)
         |> Map.put(:model_names, assigns.model_names)
         |> Map.put(:parent_path, assigns.path)
         |> case do
@@ -33,7 +36,7 @@ defmodule FsetWeb.ModuleComponent do
     case {connected?(assigns.socket), assigns} do
       {true, %{models: models}} when is_map(models) -> render_main(assigns)
       {false, %{models: models}} when is_map(models) -> render_main(assigns)
-      {true, %{models: models}} when is_list(models) -> render_elm_model(assigns)
+      {true, %{models: models}} when is_list(models) -> render_model(assigns)
       {false, %{models: models}} when is_list(models) -> render_model(assigns)
     end
   end
@@ -47,7 +50,7 @@ defmodule FsetWeb.ModuleComponent do
 
   defp render_model(assigns) do
     ~L"""
-    <div id="<%= @path %>" class="grid grid-cols-fit py-6 h-full gap-4 <%= if @ui.model_number, do: 'model_number' %>"
+    <div id="<%= @path %>" class="grid grid-cols-fit py-6 h-full gap-3 <%= if @ui.model_number, do: 'model_number' %>"
       phx-capture-click="select_sch"
       phx-value-paths="<%= @path %>"
       phx-hook="moveable"
