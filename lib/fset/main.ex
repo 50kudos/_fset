@@ -175,7 +175,7 @@ defmodule Fset.Main do
   def delete(assigns, %{"key" => "Delete"}) do
     file = assigns.current_file
     user = assigns.current_user
-    current_path = assigns.current_path
+    current_path = FsetWeb.MainLive.current_path(assigns.ui)
 
     # Referential integrity
     referrers =

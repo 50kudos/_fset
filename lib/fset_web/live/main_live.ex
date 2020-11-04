@@ -136,7 +136,13 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def handle_info({:update_sch, path, sch, opts}, socket) do
-    # re_render_model(path, Keyword.put(opts, :sch, sch))
+    re_render_model(
+      path,
+      opts
+      |> Keyword.put(:sch, sch)
+      |> Keyword.put(:file_id, socket.assigns.current_file.id)
+    )
+
     send(self(), {:async_get_and_update, path, sch})
 
     socket =
@@ -246,11 +252,17 @@ defmodule FsetWeb.MainLive do
   def re_render_model(path_, opts \\ []) do
     case List.wrap(path_) do
       [path] when is_binary(path) ->
-        send_update(FsetWeb.ModelComponent, Keyword.merge(opts, id: path))
+        send_update(
+          FsetWeb.ModelComponent,
+          Keyword.merge(opts, id: String.replace_prefix(path, opts[:file_id], ""))
+        )
 
       paths when is_list(paths) ->
         for path <- paths do
-          send_update(FsetWeb.ModelComponent, Keyword.merge(opts, id: path))
+          send_update(
+            FsetWeb.ModelComponent,
+            Keyword.merge(opts, id: String.replace_prefix(path, opts[:file_id], ""))
+          )
         end
     end
   end

@@ -59,7 +59,7 @@ defmodule FsetWeb.ModuleComponent do
     >
       <%= for {key, sch} <- Enum.slice(@models, 0..10) do %>
         <%= live_component(@socket, ModelComponent,
-          id: key,
+          id: input_name("", key),
           key: key,
           sch: sch,
           parent: Fset.Sch.New.object(),

@@ -24,7 +24,7 @@ defmodule FsetWeb.ModelComponent do
       socket
       |> assign(assigns)
       |> assign_new(:errors, fn -> assigns.ui.errors end)
-      |> update(:sch, fn sch -> Map.delete(sch, "examples") end)
+      |> update(:sch, fn sch -> Map.drop(sch, ~w(examples title description)) end)
       |> update(:ui, fn ui -> Map.put_new(ui, :level, ui.tab) end)
       |> update(:ui, fn ui -> Map.put_new(ui, :parent_path, assigns.path) end)
     }
@@ -190,7 +190,7 @@ defmodule FsetWeb.ModelComponent do
         ~L"""
         <span class="px-2 bg-indigo-500 rounded cursor-pointer"
           phx-click="add_field" phx-value-field="Record"
-          phx-value-path="<%= @path %>"
+          phx-value-path="<%= @ui.file_id <> @path %>"
           phx-target="<%= @myself %>">+</span>
         """
 
@@ -198,7 +198,7 @@ defmodule FsetWeb.ModelComponent do
         ~L"""
         <span class="px-2 bg-indigo-500 rounded cursor-pointer"
           phx-click="add_field" phx-value-field="Record"
-          phx-value-path="<%= @path %>"
+          phx-value-path="<%= @ui.file_id <> @path %>"
           phx-target="<%= @myself %>">+</span>
         """
 
@@ -206,7 +206,7 @@ defmodule FsetWeb.ModelComponent do
         ~L"""
         <span class="px-2 bg-indigo-500 rounded cursor-pointer"
           phx-click="add_field" phx-value-field="Record"
-          phx-value-path="<%= @path %>"
+          phx-value-path="<%= @ui.file_id <> @path %>"
           phx-target="<%= @myself %>">+</span>
         """
 
