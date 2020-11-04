@@ -14,12 +14,13 @@ defmodule Fset.Main do
 
   def init_data(params) do
     with project <- Project.get_by!(name: params["project_name"]),
-         current_file <- get_current_file(params["file_id"], project.main_sch),
+         current_file <- get_current_file(project, params["file_id"]),
          {models_anchors, files_ids} <- get_project_meta(project.id),
          models_bodies <- models_bodies(current_file),
          user <- Accounts.get_user_by_username!(params["username"]) do
       %{}
       |> Map.put(:project_name, project.name)
+      |> Map.put(:project, project)
       |> Map.put(:current_user, user)
       |> Map.put(:current_file, current_file)
       |> Map.put(:current_path, [current_file.id])
@@ -31,7 +32,7 @@ defmodule Fset.Main do
   end
 
   def change_file_data(assigns, params) do
-    with current_file <- get_current_file(params["file_id"], Map.get(assigns, :current_file)),
+    with current_file <- get_current_file(assigns.project, params["file_id"]),
          models_bodies <- models_bodies(current_file) do
       %{}
       |> Map.put(:current_file, current_file)
@@ -247,8 +248,9 @@ defmodule Fset.Main do
     {models_anchors, [main_file | files_ids]}
   end
 
-  defp get_current_file(file_id, default) do
-    if file_id, do: Project.get_file!(file_id), else: default
+  defp get_current_file(project, file_id) do
+    Enum.find(project.schs, fn file -> file.id == file_id end) || hd(project.schs)
+    # if file_id, do: Project.get_file!(file_id), else: default
   end
 
   # Process or application dependent functions

@@ -1,7 +1,7 @@
 FROM elixir:1.10.4-alpine AS build
 
 # install build dependencies
-RUN apk add --no-cache build-base npm git python
+RUN apk add --no-cache build-base npm git curl
 
 # prepare build dir
 WORKDIR /app
@@ -18,9 +18,21 @@ COPY mix.exs mix.lock ./
 COPY config config
 RUN mix do deps.get, deps.compile
 
+# install and build elm
+RUN git clone https://github.com/50kudos/fmodel.git
+RUN cd fmodel && \
+    npm install -g uglify-js && \
+    curl -L -o elm.gz https://github.com/elm/compiler/releases/download/0.19.1/binary-for-linux-64-bit.gz && \
+    gunzip elm.gz && \
+    chmod +x elm && \
+    mv elm /usr/local/bin/ && \
+    ./make.sh src/Main.elm && \
+    cd -
+
 # build assets
 COPY assets/package.json assets/package-lock.json ./assets/
-COPY fmodel/elm-main.js ./assets/elm/
+RUN mkdir -p ./assets/elm && \
+    cp fmodel/elm.min.js ./assets/elm/
 RUN npm --prefix ./assets ci --progress=false --no-audit --loglevel=error
 
 ENV NODE_ENV=production

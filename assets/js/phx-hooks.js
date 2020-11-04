@@ -2,7 +2,7 @@ import Sortable, { MultiDrag } from "sortablejs"
 import hljs from 'highlight.js/lib/core';
 import json from 'highlight.js/lib/languages/json';
 import 'highlight.js/styles/agate.css';
-import { Elm } from "../elm/elm-main.js"
+import { Elm } from "../elm/elm.min.js"
 import PhxSortable from "./model-sortable.js"
 
 let Hooks = {}
@@ -29,12 +29,12 @@ Hooks.elm = {
     })
     this.handleEvent("file_change", ({ currentFile, anchorsModels }) => {
       elmMain.ports.stateUpdate.send({ currentFile, anchorsModels })
-      this.rebindSortable(currentFile.id)
+      // this.rebindSortable(currentFile.id)
     })
 
     this.handleEvent("model_change", ({ path, sch, id }) => {
       elmMain.ports.stateUpdate.send({ id, path, sch })
-      this.rebindSortable(id)
+      // this.rebindSortable(id)
     })
   },
   destroyed() {

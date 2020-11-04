@@ -58,8 +58,7 @@ defmodule FsetWeb.MainLive do
   # problematic, things get impured. Instead, we want to always send path on every
   # operation to server when it is needed.
   def handle_event("select_sch", %{"paths" => sch_path}, socket) do
-    {:memory, mem} = Process.info(socket.root_pid, :memory)
-    IO.inspect("#{mem / (1024 * 1024)} MB", label: "MEMORY")
+    inspect_memory(socket)
 
     user = socket.assigns.current_user
     file = socket.assigns.current_file
@@ -136,12 +135,12 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def handle_info({:update_sch, path, sch, opts}, socket) do
-    re_render_model(
-      path,
-      opts
-      |> Keyword.put(:sch, sch)
-      |> Keyword.put(:file_id, socket.assigns.current_file.id)
-    )
+    # re_render_model(
+    #   path,
+    #   opts
+    #   |> Keyword.put(:sch, sch)
+    #   |> Keyword.put(:file_id, socket.assigns.current_file.id)
+    # )
 
     send(self(), {:async_get_and_update, path, sch})
 
@@ -264,6 +263,16 @@ defmodule FsetWeb.MainLive do
             Keyword.merge(opts, id: String.replace_prefix(path, opts[:file_id], ""))
           )
         end
+    end
+  end
+
+  defp inspect_memory(socket) do
+    {:memory, mem} = Process.info(socket.root_pid, :memory)
+    IO.inspect("#{mem / (1024 * 1024)} MB", label: "MEMORY")
+
+    for ak <- Map.keys(socket.assigns) do
+      kb = Persistence.term_size(Map.get(socket.assigns, ak)) / 1024
+      IO.inspect("#{floor(kb)}" <> " KB", label: ak)
     end
   end
 end
