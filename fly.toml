@@ -1,6 +1,6 @@
 # fly.toml file generated for fset on 2020-08-21T01:01:16+07:00
 
-app = "fset"
+app = "fset-prod"
 
 
 [[services]]
