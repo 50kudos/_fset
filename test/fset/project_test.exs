@@ -58,7 +58,7 @@ defmodule Fset.ProjectTest do
     user = user_fixture()
     {:ok, project} = create_with_user!(files, user.id)
 
-    [main | models] = all_files(project.id)
+    [main | models] = all_files(project.id, schema: true)
 
     for model <- models do
       assert model.project_id == project.id

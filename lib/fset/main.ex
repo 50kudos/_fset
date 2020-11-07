@@ -12,27 +12,25 @@ defmodule Fset.Main do
   alias Fset.{Accounts, Project, Module, Sch, Utils}
   alias FsetWeb.Presence
 
-  def init_data(params) do
-    with project <- Project.get_by!(name: params["project_name"]),
-         current_file <- get_current_file(project, params["file_id"]),
-         {models_anchors, files_ids} <- get_project_meta(project.id),
-         models_bodies <- models_bodies(current_file),
-         user <- Accounts.get_user_by_username!(params["username"]) do
+  def init_data(connected?, params) do
+    with project <- get_project(params["project_name"], connected: connected?),
+         {models_anchors, files_ids} <- get_project_meta(project.id, connected: connected?),
+         user <- Accounts.get_user_by_username!(params["username"]),
+         file_id <- params["file_id"] || hd(files_ids).id do
       %{}
       |> Map.put(:project_name, project.name)
       |> Map.put(:project, project)
       |> Map.put(:current_user, user)
-      |> Map.put(:current_file, current_file)
-      |> Map.put(:current_path, [current_file.id])
+      |> Map.put(:current_path, [file_id])
       |> Map.put(:files_ids, files_ids)
       |> Map.put(:models_anchors, models_anchors)
-      |> Map.put(:current_models_bodies, models_bodies)
-      |> Map.put(:ui, %{errors: [], topic: @file_topic <> current_file.id, user_id: user.id})
+      |> Map.put(:ui, %{errors: [], topic: @file_topic <> file_id, user_id: user.id})
     end
   end
 
   def change_file_data(assigns, params) do
-    with current_file <- get_current_file(assigns.project, params["file_id"]),
+    with file_id <- params["file_id"] || hd(assigns.files_ids).id,
+         current_file <- get_current_file(assigns.project, file_id),
          models_bodies <- models_bodies(current_file) do
       %{}
       |> Map.put(:current_file, current_file)
@@ -227,8 +225,25 @@ defmodule Fset.Main do
     end
   end
 
-  defp get_project_meta(project_id) do
-    all_files = Project.all_files(project_id)
+  defp get_project(project_name, connected: true) do
+    Project.get_by!(:full, name: project_name)
+  end
+
+  defp get_project(project_name, connected: false) do
+    Project.get_by!(:file, name: project_name)
+  end
+
+  defp get_project_meta(project_id, connected: false) do
+    {[], Project.all_files(project_id)}
+  end
+
+  defp get_project_meta(project_id, connected: true) do
+    project_id
+    |> Project.all_files(schema: true)
+    |> get_project_meta_()
+  end
+
+  defp get_project_meta_(all_files) do
     {[main_file], model_files} = Enum.split_with(all_files, fn fi -> fi.type == :main end)
 
     {models_anchors, files_ids} =
@@ -249,14 +264,17 @@ defmodule Fset.Main do
   end
 
   defp get_current_file(project, file_id) do
-    Enum.find(project.schs, fn file -> file.id == file_id end) || hd(project.schs)
-    # if file_id, do: Project.get_file!(file_id), else: default
+    if Ecto.assoc_loaded?(project.schs) do
+      Enum.find(project.schs, fn file -> file.id == file_id end) || hd(project.schs)
+    else
+      project.main_sch
+    end
   end
 
   # Process or application dependent functions
   #
-  def subscribe_file_update(file) do
-    Phoenix.PubSub.subscribe(Fset.PubSub, @file_topic <> file.id)
+  def subscribe_file_update(file_id) do
+    Phoenix.PubSub.subscribe(Fset.PubSub, @file_topic <> file_id)
   end
 
   def broadcast_update_sch(%{id: id}, path, sch, opts \\ []) when is_binary(id) do
@@ -267,9 +285,9 @@ defmodule Fset.Main do
     )
   end
 
-  def track_user(user, file) do
-    Presence.track(self(), @file_topic <> file.id, user.id, %{
-      current_path: file.id,
+  def track_user(user_id, file_id) do
+    Presence.track(self(), @file_topic <> file_id, user_id, %{
+      current_path: file_id,
       pid: self()
     })
   end

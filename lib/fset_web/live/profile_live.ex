@@ -50,7 +50,7 @@ defmodule FsetWeb.ProfileLive do
           <ul class="my-4 w-full divide-y divide-gray-900 border border-gray-900 rounded-md text-gray-400 bg-gray-800 text-sm overflow-hidden">
             <%= for project <- @projects do %>
               <li >
-                <%= live_redirect to: Routes.main_path(@socket, :index, @username, project.name), class: "block px-3 py-1 hover:bg-gray-700" do %>
+                <%= live_patch to: Routes.main_path(@socket, :index, @username, project.name), class: "block px-3 py-1 hover:bg-gray-700" do %>
                   <%= project.name %>
                 <% end %>
               </li>
@@ -119,7 +119,7 @@ defmodule FsetWeb.ProfileLive do
               project.main_sch.id
             )
 
-          push_redirect(socket, to: project_page)
+          push_patch(socket, to: project_page)
 
         {:error, changeset} ->
           assign(socket, :project_form, %{

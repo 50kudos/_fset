@@ -8,6 +8,7 @@ config :fset, Fset.Repo,
   hostname: "localhost",
   # ssl: true,
   # url: System.get_env("DATABASE_URL"),
+  prepare: :unnamed,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
 

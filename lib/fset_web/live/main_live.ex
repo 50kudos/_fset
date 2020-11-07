@@ -6,14 +6,17 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def mount(params, _session, socket) do
-    assigns = init_data(params)
+    socket_connected? = connected?(socket)
+    assigns = init_data(socket_connected?, params)
+    file_id = params["file_id"] || hd(assigns.files_ids).id
+
+    if socket_connected? do
+      subscribe_file_update(file_id)
+      push_current_path(file_id)
+      track_user(assigns.current_user.id, file_id)
+    end
+
     temporary_assigns = []
-
-    if connected?(socket), do: subscribe_file_update(assigns.current_file)
-
-    push_current_path(assigns.current_file.id)
-    track_user(assigns.current_user, assigns.current_file)
-
     {:ok, assign(socket, assigns), temporary_assigns: temporary_assigns}
   end
 

@@ -30,8 +30,12 @@ defmodule Fset.Project do
     end
   end
 
-  def get_by!(attrs) do
+  def get_by!(:full, attrs) do
     Repo.get_by!(Root, attrs) |> Repo.preload(:schs)
+  end
+
+  def get_by!(:file, attrs) do
+    Repo.get_by!(Root, attrs) |> Repo.preload(:main_sch)
   end
 
   def get_file!(file_id) do
@@ -51,11 +55,14 @@ defmodule Fset.Project do
     Repo.all(user_projects_q)
   end
 
-  def all_files(project_id) do
+  def all_files(project_id, opts \\ []) do
+    select = [:id, :name, :type, :project_id]
+    select = if opts[:schema], do: [:schema | select], else: select
+
     all_files_q =
       from f in Fset.Project.File,
         where: f.project_id == ^project_id,
-        select: [:id, :name, :type, :project_id, :schema]
+        select: ^select
 
     Repo.all(all_files_q)
   end
