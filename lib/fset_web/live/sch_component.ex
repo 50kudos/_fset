@@ -122,18 +122,20 @@ defmodule FsetWeb.SchComponent do
           </label>
         </div>
         <h1 class="mt-12 mb-6 text-gray-600 underline text-lg">Properties</h1>
-        <%= for prop <- Sch.order(@sch) do %>
-          <article class="mb-8">
-            <h1 class="mb-3 text-base">
-              <span><%= prop %></span>
-              <span class="px-2 rounded text-blue-500 text-sm">
-                <%= FsetWeb.ModelComponent.read_type(Sch.get(@sch, prop), @ui) %>
-              </span>
-            </h1>
-            <%= render_title(%{assigns | sch: Sch.get(@sch, prop), path: input_name(@path, prop), title: Sch.get(@sch, prop) |> Sch.title() }) %>
-            <%= render_description(%{assigns | sch: Sch.get(@sch, prop), path: input_name(@path, prop), description: Sch.get(@sch, prop) |> Sch.description() }) %>
-          </article>
-        <% end %>
+        <ul>
+          <%= for prop <- Sch.order(@sch) do %>
+            <li class="mb-8">
+              <h1 class="mb-3 text-base">
+                <span class="break-words"><%= prop %></span>
+                <span class="px-2 rounded text-blue-500 text-sm">
+                  <%= FsetWeb.ModelComponent.read_type(Sch.get(@sch, prop), @ui) %>
+                </span>
+              </h1>
+              <%= render_title(%{assigns | sch: Sch.get(@sch, prop), path: input_name(@path, prop), title: Sch.get(@sch, prop) |> Sch.title() }) %>
+              <%= render_description(%{assigns | sch: Sch.get(@sch, prop), path: input_name(@path, prop), description: Sch.get(@sch, prop) |> Sch.description() }) %>
+            </li>
+          <% end %>
+        </ul>
       </section>
     """
   end

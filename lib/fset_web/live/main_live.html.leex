@@ -13,7 +13,7 @@
       <span class="w-full text-red-600"><%= error.payload.msg %></span>
     <% end %>
     <section class="flex flex-grow overflow-scroll h-full">
-      <aside class="w-1/5 px-4 flex flex-col text-gray-500 bg-gray-900">
+      <aside class="hidden lg:w-1/5 lg:flex flex-col px-4 text-gray-500 bg-gray-900">
         <p class="ml-2 text-sm leading-8"><%= @project_name %></p>
         <ul class="overflow-scroll text-sm leading-6 space-y-4" style="transform: translate3d(0,0,0)">
           <%= for file <- @files_ids do %>
@@ -34,7 +34,7 @@
         <span class="flex-1"></span>
         <%=# render_storage(assigns) %>
       </aside>
-      <nav class="w-2/5 overflow-scroll scroll-smooth pr-3" id="scroll__<%= @current_file.id %>" _phx-hook="virtualscroll">
+      <nav class="md:w-1/2 xl:w-2/5 overflow-y-scroll scroll-smooth pr-3" id="scroll__<%= @current_file.id %>" _phx-hook="virtualscroll">
         <div class="text-xs px-2 h-8 bg-gray-900 sticky top-0 z-10">
           <%= live_component @socket, ModelBarComponent, id: :model_bar, paths: List.wrap(@current_path) -- [@current_file.id] %>
         </div>
@@ -46,7 +46,7 @@
             model_names: @models_anchors, ui: @ui, path: @current_file.id %>
         </div>
       </nav>
-      <aside class="w-2/5 overflow-scroll text-sm pl-3 pr-5">
+      <aside class="hidden md:w-1/2 xl:w-2/5 md:block overflow-y-scroll overflow-x-hidden text-sm pl-3 pr-5">
         <%= if length(@current_path) == 1 do %>
           <%= live_component @socket, SchComponent, id: :sch_meta, sch: Sch.get(@current_file.schema, hd(@current_path)), ui: Map.put(@ui, :model_names, @models_anchors), path: hd(@current_path) %>
         <% end %>
