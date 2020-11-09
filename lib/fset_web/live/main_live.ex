@@ -28,9 +28,6 @@ defmodule FsetWeb.MainLive do
     params = Map.put(params, :connect_params, socket.assigns.connect_params)
     assigns = change_file_data(socket.assigns, params)
 
-    models_bodies = virtualize_list(assigns.current_models_bodies, params.connect_params)
-    assigns = Map.put(assigns, :virtual_models_bodies, models_bodies)
-
     current_file =
       assigns.current_file
       |> Map.from_struct()
@@ -41,8 +38,13 @@ defmodule FsetWeb.MainLive do
         [anchor, model_name]
       end)
 
+    fmodels =
+      Enum.map(assigns.current_models_bodies, fn {model_name, model} ->
+        [model_name, model]
+      end)
+
     push_file_change = %{
-      "currentFile" => current_file,
+      "currentFile" => %{id: current_file.id, fmodels: fmodels},
       "anchorsModels" => anchors_models
     }
 

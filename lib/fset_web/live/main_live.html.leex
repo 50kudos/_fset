@@ -1,3 +1,4 @@
+<span id="fstore" data-store="<%= Jason.encode!(@socket.private.changed.push_events |> Enum.at(0) |> Enum.at(1)) %>"></span>
 <div class="w-full">
   <datalist id="changeable_types">
     <%= for type_text <- text_val_types(@models_anchors) do %>
@@ -40,13 +41,13 @@
         </div>
         <div id="module_container" class="h-full overflow-y-scroll overscroll-contain scroll-smooth"
           phx-window-keyup="module_keyup"
-          phx-hook="virtualscroll"
+          _phx-hook="virtualscroll"
           tabindex="-1"
         >
           <%= live_component @socket, ModuleComponent,
             id: @current_file.id,
             name: @current_file.name,
-            models: @virtual_models_bodies,
+            models: @current_models_bodies,
             model_names: @models_anchors, ui: @ui, path: @current_file.id %>
         </div>
       </nav>

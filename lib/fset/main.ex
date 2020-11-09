@@ -13,6 +13,8 @@ defmodule Fset.Main do
   alias FsetWeb.Presence
 
   def init_data(connected?, params) do
+    connected? = true
+
     with project <- get_project(params["project_name"], connected: connected?),
          {models_anchors, files_ids} <- get_project_meta(project.id, connected: connected?),
          user <- Accounts.get_user_by_username!(params["username"]),
@@ -218,7 +220,7 @@ defmodule Fset.Main do
     end
   end
 
-  def models_bodies(file, meta \\ %{})
+  def models_bodies(file, meta \\ nil)
 
   def models_bodies(%{type: :main} = file, meta) do
     schema = Sch.get(file.schema, file.id)
@@ -228,13 +230,14 @@ defmodule Fset.Main do
   end
 
   def models_bodies(%{type: :model} = file, nil) do
-    IO.inspect("what")
+    ksch_pairs =
+      file.schema
+      |> Sch.get(file.id)
+      |> Sch.order()
+      |> Enum.map(fn key -> {key, Sch.prop_sch(file.schema, key)} end)
+      |> Enum.slice(0..10)
 
-    file.schema
-    |> Sch.get(file.id)
-    |> Sch.order()
-    |> Enum.map(fn key -> {key, Sch.prop_sch(file.schema, key)} end)
-    |> Enum.slice(0..10)
+    {ksch_pairs, _container_height = sch_height(file.schema)}
   end
 
   def models_bodies(%{type: :model} = file, meta) do

@@ -23,10 +23,8 @@ Utils.throttle = (func, limit) => {
 
 Hooks.elm = {
   mounted() {
-    let elmMain = Elm.Main.init({
-      node: this.el.appendChild(document.createElement("div")),
-      flags: { currentFile: { id: "", schema: {} }, anchorsModels: [] }
-    })
+    let elmMain = window.elm.Main
+
     this.handleEvent("file_change", ({ currentFile, anchorsModels }) => {
       elmMain.ports.stateUpdate.send({ currentFile, anchorsModels })
       // this.rebindSortable(currentFile.id)
