@@ -20,9 +20,10 @@ import phxHooks from "./phx-hooks"
 import topbar from "topbar"
 import "./menu"
 
+let moduleContainer = document.querySelector("#module_container")
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
-  params: { _csrf_token: csrfToken },
+  params: { _csrf_token: csrfToken, module_container: { rect: moduleContainer.getBoundingClientRect() } },
   hooks: phxHooks
 })
 

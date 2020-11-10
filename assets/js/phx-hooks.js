@@ -67,25 +67,17 @@ Hooks.syntaxHighlight = {
 Hooks.virtualscroll = {
   load_model() {
     return Utils.throttle(e => {
-      let page = Math.round(this.el.scrollTop / 1500)
-      this.pushEvent("load_models", { page: page })
-
-      // this.pushEvent("scroll", {
-      //   offset: this.el.scrollTop,
-      //   viewportHeight: this.el.offsetHeight
-      // })
-
+      this.pushEvent("scroll", {
+        module_container: {
+          scrollTop: this.el.scrollTop,
+          rect: this.el.getBoundingClientRect()
+        }
+      })
     }, 300)
   },
   mounted() {
     let load_fun = this.load_model()
-
     this.el.addEventListener("scroll", load_fun, true)
-    this.handleEvent("load_models", ({ modelState }) => {
-      if (modelState == "done") {
-        this.el.removeEventListener("scroll", load_fun, true)
-      }
-    })
   }
 }
 

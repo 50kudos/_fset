@@ -17,11 +17,15 @@ defmodule FsetWeb.MainLive do
     end
 
     temporary_assigns = []
-    {:ok, assign(socket, assigns), temporary_assigns: temporary_assigns}
+    socket = assign(socket, assigns)
+    socket = assign(socket, :connect_params, get_connect_params(socket))
+
+    {:ok, socket, temporary_assigns: temporary_assigns}
   end
 
   @impl true
   def handle_params(params, _uri, socket) do
+    params = Map.put(params, :connect_params, socket.assigns.connect_params)
     assigns = change_file_data(socket.assigns, params)
 
     current_file =
@@ -125,15 +129,11 @@ defmodule FsetWeb.MainLive do
     end
   end
 
-  def handle_event("load_models", %{"page" => _page} = params, socket) do
-    assigns = ModuleComponent.load_models(socket.assigns, params)
-
-    send_update(ModuleComponent,
-      id: socket.assigns.current_file.id,
-      items_per_viewport: assigns.items_per_viewport
-    )
-
-    {:noreply, push_event(socket, "load_models", %{"modelState" => assigns.page})}
+  def handle_event("scroll", params, socket) do
+    {models_bodies, _} = models_bodies(socket.assigns.current_file, params)
+    # socket = Map.put(socket, :current_models_bodies, models_bodies)
+    send_update(ModuleComponent, id: socket.assigns.current_file.id, models: models_bodies)
+    {:noreply, socket}
   end
 
   @impl true

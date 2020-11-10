@@ -47,9 +47,10 @@ defmodule FsetWeb.ModelComponent do
   defp render_folder(assigns) do
     ~L"""
     <nav id="<%= @path %>" class="sort-handle
-      <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow' %>"
+      <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow absolute w-full' %>"
+      style="<%= if @ui.level == @ui.tab, do: Enum.join([~s(top:), Map.get(@sch, :offset, ''), 'px']) %>"
     >
-      <details <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>>
+      <details <%= if false && Sch.array?(@sch, :homo), do: "", else: "open" %>>
         <summary class="flex flex-col" >
           <%= render_folder_header(assigns) %>
         </summary>

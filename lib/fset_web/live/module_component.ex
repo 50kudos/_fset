@@ -8,13 +8,11 @@ defmodule FsetWeb.ModuleComponent do
   def update(assigns, socket) do
     assigns = Map.merge(socket.assigns, assigns)
 
-    assigns =
-      Map.take(assigns, [:id, :name, :models, :model_names, :ui, :path, :items_per_viewport])
+    assigns = Map.take(assigns, [:id, :name, :models, :model_names, :ui, :path])
 
     socket =
       socket
       |> assign(assigns)
-      |> assign_new(:items_per_viewport, fn -> Range.new(0, @items_per_chuck - 1) end)
       |> update(:ui, fn ui ->
         ui
         |> Map.put_new(:tab, 1)
@@ -34,9 +32,9 @@ defmodule FsetWeb.ModuleComponent do
   @impl true
   def render(assigns) do
     case {connected?(assigns.socket), assigns} do
-      {true, %{models: models}} when is_map(models) -> render_main(assigns)
-      {false, %{models: models}} when is_map(models) -> render_main(assigns)
-      {true, %{models: models}} when is_list(models) -> render_elm_model(assigns)
+      {true, %{models: [{:main, _}]}} -> render_main(assigns)
+      {false, %{models: [{:main, _}]}} -> render_main(assigns)
+      {true, %{models: models}} when is_list(models) -> render_model(assigns)
       {false, %{models: models}} when is_list(models) -> render_model(assigns)
     end
   end
@@ -50,14 +48,15 @@ defmodule FsetWeb.ModuleComponent do
 
   defp render_model(assigns) do
     ~L"""
-    <div id="<%= @path %>" class="grid grid-cols-fit py-6 h-full gap-3 <%= if @ui.model_number, do: 'model_number' %>"
+    <div id="<%= @path %>" class="relative flex flex-col flex-wrap pb-6 h-full gap-3 <%= if @ui.model_number, do: 'model_number' %>"
       phx-capture-click="select_sch"
       phx-value-paths="<%= @path %>"
       phx-hook="moveable"
       data-group="body"
       data-indent="1.25rem"
+      style="height: <%= @ui.module_container_height %>px; min-width: 374px"
     >
-      <%= for {key, sch} <- Enum.slice(@models, 0..10) do %>
+      <%= for {key, sch} <- @models do %>
         <%= live_component(@socket, ModelComponent,
           id: input_name("", key),
           key: key,
@@ -76,8 +75,8 @@ defmodule FsetWeb.ModuleComponent do
     <main class="grid grid-cols-fit py-6 h-full gap-x-6">
       <%= live_component(@socket, ModelComponent,
         id: @path,
-        key: @name,
-        sch: @models,
+        key: "#{elem(hd(@models), 0)}",
+        sch: elem(hd(@models), 1),
         ui: @ui,
         path: @path
       ) %>
@@ -85,20 +84,6 @@ defmodule FsetWeb.ModuleComponent do
     """
   end
 
-  def load_models(assigns, %{"page" => page}) do
-    models_count = Enum.count(assigns.current_models_bodies)
-    chucks_count = max(1, div(models_count, @items_per_chuck))
-
-    chuck_start = page * @items_per_chuck
-    chuck_end = (page + 1) * @items_per_chuck
-
-    {page, items_per_viewport} =
-      cond do
-        page <= chucks_count -> {page, Range.new(chuck_start, chuck_end - 1)}
-        page > chucks_count -> {:done, Range.new(0, -1)}
-      end
-
-    assigns = Map.put(%{}, :page, page)
-    _assigns = Map.put(assigns, :items_per_viewport, items_per_viewport)
+  def load_models(assigns, %{"scrollTop" => scrollTop}) do
   end
 end

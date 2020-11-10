@@ -31,11 +31,12 @@ defmodule Fset.Main do
   def change_file_data(assigns, params) do
     with file_id <- params["file_id"] || hd(assigns.files_ids).id,
          current_file <- get_current_file(assigns.project, file_id),
-         models_bodies <- models_bodies(current_file) do
+         {models_bodies, height} <- models_bodies(current_file, params[:connect_params]) do
       %{}
       |> Map.put(:current_file, current_file)
       |> Map.put(:current_path, [current_file.id])
       |> Map.put(:current_models_bodies, models_bodies)
+      |> Map.put(:ui, Map.put(assigns.ui, :module_container_height, height))
     end
   end
 
@@ -92,10 +93,11 @@ defmodule Fset.Main do
       end
 
     new_file = %{file | schema: new_schema}
+    {models_bodies, _} = models_bodies(new_file)
 
     %{}
     |> Map.put(:current_file, new_file)
-    |> Map.put(:current_models_bodies, models_bodies(new_file))
+    |> Map.put(:current_models_bodies, models_bodies)
   end
 
   def update_sch(assigns, %{"key" => key, "path" => sch_path} = params) do
@@ -135,12 +137,13 @@ defmodule Fset.Main do
 
     {moved_paths, new_schema} = Sch.move(file.schema, src_indices, dst_indices)
     file = %{file | schema: new_schema}
+    {models_bodies, _} = models_bodies(file)
 
     return_assigns =
       %{}
       |> Map.put(:current_file, file)
       |> Map.put(:current_path, moved_paths)
-      |> Map.put(:current_models_bodies, models_bodies(file))
+      |> Map.put(:current_models_bodies, models_bodies)
 
     track_user_update(user, file, current_path: Utils.unwrap(moved_paths))
 
@@ -215,14 +218,63 @@ defmodule Fset.Main do
     end
   end
 
-  defp models_bodies(%{type: :main} = file), do: Sch.get(file.schema, file.id)
+  def models_bodies(file, meta \\ %{})
 
-  defp models_bodies(%{type: :model} = file) do
+  def models_bodies(%{type: :main} = file, meta) do
     schema = Sch.get(file.schema, file.id)
+    ksch_pairs = [{:main, schema}]
 
-    for key <- Sch.order(schema) do
-      {key, Sch.prop_sch(schema, key)}
-    end
+    {ksch_pairs, _container_height = sch_height(schema)}
+  end
+
+  def models_bodies(%{type: :model} = file, meta) do
+    schema = Sch.get(file.schema, file.id)
+    line_h = 24
+    buffer = 32
+    gap = 8
+
+    %{"height" => viewport_h} = get_in(meta, ["module_container", "rect"])
+    scroll_top = get_in(meta, ["module_container", "scrollTop"]) || 0
+
+    # [{0, "0px"}, {1, "100px"}, {2, "105px"}, {3, "155px"}]
+    {ksch_pairs, _h, _vh} =
+      Sch.order(schema)
+      |> Enum.with_index()
+      |> Enum.reduce_while({[], 0, 0}, fn {key, index}, {pair_acc, h_acc, vh_acc} ->
+        sch = Sch.prop_sch(schema, key)
+        sch = Map.put(sch, :index, index)
+        sch = Map.put(sch, :offset, h_acc)
+        sch_h = sch_height(sch)
+
+        # accumulate sch height per line, stop when it reaches viewport height.
+        h_acc = h_acc + sch_h * line_h + buffer + gap
+
+        if scroll_top <= sch.offset do
+          vh_acc = vh_acc + sch_h * line_h + buffer + gap
+          acc = {[{key, sch} | pair_acc], h_acc, vh_acc}
+
+          cond do
+            vh_acc <= viewport_h * 2 -> {:cont, acc}
+            vh_acc > viewport_h * 2 -> {:halt, acc}
+          end
+        else
+          {:cont, {pair_acc, h_acc, vh_acc}}
+        end
+      end)
+
+    {Enum.reverse(ksch_pairs), _container_height = sch_height(schema) * line_h}
+  end
+
+  defp sch_height(sch) when is_map(sch) do
+    {_new_sch, height} =
+      Sch.reduce(sch, 0, fn a, acc ->
+        cond do
+          # Sch.array?(a, :homo) -> {a, acc}
+          true -> {a, acc + 1}
+        end
+      end)
+
+    height
   end
 
   defp get_project(project_name, connected: true) do

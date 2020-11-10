@@ -999,50 +999,55 @@ defmodule Fset.Sch do
     end)
   end
 
+  def walk_container(map, fun) when is_map(map) and is_function(fun) do
+    {new_map, _new_acc} = reduce(map, nil, fn a, acc -> {fun.(a), acc} end)
+    new_map
+  end
+
   def reduce(map, acc, fun) when is_map(map) and is_function(fun) do
     case map do
       %{@type_ => @object, @properties => properties} ->
-        for {k, sch} <- properties, reduce: map do
-          acc ->
-            acc
-            |> Map.update(@properties, %{}, fn props ->
-              Map.put(props, k, reduce(sch, fun.(sch, acc), fun))
-            end)
-        end
+        walk_kschs(@properties, map, properties, fun, acc)
 
       %{@type_ => @object, @patternProperties => pattern_roperties} ->
-        for {k, sch} <- pattern_roperties, reduce: map do
-          acc ->
-            acc
-            |> Map.update(@patternProperties, %{}, fn props ->
-              Map.put(props, k, reduce(sch, fun.(sch, acc), fun))
-            end)
-        end
+        walk_kschs(@patternProperties, map, pattern_roperties, fun, acc)
 
-      %{@type_ => @array} ->
-        items =
-          case items(map) do
-            item when is_map(item) ->
-              reduce(item, fun.(item, acc), fun)
+      %{@type_ => @array, @items => item} when is_map(item) ->
+        {new_sch, new_acc} = reduce(item, acc, fun)
 
-            items when is_list(items) ->
-              for {sch, _i} <- Enum.with_index(items), do: reduce(sch, fun.(sch, acc), fun)
-          end
+        new_map = Map.put(map, @items, new_sch)
+        fun.(new_map, new_acc)
 
-        Map.put(map, @items, items)
+      %{@type_ => @array, @items => items} when is_list(items) ->
+        walk_schs(@items, map, items, fun, acc)
 
       %{@any_of => schs} ->
-        schs = for {sch, _i} <- Enum.with_index(schs), do: reduce(sch, fun.(sch, acc), fun)
-        Map.put(map, @any_of, schs)
+        walk_schs(@any_of, map, schs, fun, acc)
 
       _ ->
-        map
+        fun.(map, acc)
     end
-    |> fun.(acc)
   end
 
-  def walk_container(map, fun) when is_map(map) and is_function(fun) do
-    reduce(map, nil, fn a, _ -> fun.(a) end)
+  defp walk_kschs(keyword, map, props, f, acc) do
+    {new_props, new_acc} =
+      Enum.map_reduce(props, acc, fn {k, sch}, acc_ ->
+        {new_sch, new_acc} = reduce(sch, acc_, f)
+        {{k, new_sch}, new_acc}
+      end)
+
+    new_map = Map.put(map, keyword, Map.new(new_props))
+    f.(new_map, new_acc)
+  end
+
+  defp walk_schs(keyword, map, schs, f, acc) do
+    {new_schs, new_acc} =
+      Enum.map_reduce(Enum.with_index(schs), acc, fn {sch, _i}, acc_ ->
+        {_new_sch, _new_acc} = reduce(sch, acc_, f)
+      end)
+
+    new_map = Map.put(map, keyword, new_schs)
+    f.(new_map, new_acc)
   end
 
   # Helpers
