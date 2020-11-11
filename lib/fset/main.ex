@@ -227,6 +227,16 @@ defmodule Fset.Main do
     {ksch_pairs, _container_height = sch_height(schema)}
   end
 
+  def models_bodies(%{type: :model} = file, nil) do
+    IO.inspect("what")
+
+    file.schema
+    |> Sch.get(file.id)
+    |> Sch.order()
+    |> Enum.map(fn key -> {key, Sch.prop_sch(file.schema, key)} end)
+    |> Enum.slice(0..10)
+  end
+
   def models_bodies(%{type: :model} = file, meta) do
     schema = Sch.get(file.schema, file.id)
     line_h = 24
@@ -236,33 +246,58 @@ defmodule Fset.Main do
     %{"height" => viewport_h} = get_in(meta, ["module_container", "rect"])
     scroll_top = get_in(meta, ["module_container", "scrollTop"]) || 0
 
-    # [{0, "0px"}, {1, "100px"}, {2, "105px"}, {3, "155px"}]
-    {ksch_pairs, _h, _vh} =
+    {ksch_pairs, _h} =
       Sch.order(schema)
       |> Enum.with_index()
-      |> Enum.reduce_while({[], 0, 0}, fn {key, index}, {pair_acc, h_acc, vh_acc} ->
+      |> Enum.reduce({[], 0}, fn {key, index}, {pair_acc, h_acc} ->
         sch = Sch.prop_sch(schema, key)
         sch = Map.put(sch, :index, index)
         sch = Map.put(sch, :offset, h_acc)
         sch_h = sch_height(sch)
 
-        # accumulate sch height per line, stop when it reaches viewport height.
+        # accumulate sch height per line. h_acc is a next item's offset.
         h_acc = h_acc + sch_h * line_h + buffer + gap
-
-        if scroll_top <= sch.offset do
-          vh_acc = vh_acc + sch_h * line_h + buffer + gap
-          acc = {[{key, sch} | pair_acc], h_acc, vh_acc}
-
-          cond do
-            vh_acc <= viewport_h * 2 -> {:cont, acc}
-            vh_acc > viewport_h * 2 -> {:halt, acc}
-          end
-        else
-          {:cont, {pair_acc, h_acc, vh_acc}}
-        end
+        acc = {[{key, sch} | pair_acc], h_acc}
       end)
 
     {Enum.reverse(ksch_pairs), _container_height = sch_height(schema) * line_h}
+  end
+
+  def virtualize_list([{:main, _}] = models, _) when is_list(models) do
+    models
+  end
+
+  def virtualize_list(models, nil) when is_list(models) do
+    Enum.slice(models, 0..10)
+  end
+
+  def virtualize_list(models, meta) when is_list(models) do
+    %{"height" => viewport_h} = get_in(meta, ["module_container", "rect"])
+    scroll_top = get_in(meta, ["module_container", "scrollTop"]) || 0
+
+    # [{0, "0px"}, {1, "100px"}, {2, "105px"}, {3, "155px"}]
+
+    sch_range =
+      models
+      |> Enum.drop_while(fn {_, sch} -> scroll_top - viewport_h > sch.offset end)
+      |> Enum.take_while(fn {_, sch} -> scroll_top + viewport_h >= sch.offset end)
+
+    case sch_range do
+      [] ->
+        {_, sch} = Enum.find(models, fn {_, sch} -> scroll_top + viewport_h >= sch.offset end)
+        Enum.slice(models, (sch.index - 1)..(sch.index + 1))
+
+      [{_, sch}] ->
+        Enum.slice(models, (sch.index - 1)..(sch.index + 1))
+
+      _ ->
+        {_, first_sch} = List.first(sch_range)
+        {_, last_sch} = List.last(sch_range)
+
+        start_ = max(first_sch.index - 2, 0)
+        end_ = min(last_sch.index + 2, length(models))
+        Enum.slice(models, start_..end_)
+    end
   end
 
   defp sch_height(sch) when is_map(sch) do

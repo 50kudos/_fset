@@ -20,7 +20,6 @@ export default class PhxSortable {
     let sortableEl = Sortable.get(this.el)
     if (!sortableEl) {
       this.setupSortable()
-      this.computeContainIntrinsicSize()
       this.phx.handleEvent("current_path", ({ paths }) => {
         this.selectCurrentItems(paths)
       })
@@ -30,12 +29,6 @@ export default class PhxSortable {
     this.el = phx.el
     let sortableEl = Sortable.get(this.el)
     sortableEl && sortableEl.destroy()
-  }
-  computeContainIntrinsicSize() {
-    if (this.el.classList.contains("content-vis-auto")) {
-      let boxHeight = this.el.querySelectorAll(this.itemClass).length + 1
-      this.el.style.containIntrinsicSize = `${this.el.offsetWidth}px ${boxHeight * 24}px`
-    }
   }
   resetHighLight() {
     document.querySelectorAll(this.highlightClass).forEach(a => a.classList.remove(...this.heighlightStyle))

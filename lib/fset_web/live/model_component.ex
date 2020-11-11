@@ -58,7 +58,6 @@ defmodule FsetWeb.ModelComponent do
           id="moveable__<%= @path %>"
           phx-hook="moveable"
           data-indent="<%= (@ui.level + 1) * 1.25 %>rem"
-          class="<%= if @ui.level == @ui.tab, do: 'content-vis-auto' %>"
         >
           <%= render_itself(assigns) %>
         </article>

@@ -46,7 +46,7 @@
           <%= live_component @socket, ModuleComponent,
             id: @current_file.id,
             name: @current_file.name,
-            models: @current_models_bodies,
+            models: @virtual_models_bodies,
             model_names: @models_anchors, ui: @ui, path: @current_file.id %>
         </div>
       </nav>

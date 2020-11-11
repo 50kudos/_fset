@@ -73,7 +73,7 @@ Hooks.virtualscroll = {
           rect: this.el.getBoundingClientRect()
         }
       })
-    }, 300)
+    }, 200)
   },
   mounted() {
     let load_fun = this.load_model()

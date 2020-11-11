@@ -28,6 +28,9 @@ defmodule FsetWeb.MainLive do
     params = Map.put(params, :connect_params, socket.assigns.connect_params)
     assigns = change_file_data(socket.assigns, params)
 
+    models_bodies = virtualize_list(assigns.current_models_bodies, params.connect_params)
+    assigns = Map.put(assigns, :virtual_models_bodies, models_bodies)
+
     current_file =
       assigns.current_file
       |> Map.from_struct()
@@ -130,8 +133,8 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("scroll", params, socket) do
-    {models_bodies, _} = models_bodies(socket.assigns.current_file, params)
-    # socket = Map.put(socket, :current_models_bodies, models_bodies)
+    models_bodies = virtualize_list(socket.assigns.current_models_bodies, params)
+    # IO.inspect(Enum.map(models_bodies, fn {_, sch} -> sch.index end), charlists: :as_list)
     send_update(ModuleComponent, id: socket.assigns.current_file.id, models: models_bodies)
     {:noreply, socket}
   end
