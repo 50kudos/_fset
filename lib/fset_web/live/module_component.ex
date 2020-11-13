@@ -41,7 +41,7 @@ defmodule FsetWeb.ModuleComponent do
 
   defp render_elm_model(assigns) do
     ~L"""
-    <div id="<%= @path %>" phx-hook="elm" phx-update="ignore">
+    <div id="file_<%= @path %>" class="h-screen" phx-hook="elm" phx-update="ignore">
     </div>
     """
   end

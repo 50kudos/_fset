@@ -13,7 +13,7 @@
     <%= for error <- @ui.errors do %>
       <span class="w-full text-red-600"><%= error.payload.msg %></span>
     <% end %>
-    <section class="flex flex-grow overflow-scroll h-full">
+    <section class="flex flex-grow overflow-hidden h-full">
       <aside class="hidden lg:w-1/5 lg:flex flex-col px-4 text-gray-500 bg-gray-900">
         <p class="ml-2 text-sm leading-8"><%= @project_name %></p>
         <ul class="overflow-scroll text-sm leading-6 space-y-4" style="transform: translate3d(0,0,0)">
@@ -39,7 +39,7 @@
         <div class="text-xs px-2 h-8 bg-gray-900 sticky top-0 z-10">
           <%= live_component @socket, ModelBarComponent, id: :model_bar, paths: List.wrap(@current_path) -- [@current_file.id] %>
         </div>
-        <div id="module_container" class="h-full overflow-y-scroll overscroll-contain scroll-smooth"
+        <div id="module_container" class=""
           phx-window-keyup="module_keyup"
           _phx-hook="virtualscroll"
           tabindex="-1"

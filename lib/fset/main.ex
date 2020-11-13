@@ -254,9 +254,13 @@ defmodule Fset.Main do
       |> Enum.with_index()
       |> Enum.reduce({[], 0}, fn {key, index}, {pair_acc, h_acc} ->
         sch = Sch.prop_sch(schema, key)
-        sch = Map.put(sch, :index, index)
-        sch = Map.put(sch, :offset, h_acc)
         sch_h = sch_height(sch)
+
+        sch =
+          sch
+          |> Map.put(:index, index)
+          |> Map.put(:offset, h_acc)
+          |> Map.put(:height, sch_h)
 
         # accumulate sch height per line. h_acc is a next item's offset.
         h_acc = h_acc + sch_h * line_h + buffer + gap
