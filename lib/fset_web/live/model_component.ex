@@ -46,23 +46,22 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_folder(assigns) do
     ~L"""
-    <nav id="<%= @path %>" class="sort-handle
-      <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow absolute w-full' %>"
-      style="<%= if @ui.level == @ui.tab, do: Enum.join([~s(top:), Map.get(@sch, :offset, ''), 'px']) %>"
+    <li id="<%= @path %>" class="sort-handle
+      <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow w-full' %>"
     >
       <details <%= if false && Sch.array?(@sch, :homo), do: "", else: "open" %>>
         <summary class="flex flex-col" >
           <%= render_folder_header(assigns) %>
         </summary>
-        <article
+        <ul
           id="moveable__<%= @path %>"
           phx-hook="moveable"
           data-indent="<%= (@ui.level + 1) * 1.25 %>rem"
         >
           <%= render_itself(assigns) %>
-        </article>
+        </ul>
       </details>
-    </nav>
+    </li>
     """
   end
 
@@ -137,11 +136,11 @@ defmodule FsetWeb.ModelComponent do
 
   defp render_file(assigns) do
     ~L"""
-    <nav id="<%= @path %>" class="sort-handle
+    <li id="<%= @path %>" class="sort-handle
       <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow' %>"
     >
       <%= render_key_type_pair(assigns) %>
-    </nav>
+    </li>
     """
   end
 

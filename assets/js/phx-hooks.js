@@ -62,23 +62,6 @@ Hooks.syntaxHighlight = {
   }
 }
 
-Hooks.virtualscroll = {
-  load_model() {
-    return Utils.throttle(e => {
-      this.pushEvent("scroll", {
-        module_container: {
-          scrollTop: this.el.scrollTop,
-          rect: this.el.getBoundingClientRect()
-        }
-      })
-    }, 200)
-  },
-  mounted() {
-    let load_fun = this.load_model()
-    this.el.addEventListener("scroll", load_fun, true)
-  }
-}
-
 Hooks.focusOnOpen = {
   mounted() {
     this.el.closest("details").addEventListener("toggle", event => {

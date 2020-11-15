@@ -21,12 +21,12 @@ import topbar from "topbar"
 import "./menu"
 import { Elm } from "../elm/elm.min.js"
 
-window.elm = {}
-window.elm.node = document.querySelector("[phx-hook='elm']")
-window.elm.Main = Elm.Main.init({
-  node: window.elm.node.appendChild(document.createElement("code")),
-  flags: JSON.parse(window.fstore.dataset.store)
-})
+// window.elm = {}
+// window.elm.node = document.querySelector("[phx-hook='elm']")
+// window.elm.Main = Elm.Main.init({
+//   node: window.elm.node.appendChild(document.createElement("code")),
+//   flags: {}// JSON.parse(window.fstore.dataset.store)
+// })
 // document.querySelector("[phx-hook='elm']").appendChild(window.elm.node)
 
 
@@ -34,7 +34,14 @@ let moduleContainer = document.querySelector("#module_container")
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
   params: { _csrf_token: csrfToken, module_container: { rect: moduleContainer.getBoundingClientRect() } },
-  hooks: phxHooks
+  hooks: phxHooks,
+  dom: {
+    onBeforeElUpdated(old_, new_) {
+      if (old_.classList.contains("sortable-selected")) {
+        new_.classList.add("sortable-selected")
+      }
+    }
+  },
 })
 liveSocket.connect()
 window.liveSocket = liveSocket
@@ -42,5 +49,7 @@ window.liveSocket = liveSocket
 let indigo500 = "rgba(102, 126, 234, 1)"
 let indigo700 = "rgba(102, 126, 234, 1)"
 topbar.config({ barColors: [indigo700, indigo500], barThickness: 2 })
-// window.addEventListener("phx:page-loading-start", info => topbar.show())
-// window.addEventListener("phx:page-loading-stop", info => topbar.hide())
+window.addEventListener("phx:page-loading-start", info => {
+  if (info.detail.kind != "error") { topbar.show() }
+})
+window.addEventListener("phx:page-loading-stop", info => topbar.hide())

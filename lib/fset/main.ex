@@ -12,11 +12,9 @@ defmodule Fset.Main do
   alias Fset.{Accounts, Project, Module, Sch, Utils}
   alias FsetWeb.Presence
 
-  def init_data(connected?, params) do
-    connected? = true
-
-    with project <- get_project(params["project_name"], connected: connected?),
-         {models_anchors, files_ids} <- get_project_meta(project.id, connected: connected?),
+  def init_data(connect_params, params) do
+    with project <- get_project(params["project_name"], connect_params),
+         {models_anchors, files_ids} <- get_project_meta(project.id, connect_params),
          user <- Accounts.get_user_by_username!(params["username"]),
          file_id <- params["file_id"] || hd(files_ids).id do
       %{}
@@ -140,6 +138,7 @@ defmodule Fset.Main do
     {moved_paths, new_schema} = Sch.move(file.schema, src_indices, dst_indices)
     file = %{file | schema: new_schema}
     {models_bodies, _} = models_bodies(file)
+    IO.inspect(models_bodies)
 
     return_assigns =
       %{}
@@ -222,32 +221,28 @@ defmodule Fset.Main do
 
   def models_bodies(file, meta \\ nil)
 
-  def models_bodies(%{type: :main} = file, meta) do
+  def models_bodies(%{type: :main} = file, _meta) do
     schema = Sch.get(file.schema, file.id)
     ksch_pairs = [{:main, schema}]
 
     {ksch_pairs, _container_height = sch_height(schema)}
   end
 
-  def models_bodies(%{type: :model} = file, nil) do
-    ksch_pairs =
-      file.schema
-      |> Sch.get(file.id)
-      |> Sch.order()
-      |> Enum.map(fn key -> {key, Sch.prop_sch(file.schema, key)} end)
-      |> Enum.slice(0..10)
+  # def models_bodies(%{type: :model} = file, nil) do
+  #   ksch_pairs =
+  #     file.schema
+  #     |> Sch.get(file.id)
+  #     |> Sch.order()
+  #     |> Enum.map(fn key -> {key, Sch.prop_sch(file.schema, key)} end)
 
-    {ksch_pairs, _container_height = sch_height(file.schema)}
-  end
+  #   {ksch_pairs, _container_height = sch_height(file.schema)}
+  # end
 
-  def models_bodies(%{type: :model} = file, meta) do
+  def models_bodies(%{type: :model} = file, _meta) do
     schema = Sch.get(file.schema, file.id)
     line_h = 24
     buffer = 32
     gap = 8
-
-    %{"height" => viewport_h} = get_in(meta, ["module_container", "rect"])
-    scroll_top = get_in(meta, ["module_container", "scrollTop"]) || 0
 
     {ksch_pairs, _h} =
       Sch.order(schema)
@@ -264,47 +259,10 @@ defmodule Fset.Main do
 
         # accumulate sch height per line. h_acc is a next item's offset.
         h_acc = h_acc + sch_h * line_h + buffer + gap
-        acc = {[{key, sch} | pair_acc], h_acc}
+        _acc = {[{key, sch} | pair_acc], h_acc}
       end)
 
     {Enum.reverse(ksch_pairs), _container_height = sch_height(schema) * line_h}
-  end
-
-  def virtualize_list([{:main, _}] = models, _) when is_list(models) do
-    models
-  end
-
-  def virtualize_list(models, nil) when is_list(models) do
-    Enum.slice(models, 0..10)
-  end
-
-  def virtualize_list(models, meta) when is_list(models) do
-    %{"height" => viewport_h} = get_in(meta, ["module_container", "rect"])
-    scroll_top = get_in(meta, ["module_container", "scrollTop"]) || 0
-
-    # [{0, "0px"}, {1, "100px"}, {2, "105px"}, {3, "155px"}]
-
-    sch_range =
-      models
-      |> Enum.drop_while(fn {_, sch} -> scroll_top - viewport_h > sch.offset end)
-      |> Enum.take_while(fn {_, sch} -> scroll_top + viewport_h >= sch.offset end)
-
-    case sch_range do
-      [] ->
-        {_, sch} = Enum.find(models, fn {_, sch} -> scroll_top + viewport_h >= sch.offset end)
-        Enum.slice(models, (sch.index - 1)..(sch.index + 1))
-
-      [{_, sch}] ->
-        Enum.slice(models, (sch.index - 1)..(sch.index + 1))
-
-      _ ->
-        {_, first_sch} = List.first(sch_range)
-        {_, last_sch} = List.last(sch_range)
-
-        start_ = max(first_sch.index - 2, 0)
-        end_ = min(last_sch.index + 2, length(models))
-        Enum.slice(models, start_..end_)
-    end
   end
 
   defp sch_height(sch) when is_map(sch) do
@@ -319,19 +277,19 @@ defmodule Fset.Main do
     height
   end
 
-  defp get_project(project_name, connected: true) do
+  # defp get_project(project_name, %{"_mounts" => 0}) do
+  #   Project.get_by!(:full, name: project_name)
+  # end
+
+  defp get_project(project_name, _connect_params) do
     Project.get_by!(:full, name: project_name)
   end
 
-  defp get_project(project_name, connected: false) do
-    Project.get_by!(:file, name: project_name)
-  end
+  # defp get_project_meta(project_id, %{"_mounts" => 0}) do
+  #   {[], Project.all_files(project_id)}
+  # end
 
-  defp get_project_meta(project_id, connected: false) do
-    {[], Project.all_files(project_id)}
-  end
-
-  defp get_project_meta(project_id, connected: true) do
+  defp get_project_meta(project_id, _connect_params) do
     project_id
     |> Project.all_files(schema: true)
     |> get_project_meta_()

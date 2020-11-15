@@ -6,20 +6,18 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def mount(params, _session, socket) do
-    socket_connected? = connected?(socket)
-    assigns = init_data(socket_connected?, params)
+    socket = assign(socket, :connect_params, get_connect_params(socket))
+    assigns = init_data(socket.assigns.connect_params, params)
+    socket = assign(socket, assigns)
     file_id = params["file_id"] || hd(assigns.files_ids).id
 
-    if socket_connected? do
+    if connected?(socket) do
       subscribe_file_update(file_id)
       push_current_path(file_id)
       track_user(assigns.current_user.id, file_id)
     end
 
     temporary_assigns = []
-    socket = assign(socket, assigns)
-    socket = assign(socket, :connect_params, get_connect_params(socket))
-
     {:ok, socket, temporary_assigns: temporary_assigns}
   end
 
@@ -28,28 +26,36 @@ defmodule FsetWeb.MainLive do
     params = Map.put(params, :connect_params, socket.assigns.connect_params)
     assigns = change_file_data(socket.assigns, params)
 
-    current_file =
-      assigns.current_file
-      |> Map.from_struct()
-      |> Map.take([:id, :schema])
+    # current_file =
+    #   assigns.current_file
+    #   |> Map.from_struct()
+    #   |> Map.take([:id, :schema])
 
-    anchors_models =
-      Enum.map(socket.assigns.models_anchors, fn {model_name, anchor} ->
-        [anchor, model_name]
-      end)
+    # anchors_models =
+    #   Enum.map(socket.assigns.models_anchors, fn {model_name, anchor} ->
+    #     [anchor, model_name]
+    #   end)
 
-    fmodels =
-      Enum.map(assigns.current_models_bodies, fn {model_name, model} ->
-        [model_name, model]
-      end)
+    # fmodels =
+    #   Enum.map(assigns.current_models_bodies, fn {model_name, model} ->
+    #     [model_name, model]
+    #   end)
 
-    push_file_change = %{
-      "currentFile" => %{id: current_file.id, fmodels: fmodels},
-      "anchorsModels" => anchors_models
-    }
+    # push_file_change = %{
+    #   "currentFile" => %{id: current_file.id, fmodels: fmodels},
+    #   "anchorsModels" => anchors_models
+    # }
 
     socket = assign(socket, assigns)
-    socket = push_event(socket, "file_change", push_file_change)
+
+    socket =
+      if socket.assigns.connect_params["_mounts"] == 0 do
+        push_event(socket, "mark_no_render", %{"norender" => true})
+      else
+        socket
+      end
+
+    # socket = push_event(socket, "file_change", push_file_change)
     {:noreply, socket}
   end
 
@@ -66,9 +72,6 @@ defmodule FsetWeb.MainLive do
     {:noreply, assign(socket, assigns)}
   end
 
-  # TODO: Completely move select state to client side. Tracking current_path is
-  # problematic, things get impured. Instead, we want to always send path on every
-  # operation to server when it is needed.
   def handle_event("select_sch", %{"paths" => sch_path}, socket) do
     inspect_memory(socket)
 
@@ -81,7 +84,7 @@ defmodule FsetWeb.MainLive do
 
     if length(sch_path) == 1 do
       sch = Sch.get(file.schema, hd(sch_path))
-      send_update(FsetWeb.SchComponent, id: :sch_meta, sch: sch, path: hd(sch_path))
+      send_update(SchComponent, id: :sch_meta, sch: sch, path: hd(sch_path))
     end
 
     {:noreply, socket}
@@ -102,7 +105,7 @@ defmodule FsetWeb.MainLive do
   def handle_event("move", params, socket) do
     assigns = move(socket.assigns, params)
 
-    {:noreply, socket = assign(socket, assigns)}
+    {:noreply, assign(socket, assigns)}
   end
 
   def handle_event("escape", _val, socket) do
@@ -134,30 +137,23 @@ defmodule FsetWeb.MainLive do
     end
   end
 
-  def handle_event("scroll", params, socket) do
-    models_bodies = virtualize_list(socket.assigns.current_models_bodies, params)
-    # IO.inspect(Enum.map(models_bodies, fn {_, sch} -> sch.index end), charlists: :as_list)
-    send_update(ModuleComponent, id: socket.assigns.current_file.id, models: models_bodies)
-    {:noreply, socket}
-  end
-
   @impl true
   def handle_info({:update_sch, path, sch, opts}, socket) do
-    # re_render_model(
-    #   path,
-    #   opts
-    #   |> Keyword.put(:sch, sch)
-    #   |> Keyword.put(:file_id, socket.assigns.current_file.id)
-    # )
+    re_render_model(
+      path,
+      opts
+      |> Keyword.put(:sch, sch)
+      |> Keyword.put(:file_id, socket.assigns.current_file.id)
+    )
 
     send(self(), {:async_get_and_update, path, sch})
 
-    socket =
-      push_event(socket, "model_change", %{
-        id: socket.assigns.current_file.id,
-        path: path,
-        sch: sch
-      })
+    # socket =
+    #   push_event(socket, "model_change", %{
+    #     id: socket.assigns.current_file.id,
+    #     path: path,
+    #     sch: sch
+    #   })
 
     {:noreply, socket}
   end
@@ -232,7 +228,7 @@ defmodule FsetWeb.MainLive do
         <% end %>
       </ul>
     <% else %>
-      <%= live_patch to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id), class: "block" do %>
+      <%= live_redirect to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id), class: "block" do %>
         <span class="pl-2 block sticky top-0 hover:text-black hover:text-indigo-500 bg-gray-800"><%= file.name %></span>
       <% end %>
       <ul class="px-2 py-2 text-xs space-y-1">
