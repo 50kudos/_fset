@@ -1,6 +1,6 @@
 defmodule FsetWeb.ModuleComponent do
   use FsetWeb, :live_component
-  alias FsetWeb.ModelComponent
+  alias FsetWeb.{ModelComponent, ModelView}
 
   @impl true
   def update(assigns, socket) do
@@ -13,6 +13,7 @@ defmodule FsetWeb.ModuleComponent do
       |> update(:ui, fn ui ->
         ui
         |> Map.put_new(:tab, 1)
+        |> Map.put_new(:level, 1)
         |> Map.put_new(:model_number, false)
         |> Map.put_new(:file_id, assigns.id)
         |> Map.put(:model_names, assigns.model_names)
@@ -31,14 +32,41 @@ defmodule FsetWeb.ModuleComponent do
     case {connected?(assigns.socket), assigns} do
       {true, %{models: [{:main, _}]}} -> render_main(assigns)
       {false, %{models: [{:main, _}]}} -> render_main(assigns)
-      {true, %{models: models}} when is_list(models) -> render_model(assigns)
-      {false, %{models: models}} when is_list(models) -> render_model(assigns)
+      {true, %{models: models}} when is_list(models) -> render_readonly_model(assigns)
+      {false, %{models: models}} when is_list(models) -> render_readonly_model(assigns)
     end
   end
 
   defp render_elm_model(assigns) do
     ~L"""
     <div id="file_<%= @path %>" class="h-screen" phx-hook="elm" phx-update="ignore">
+    </div>
+    """
+  end
+
+  defp render_readonly_model(assigns) do
+    ~L"""
+    <div id="file_<%= @path %>" class="h-screen">
+      <main class="overflow-y-scroll overscroll-y-none h-full relative">
+        <ul id="<%= @path %>" class="grid grid-cols-fit pb-6 gap-2 w-full text-sm <%= if @ui.model_number, do: 'model_number' %>"
+          phx-capture-click="select_sch"
+          phx-value-paths="<%= @path %>"
+          phx-hook="moveable"
+          data-group="body"
+          data-indent="1.25rem"
+        >
+          <%= for {key, sch} <- @models do %>
+            <%= ModelView.render("model.html", %{
+              id: input_name("", key),
+              key: key,
+              sch: sch,
+              parent: Fset.Sch.New.object(),
+              ui: @ui,
+              path: input_name("", key)
+            }) %>
+          <% end %>
+        </ul>
+      </main>
     </div>
     """
   end

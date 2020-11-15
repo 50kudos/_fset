@@ -228,7 +228,7 @@ defmodule FsetWeb.MainLive do
         <% end %>
       </ul>
     <% else %>
-      <%= live_redirect to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id), class: "block" do %>
+      <%= live_patch to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id), class: "block" do %>
         <span class="pl-2 block sticky top-0 hover:text-black hover:text-indigo-500 bg-gray-800"><%= file.name %></span>
       <% end %>
       <ul class="px-2 py-2 text-xs space-y-1">
