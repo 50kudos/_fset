@@ -72,6 +72,10 @@ details[open] > summary {
   .open-marker { display: flex; }
 }
 
+[aria-selected="true"] {
+  @apply border-pink-500
+}
+
 /* General style */
 
 /* input { @apply outline-none; } */

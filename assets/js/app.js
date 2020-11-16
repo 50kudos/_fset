@@ -19,6 +19,7 @@ import phxHooks from "./phx-hooks"
 
 import topbar from "topbar"
 import "./menu"
+import '@github/tab-container-element'
 import { Elm } from "../elm/elm.min.js"
 
 const init_elm = () => {

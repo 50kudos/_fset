@@ -75,7 +75,7 @@ defmodule Fset.Project do
     Ecto.Changeset.change(Create.import_changeset(%Create{}, attrs))
   end
 
-  defp fetch_schema(url) do
+  defp fetch_file(url) do
     case Finch.request(Finch.build(:get, url), FsetHttp) do
       {:ok, result} ->
         {:ok, result.body}
@@ -92,11 +92,15 @@ defmodule Fset.Project do
     load(schema, fn a -> Module.encode(a, defs_per_file: 50) end)
   end
 
-  def create(user_id, %{"type" => "import"} = params) do
+  defp data_to_schema(json_data) do
+    load(json_data, fn a -> a end)
+  end
+
+  def create(user_id, %{"type" => "import_schema"} = params) do
     changeset = change_import_create(params)
 
     with {:ok, project} <- Ecto.Changeset.apply_action(changeset, :create),
-         {:ok, schema} <- fetch_schema(project.url),
+         {:ok, schema} <- fetch_file(project.url),
          {:ok, encoded_schema} <- encode_schema(schema) do
       encoded_schema
       |> Module.init_files()
@@ -107,11 +111,26 @@ defmodule Fset.Project do
     end
   end
 
-  def create(user_id, %{"type" => "bare"} = params) do
+  def create(user_id, %{"type" => "bare_schema"} = params) do
     changeset = change_bare_create(params)
 
     with {:ok, project} <- Ecto.Changeset.apply_action(changeset, :create),
          {:ok, encoded_schema} <- encode_schema("{}") do
+      encoded_schema
+      |> Module.init_files()
+      |> create_with_user!(user_id, project.name)
+    else
+      {:error, %Ecto.Changeset{}} = errors -> errors
+      {:error, errors} -> collect_errors(changeset, errors)
+    end
+  end
+
+  def create(user_id, %{"type" => "schema_from_data"} = params) do
+    changeset = change_import_create(params)
+
+    with {:ok, project} <- Ecto.Changeset.apply_action(changeset, :create),
+         {:ok, json_data} <- fetch_file(project.url),
+         {:ok, encoded_schema} <- data_to_schema(json_data) do
       encoded_schema
       |> Module.init_files()
       |> create_with_user!(user_id, project.name)

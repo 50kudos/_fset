@@ -20,7 +20,7 @@ defmodule Fset.ProjectTest do
 
   test "#create" do
     user = user_fixture()
-    {:ok, project} = create(user.id, %{"type" => "bare", "name" => "a.json"})
+    {:ok, project} = create(user.id, %{"type" => "bare_schema", "name" => "a.json"})
     assert length(project.schs) == 1
 
     for file <- project.schs do
