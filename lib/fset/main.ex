@@ -14,7 +14,7 @@ defmodule Fset.Main do
 
   def init_data(connect_params, params) do
     with project <- get_project(params["project_name"], connect_params),
-         {models_anchors, files_ids} <- get_project_meta(project.id, connect_params),
+         {models_anchors, files_ids} <- get_project_meta(project, connect_params),
          user <- Accounts.get_user_by_username!(params["username"]),
          file_id <- params["file_id"] || hd(files_ids).id do
       %{}
@@ -289,10 +289,8 @@ defmodule Fset.Main do
   #   {[], Project.all_files(project_id)}
   # end
 
-  defp get_project_meta(project_id, _connect_params) do
-    project_id
-    |> Project.all_files(schema: true)
-    |> get_project_meta_()
+  defp get_project_meta(project, _connect_params) do
+    get_project_meta_(project.schs)
   end
 
   defp get_project_meta_(all_files) do

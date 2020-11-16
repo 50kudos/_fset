@@ -60,11 +60,10 @@
 }
 
 textarea { resize: none; }
-details > summary::-webkit-details-marker {
-  display: none;
-}
+details > summary::-webkit-details-marker { display: none; }
 details > summary {
   outline: none;
+  display: flex;
   .close-marker { display: flex; }
   .open-marker { display: none; }
 }
