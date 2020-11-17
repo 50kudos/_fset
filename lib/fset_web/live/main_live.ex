@@ -255,16 +255,26 @@ defmodule FsetWeb.MainLive do
   def re_render_model(path_, opts \\ []) do
     case List.wrap(path_) do
       [path] when is_binary(path) ->
+        cid =
+          if path == opts[:file_id],
+            do: path,
+            else: String.replace_prefix(path, opts[:file_id], "")
+
         send_update(
           FsetWeb.ModelComponent,
-          Keyword.merge(opts, id: String.replace_prefix(path, opts[:file_id], ""))
+          Keyword.merge(opts, id: cid)
         )
 
       paths when is_list(paths) ->
         for path <- paths do
+          cid =
+            if path == opts[:file_id],
+              do: path,
+              else: String.replace_prefix(path, opts[:file_id], "")
+
           send_update(
             FsetWeb.ModelComponent,
-            Keyword.merge(opts, id: String.replace_prefix(path, opts[:file_id], ""))
+            Keyword.merge(opts, id: cid)
           )
         end
     end

@@ -12,6 +12,7 @@ export default class PhxSortable {
     this.heighlightStyle = ["bg-indigo-700", "bg-opacity-25"]
     this.indentClass = ".indent"
     this.cursorLoadingStyle = "phx-click-loading"
+    this.rootSelector = "[data-group='root']"
 
     this.findOrCreate()
   }
@@ -45,7 +46,7 @@ export default class PhxSortable {
     if (indentEl) { indentEl.style.paddingLeft = box.dataset.indent || "0rem" }
   }
   sortableRoot() {
-    return document.querySelector("[data-group='body']")
+    return Sortable.utils.closest(this.el, this.rootSelector)
   }
   rootID() {
     return this.rootId || this.sortableRoot().id
@@ -54,11 +55,9 @@ export default class PhxSortable {
     let item = Sortable.utils.closest(el, this.itemClass)
     let rootEl = this.sortableRoot()
 
-    if (item == rootEl) {
-      return item.id
-    } else {
-      return (this.rootId || rootEl.id) + item.id
-    }
+    if (item.id.startsWith("main")) { item.id = item.id.replace("main", "") }
+    if (item.id == rootEl.id) { return item.id }
+    else { return (this.rootId || rootEl.id) + item.id }
   }
   selectCurrentItems(paths) {
     const currentPaths = paths

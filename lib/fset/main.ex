@@ -138,7 +138,6 @@ defmodule Fset.Main do
     {moved_paths, new_schema} = Sch.move(file.schema, src_indices, dst_indices)
     file = %{file | schema: new_schema}
     {models_bodies, _} = models_bodies(file)
-    IO.inspect(models_bodies)
 
     return_assigns =
       %{}

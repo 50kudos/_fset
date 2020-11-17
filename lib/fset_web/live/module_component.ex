@@ -32,7 +32,7 @@ defmodule FsetWeb.ModuleComponent do
     case {connected?(assigns.socket), assigns} do
       {true, %{models: [{:main, _}]}} -> render_main(assigns)
       {false, %{models: [{:main, _}]}} -> render_main(assigns)
-      {true, %{models: models}} when is_list(models) -> render_readonly_model(assigns)
+      {true, %{models: models}} when is_list(models) -> render_model(assigns)
       {false, %{models: models}} when is_list(models) -> render_readonly_model(assigns)
     end
   end
@@ -48,11 +48,10 @@ defmodule FsetWeb.ModuleComponent do
     ~L"""
     <div id="file_<%= @path %>" class="h-screen">
       <main class="overflow-y-scroll overscroll-y-none h-full relative">
-        <ul id="<%= @path %>" class="grid grid-cols-fit pb-6 gap-2 w-full text-sm <%= if @ui.model_number, do: 'model_number' %>"
+        <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit pb-6 gap-2 w-full text-sm <%= if @ui.model_number, do: 'model_number' %>"
           phx-capture-click="select_sch"
           phx-value-paths="<%= @path %>"
-          phx-hook="moveable"
-          data-group="body"
+          data-group="root"
           data-indent="1.25rem"
         >
           <%= for {key, sch} <- @models do %>
@@ -75,11 +74,11 @@ defmodule FsetWeb.ModuleComponent do
     ~L"""
     <div id="file_<%= @path %>" class="h-screen">
       <main id="virtual_scroller" class="overflow-y-scroll overscroll-y-none h-full relative">
-        <ul id="<%= @path %>" class="grid grid-cols-fit pb-6 gap-2 w-full <%= if @ui.model_number, do: 'model_number' %>"
+        <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit pb-6 gap-2 w-full <%= if @ui.model_number, do: 'model_number' %>"
           phx-capture-click="select_sch"
           phx-value-paths="<%= @path %>"
           phx-hook="moveable"
-          data-group="body"
+          data-group="root"
           data-indent="1.25rem"
         >
           <%= for {key, sch} <- @models do %>
@@ -98,20 +97,23 @@ defmodule FsetWeb.ModuleComponent do
     """
   end
 
-  defp render_main(assigns) do
+  defp render_main(%{models: [{main, main_sch}]} = assigns) do
     ~L"""
-    <ul class="grid grid-cols-fit py-6 h-full gap-x-6">
+    <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit py-6 w-full gap-2"
+      phx-capture-click="select_sch"
+      phx-value-paths="<%= @path %>"
+      phx-hook="moveable"
+      data-group="root"
+      data-indent="1.25rem"
+    >
       <%= live_component(@socket, ModelComponent,
         id: @path,
-        key: "#{elem(hd(@models), 0)}",
-        sch: elem(hd(@models), 1),
+        key: "#{main}",
+        sch: main_sch,
         ui: @ui,
-        path: @path
+        path: "#{main}"
       ) %>
     </ul>
     """
-  end
-
-  def load_models(assigns, %{"scrollTop" => scrollTop}) do
   end
 end

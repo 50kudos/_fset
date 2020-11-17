@@ -65,6 +65,16 @@ defmodule FsetWeb.ModelComponent do
     """
   end
 
+  defp render_file(assigns) do
+    ~L"""
+    <li id="<%= @path %>" class="sort-handle
+      <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow' %>"
+    >
+      <%= render_key_type_pair(assigns) %>
+    </li>
+    """
+  end
+
   defp render_folder_header(%{ui: %{level: _}} = assigns) do
     ~L"""
     <div class="relative dragover-hl flex flex-wrap items-start w-full">
@@ -131,16 +141,6 @@ defmodule FsetWeb.ModelComponent do
         path: input_name(@path <> "[]", Integer.to_string(i))
       ) %>
     <% end %>
-    """
-  end
-
-  defp render_file(assigns) do
-    ~L"""
-    <li id="<%= @path %>" class="sort-handle
-      <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow' %>"
-    >
-      <%= render_key_type_pair(assigns) %>
-    </li>
     """
   end
 
