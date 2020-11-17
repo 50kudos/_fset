@@ -189,7 +189,7 @@ defmodule FsetWeb.ModelComponent do
         ~L"""
         <span class="px-2 bg-indigo-500 rounded cursor-pointer"
           phx-click="add_field" phx-value-field="Record"
-          phx-value-path="<%= @ui.file_id <> @path %>"
+          phx-value-path="<%= @ui.file_id <> String.trim_leading(@path, ~s(main)) %>"
           phx-target="<%= @myself %>">+</span>
         """
 
@@ -197,7 +197,7 @@ defmodule FsetWeb.ModelComponent do
         ~L"""
         <span class="px-2 bg-indigo-500 rounded cursor-pointer"
           phx-click="add_field" phx-value-field="Record"
-          phx-value-path="<%= @ui.file_id <> @path %>"
+          phx-value-path="<%= @ui.file_id <> String.trim_leading(@path, ~s(main)) %>"
           phx-target="<%= @myself %>">+</span>
         """
 
@@ -205,7 +205,7 @@ defmodule FsetWeb.ModelComponent do
         ~L"""
         <span class="px-2 bg-indigo-500 rounded cursor-pointer"
           phx-click="add_field" phx-value-field="Record"
-          phx-value-path="<%= @ui.file_id <> @path %>"
+          phx-value-path="<%= @ui.file_id <> String.trim_leading(@path, ~s(main)) %>"
           phx-target="<%= @myself %>">+</span>
         """
 

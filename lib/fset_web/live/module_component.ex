@@ -73,7 +73,7 @@ defmodule FsetWeb.ModuleComponent do
   defp render_model(assigns) do
     ~L"""
     <div id="file_<%= @path %>" class="h-screen">
-      <main id="virtual_scroller" class="overflow-y-scroll overscroll-y-none h-full relative">
+      <main class="overflow-y-scroll overscroll-y-none h-full relative">
         <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit pb-6 gap-2 w-full <%= if @ui.model_number, do: 'model_number' %>"
           phx-capture-click="select_sch"
           phx-value-paths="<%= @path %>"
@@ -99,21 +99,25 @@ defmodule FsetWeb.ModuleComponent do
 
   defp render_main(%{models: [{main, main_sch}]} = assigns) do
     ~L"""
-    <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit py-6 w-full gap-2"
-      phx-capture-click="select_sch"
-      phx-value-paths="<%= @path %>"
-      phx-hook="moveable"
-      data-group="root"
-      data-indent="1.25rem"
-    >
-      <%= live_component(@socket, ModelComponent,
-        id: @path,
-        key: "#{main}",
-        sch: main_sch,
-        ui: @ui,
-        path: "#{main}"
-      ) %>
-    </ul>
+    <div id="file_<%= @path %>" class="h-screen">
+      <main class="overflow-y-scroll overscroll-y-none h-full relative">
+        <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit pb-6 w-full gap-2"
+          phx-capture-click="select_sch"
+          phx-value-paths="<%= @path %>"
+          phx-hook="moveable"
+          data-group="root"
+          data-indent="1.25rem"
+        >
+          <%= live_component(@socket, ModelComponent,
+            id: @path,
+            key: "#{main}",
+            sch: main_sch,
+            ui: @ui,
+            path: "#{main}"
+          ) %>
+        </ul>
+      </main>
+    <div>
     """
   end
 end

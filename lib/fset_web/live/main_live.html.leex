@@ -41,11 +41,7 @@
         <div class="text-xs px-2 h-8 bg-gray-900 sticky top-0 z-10">
           <%= live_component @socket, ModelBarComponent, id: :model_bar, paths: List.wrap(@current_path) -- [@current_file.id] %>
         </div>
-        <div id="module_container" class=""
-          phx-window-keyup="module_keyup"
-          _phx-hook="virtualscroll"
-          tabindex="-1"
-        >
+        <div id="module_container" phx-window-keyup="module_keyup">
           <%= live_component @socket, ModuleComponent,
             id: @current_file.id,
             name: @current_file.name,

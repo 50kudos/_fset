@@ -66,7 +66,11 @@ export default class PhxSortable {
 
     sortableEl && sortableEl.multiDrag._deselectMultiDrag()
     currentPaths.forEach(currentPath => {
-      currentPath = currentPath.replace(this.rootID(), "")
+      if (currentPath == this.rootID()) {
+        currentPath = "main"
+      } else {
+        currentPath = currentPath.replace(this.rootID(), "")
+      }
       let item = itemBox.querySelector(`[id='${currentPath}']`)
       if (!item) { return }
 
