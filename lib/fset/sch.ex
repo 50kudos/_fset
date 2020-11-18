@@ -986,7 +986,8 @@ defmodule Fset.Sch do
     |> Enum.reverse()
   end
 
-  def access_path(path) when is_nil(path), do: []
+  def access_path(nil), do: []
+  def access_path([""]), do: []
 
   def access_path(path) when is_map(path) or is_list(path) do
     Enum.reduce(path, [], fn
