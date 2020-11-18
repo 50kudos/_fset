@@ -1,15 +1,14 @@
 defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
-  alias FsetWeb.{SchComponent, ModuleComponent, ModelBarComponent, Presence}
+  alias FsetWeb.{SchComponent, ModuleComponent, ModelBarComponent, Presence, ModelNavComponent}
   alias Fset.{Sch, Persistence, Module, Project, Utils}
   import Fset.Main
 
   @impl true
   def mount(params, _session, socket) do
-    socket = assign(socket, :connect_params, get_connect_params(socket))
-    assigns = init_data(socket.assigns.connect_params, params)
+    assigns = init_data(params)
     socket = assign(socket, assigns)
-    file_id = params["file_id"] || hd(assigns.files_ids).id
+    file_id = params["file_id"] || assigns.project.main_sch.id
 
     if connected?(socket) do
       subscribe_file_update(file_id)
@@ -17,13 +16,12 @@ defmodule FsetWeb.MainLive do
       track_user(assigns.current_user.id, file_id)
     end
 
-    temporary_assigns = []
+    temporary_assigns = [project: nil]
     {:ok, socket, temporary_assigns: temporary_assigns}
   end
 
   @impl true
   def handle_params(params, _uri, socket) do
-    params = Map.put(params, :connect_params, socket.assigns.connect_params)
     assigns = change_file_data(socket.assigns, params)
 
     # current_file =
@@ -47,14 +45,6 @@ defmodule FsetWeb.MainLive do
     # }
 
     socket = assign(socket, assigns)
-
-    socket =
-      if socket.assigns.connect_params["_mounts"] == 0 do
-        push_event(socket, "mark_no_render", %{"norender" => true})
-      else
-        socket
-      end
-
     # socket = push_event(socket, "file_change", push_file_change)
     {:noreply, socket}
   end
@@ -118,7 +108,7 @@ defmodule FsetWeb.MainLive do
 
   def handle_event("module_keyup", params, socket) do
     # Prevent operations on file level
-    if current_path(socket.assigns.ui) in Enum.map(socket.assigns.files_ids, & &1.id) do
+    if current_path(socket.assigns.ui) in Enum.map(socket.assigns.files, & &1.id) do
       {:noreply, socket}
     else
       assigns =
@@ -208,39 +198,8 @@ defmodule FsetWeb.MainLive do
     """
   end
 
-  def render_file_nav(assigns, file) do
-    ~L"""
-    <%= if @current_file.id == file.id do %>
-      <span class="pl-2 pt-2 block _sticky top-0 text-indigo-400"><%= file.name %></span>
-      <ul class="pl-2 py-2 text-xs">
-        <%= if file.type == :model do %>
-          <%= for {{model_name, _}, i} <- Enum.with_index(@current_models_bodies) do %>
-            <li class="sort-handle" id="<%= input_id(%{id: i}, file.name) %>">
-              <a href="#[<%= model_name %>]">
-                <span class="text-gray-600 font-mono"><%= "#{i + 1}" %>.</span> <%= Utils.word_break_html(model_name) %>
-              </a>
-            </li>
-          <% end %>
-        <% else %>
-          <%= for {model_name, _} <- [] do %>
-            <li class=""><%= Utils.word_break_html(model_name) %></li>
-          <% end %>
-        <% end %>
-      </ul>
-    <% else %>
-      <%= live_patch to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id), class: "block" do %>
-        <span class="pl-2 block sticky top-0 hover:text-black hover:text-indigo-500 bg-gray-800"><%= file.name %></span>
-      <% end %>
-      <ul class="px-2 py-2 text-xs space-y-1">
-        <%= for model_name <- [""] do %>
-          <li class="bg-gray-800 bg-opacity-50 h-4 rounded-lg"><%= model_name %></li>
-        <% end %>
-      </ul>
-    <% end %>
-    """
-  end
-
-  defp text_val_types(models_anchors) do
+  defp text_val_types(files) do
+    models_anchors = models_anchors(files)
     Module.changable_types() ++ Enum.map(models_anchors, fn {key, _} -> key end)
   end
 

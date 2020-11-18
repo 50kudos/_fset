@@ -3,7 +3,7 @@
 </span>
 <div class="w-full">
   <datalist id="changeable_types">
-    <%= for type_text <- text_val_types(@models_anchors) do %>
+    <%= for type_text <- text_val_types(@files) do %>
       <option class="px-2 py-1 hover:bg-gray-800 hover:text-gray-300 bg-opacity-75 cursor-pointer border-b border-gray-500 last:border-0"
         value="<%= type_text %>">
         <%= type_text %>
@@ -11,19 +11,21 @@
     <% end %>
   </datalist>
   <section class="flex flex-col h-screen">
-    <%= render FsetWeb.LayoutView, "_header.html", assigns %>
+    <%=# render FsetWeb.LayoutView, "_header.html", assigns %>
     <%= for error <- @ui.errors do %>
       <span class="w-full text-red-600"><%= error.payload.msg %></span>
     <% end %>
     <section class="flex flex-grow overflow-hidden h-full">
-      <aside class="hidden lg:w-1/5 lg:flex flex-col px-4 text-gray-500 bg-gray-900">
-        <p class="ml-2 text-sm leading-8"><%= @project_name %></p>
-        <ul class="overflow-scroll text-sm leading-6 space-y-4" style="transform: translate3d(0,0,0)">
-          <%= for file <- @files_ids do %>
-            <li class="border border-gray-800 bg-gray-800 bg-opacity-25 rounded-tl rounded-tr">
-              <%= render_file_nav(assigns, file) %>
-            </li>
-          <% end %>
+      <aside class="hidden lg:w-1/5 lg:block text-gray-500 bg-gray-900">
+        <%= live_patch to: Routes.main_path(@socket, :index, @current_user.email, @project_name), class: "block ml-2 my-6 text-lg" do %>
+          <%= @project_name %>
+        <% end %>
+        <ul class="overflow-scroll h-full text-sm leading-6 space-y-4" style="transform: translate3d(0,0,0)">
+          <%= live_component @socket, ModelNavComponent,
+            id: :model_nav,
+            file: Enum.find(@files, fn f -> f.id == @current_file.id end),
+            current_user: @current_user,
+            project_name: @project_name %>
         </ul>
         <div class="text-sm p-2 border-t border-gray-900">
           <p class="mb-1 text-gray-600">New model: </p>
@@ -46,12 +48,12 @@
             id: @current_file.id,
             name: @current_file.name,
             models: @current_models_bodies,
-            model_names: @models_anchors, ui: @ui, path: @current_file.id %>
+            model_names: models_anchors(@files), ui: @ui, path: @current_file.id %>
         </div>
       </nav>
       <aside class="hidden md:w-1/2 xl:w-2/5 md:block overflow-y-scroll overflow-x-hidden text-sm pl-3 pr-5">
         <%= if length(@current_path) == 1 do %>
-          <%= live_component @socket, SchComponent, id: :sch_meta, sch: Sch.get(@current_file.schema, hd(@current_path)), ui: Map.put(@ui, :model_names, @models_anchors), path: hd(@current_path) %>
+          <%= live_component @socket, SchComponent, id: :sch_meta, sch: Sch.get(@current_file.schema, hd(@current_path)), ui: Map.put(@ui, :model_names, models_anchors(@files)), path: hd(@current_path) %>
         <% end %>
       </aside>
     </section>

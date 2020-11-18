@@ -30,12 +30,8 @@ defmodule Fset.Project do
     end
   end
 
-  def get_by!(:full, attrs) do
+  def get_by!(attrs) do
     Repo.get_by!(Root, attrs) |> Repo.preload(:schs)
-  end
-
-  def get_by!(:file, attrs) do
-    Repo.get_by!(Root, attrs) |> Repo.preload(:main_sch)
   end
 
   def get_file!(file_id) do

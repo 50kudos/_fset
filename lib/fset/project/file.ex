@@ -9,6 +9,7 @@ defmodule Fset.Project.File do
     field :name, :string
     field :type, Ecto.Enum, values: [:main, :model]
     field :schema, :map
+    field :models_anchors, {:array, :any}, virtual: true, default: []
 
     # We also have "user_files" table which serves as like "uid". This project_id
     # fkey is sort of "gid" (group id). Any user that is a member of a project can

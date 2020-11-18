@@ -32,7 +32,7 @@ defmodule FsetWeb.ModuleComponent do
     case {connected?(assigns.socket), assigns} do
       {true, %{models: [{:main, _}]}} -> render_main(assigns)
       {false, %{models: [{:main, _}]}} -> render_main(assigns)
-      {true, %{models: models}} when is_list(models) -> render_model(assigns)
+      {true, %{models: models}} when is_list(models) -> render_readonly_model(assigns)
       {false, %{models: models}} when is_list(models) -> render_readonly_model(assigns)
     end
   end
@@ -48,7 +48,7 @@ defmodule FsetWeb.ModuleComponent do
     ~L"""
     <div id="file_<%= @path %>" class="h-screen">
       <main class="overflow-y-scroll overscroll-y-none h-full relative">
-        <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit pb-6 gap-2 w-full text-sm <%= if @ui.model_number, do: 'model_number' %>"
+        <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit gap-2 pb-6 w-full text-sm <%= if @ui.model_number, do: 'model_number' %>"
           phx-capture-click="select_sch"
           phx-value-paths="<%= @path %>"
           data-group="root"
@@ -74,7 +74,7 @@ defmodule FsetWeb.ModuleComponent do
     ~L"""
     <div id="file_<%= @path %>" class="h-screen">
       <main class="overflow-y-scroll overscroll-y-none h-full relative">
-        <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit pb-6 gap-2 w-full <%= if @ui.model_number, do: 'model_number' %>"
+        <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit gap-2 pb-6 w-full text-sm <%= if @ui.model_number, do: 'model_number' %>"
           phx-capture-click="select_sch"
           phx-value-paths="<%= @path %>"
           phx-hook="moveable"
@@ -101,20 +101,20 @@ defmodule FsetWeb.ModuleComponent do
     ~L"""
     <div id="file_<%= @path %>" class="h-screen">
       <main class="overflow-y-scroll overscroll-y-none h-full relative">
-        <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit pb-6 w-full gap-2"
+        <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit gap-2 pb-6 w-full text-sm"
           phx-capture-click="select_sch"
           phx-value-paths="<%= @path %>"
           phx-hook="moveable"
           data-group="root"
           data-indent="1.25rem"
         >
-          <%= live_component(@socket, ModelComponent,
+          <%= ModelView.render("model.html", %{
             id: @path,
             key: "#{main}",
             sch: main_sch,
             ui: @ui,
             path: "#{main}"
-          ) %>
+          }) %>
         </ul>
       </main>
     <div>

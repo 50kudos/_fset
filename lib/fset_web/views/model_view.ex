@@ -17,7 +17,7 @@ defmodule FsetWeb.ModelView do
 
   defp render_folder(assigns) do
     ~E"""
-    <li class="<%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow w-full' %>">
+    <li class="<%= if @ui.level == @ui.tab, do: 'bg-dark-gray py-4 shadow w-full' %>">
       <details <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>>
         <summary>
           <%# render_doc(assigns) %>
@@ -37,7 +37,7 @@ defmodule FsetWeb.ModelView do
 
   defp render_file(assigns) do
     ~E"""
-    <li class="flex <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow' %>">
+    <li class="flex <%= if @ui.level == @ui.tab, do: 'bg-dark-gray py-4 shadow' %>">
       <%# render_doc(assigns) %>
       <%= render_key(%{assigns | key: Utils.word_break_html("#{@key}")}) %>
       <%= render_type(assigns) %>

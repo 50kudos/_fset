@@ -177,7 +177,7 @@ defmodule FsetWeb.ModelComponent do
         <li><input type="text" autofocus list="changeable_types" style="min-width: 30vw"
           phx-keyup="change_type"
           phx-key="Enter"
-          phx-value-path="<%= @ui.file_id <> @path %>"></li>
+          phx-value-path="<%= @ui.file_id <> String.trim_leading(@path, ~s(main)) %>"></li>
       </ul>
     </details>
     """
@@ -305,7 +305,7 @@ defmodule FsetWeb.ModelComponent do
   defp render_key_text(assigns) do
     ~L"""
     <p class="" style="_max-width: <%= if @ui.level == @ui.tab, do: 24, else: 12 %>rem"
-      phx-value-path="<%= @ui.file_id <> @path %>">
+      phx-value-path="<%= @ui.file_id <> String.trim_leading(@path, ~s(main)) %>">
       <%= render_key_text_(assigns) %>
     </p>
     """

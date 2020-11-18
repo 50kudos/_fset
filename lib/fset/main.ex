@@ -12,26 +12,25 @@ defmodule Fset.Main do
   alias Fset.{Accounts, Project, Module, Sch, Utils}
   alias FsetWeb.Presence
 
-  def init_data(connect_params, params) do
-    with project <- get_project(params["project_name"], connect_params),
-         {models_anchors, files_ids} <- get_project_meta(project, connect_params),
+  def init_data(params) do
+    with project <- get_project(params["project_name"]),
+         [main | _] = files <- get_project_meta(project),
          user <- Accounts.get_user_by_username!(params["username"]),
-         file_id <- params["file_id"] || hd(files_ids).id do
+         file_id <- params["file_id"] || main.id do
       %{}
       |> Map.put(:project_name, project.name)
       |> Map.put(:project, project)
       |> Map.put(:current_user, user)
       |> Map.put(:current_path, [file_id])
-      |> Map.put(:files_ids, files_ids)
-      |> Map.put(:models_anchors, models_anchors)
+      |> Map.put(:files, files)
       |> Map.put(:ui, %{errors: [], topic: @file_topic <> file_id, user_id: user.id})
     end
   end
 
   def change_file_data(assigns, params) do
-    with file_id <- params["file_id"] || hd(assigns.files_ids).id,
+    with file_id <- params["file_id"],
          current_file <- get_current_file(assigns.project, file_id),
-         {models_bodies, height} <- models_bodies(current_file, params[:connect_params]) do
+         {models_bodies, height} <- models_bodies(current_file) do
       %{}
       |> Map.put(:current_file, current_file)
       |> Map.put(:current_path, [current_file.id])
@@ -68,13 +67,23 @@ defmodule Fset.Main do
 
     broadcast_update_sch(file, add_path, postsch)
 
+    files =
+      Enum.map(assigns.files, fn
+        %{id: ^add_path} = f ->
+          %{f | models_anchors: [{added_key, added_sch} | f.models_anchors]}
+
+        f ->
+          f
+      end)
+
     %{}
     |> Map.put(:current_file, %{file | schema: new_schema})
-    |> Map.put(:models_anchors, [{added_key, added_sch} | assigns.models_anchors])
+    |> Map.put(:files, files)
   end
 
   def change_type(assigns, %{"value" => type, "path" => path}) do
     file = assigns.current_file
+    models_anchors = models_anchors(assigns.files)
 
     new_schema =
       cond do
@@ -83,7 +92,7 @@ defmodule Fset.Main do
           broadcast_update_sch(file, path, postsch)
           new_schema
 
-        {_m, anchor} = Enum.find(assigns.models_anchors, fn {m, _a} -> m == type end) ->
+        {_m, anchor} = Enum.find(models_anchors, fn {m, _a} -> m == type end) ->
           {_pre, postsch, new_schema} = Module.change_type(file.schema, path, {:ref, anchor})
           broadcast_update_sch(file, path, postsch)
           new_schema
@@ -227,16 +236,6 @@ defmodule Fset.Main do
     {ksch_pairs, _container_height = sch_height(schema)}
   end
 
-  # def models_bodies(%{type: :model} = file, nil) do
-  #   ksch_pairs =
-  #     file.schema
-  #     |> Sch.get(file.id)
-  #     |> Sch.order()
-  #     |> Enum.map(fn key -> {key, Sch.prop_sch(file.schema, key)} end)
-
-  #   {ksch_pairs, _container_height = sch_height(file.schema)}
-  # end
-
   def models_bodies(%{type: :model} = file, _meta) do
     schema = Sch.get(file.schema, file.id)
     line_h = 24
@@ -276,48 +275,43 @@ defmodule Fset.Main do
     height
   end
 
-  # defp get_project(project_name, %{"_mounts" => 0}) do
-  #   Project.get_by!(:full, name: project_name)
-  # end
+  defp get_project(project_name) do
+    p = Project.get_by!(name: project_name)
 
-  defp get_project(project_name, _connect_params) do
-    Project.get_by!(:full, name: project_name)
+    {[main_file], model_files} = Enum.split_with(p.schs, &(&1.type == :main))
+    %{p | main_sch: main_file, model_schs: model_files, schs: []}
   end
 
-  # defp get_project_meta(project_id, %{"_mounts" => 0}) do
-  #   {[], Project.all_files(project_id)}
-  # end
+  defp get_project_meta(project) do
+    main_file = %{project.main_sch | models_anchors: [], schema: nil}
 
-  defp get_project_meta(project, _connect_params) do
-    get_project_meta_(project.schs)
-  end
+    model_files =
+      Enum.map(project.model_schs, fn file ->
+        schema = Sch.get(file.schema, file.id)
 
-  defp get_project_meta_(all_files) do
-    {[main_file], model_files} = Enum.split_with(all_files, fn fi -> fi.type == :main end)
-
-    {models_anchors, files_ids} =
-      Enum.flat_map_reduce(model_files, [], fn fi, acc ->
-        schema = Sch.get(fi.schema, fi.id)
-
-        model_anchor =
+        models_anchors =
           for k <- Sch.order(schema) do
             model_sch = Sch.prop_sch(schema, k)
             {k, Sch.anchor(model_sch)}
           end
 
-        {model_anchor, [%{fi | schema: nil} | acc]}
+        %{file | models_anchors: models_anchors, schema: nil}
       end)
 
-    main_file = %{main_file | schema: nil}
-    {models_anchors, [main_file | files_ids]}
+    [main_file | model_files]
   end
 
   defp get_current_file(project, file_id) do
-    if Ecto.assoc_loaded?(project.schs) do
-      Enum.find(project.schs, fn file -> file.id == file_id end) || hd(project.schs)
+    if project do
+      Enum.find(project.model_schs, fn file -> file.id == file_id end) ||
+        project.main_sch
     else
-      project.main_sch
+      Project.get_file!(file_id)
     end
+  end
+
+  def models_anchors(files) do
+    Enum.flat_map(files, fn file -> file.models_anchors end)
   end
 
   # Process or application dependent functions
