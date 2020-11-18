@@ -23,17 +23,17 @@ import "@github/tab-container-element"
 import "@github/details-menu-element"
 import "@github/filter-input-element"
 
-import { Elm } from "../elm/elm.min.js"
+// import { Elm } from "../elm/elm.min.js"
 
-const init_elm = () => {
-  window.elm = {}
-  window.elm.node = document.querySelector("[phx-hook='elm']")
-  window.elm.Main = Elm.Main.init({
-    node: window.elm.node.appendChild(document.createElement("code")),
-    flags: {}// JSON.parse(window.fstore.dataset.store)
-  })
-  document.querySelector("[phx-hook='elm']").appendChild(window.elm.node)
-}
+// const init_elm = () => {
+//   window.elm = {}
+//   window.elm.node = document.querySelector("[phx-hook='elm']")
+//   window.elm.Main = Elm.Main.init({
+//     node: window.elm.node.appendChild(document.createElement("code")),
+//     flags: {}// JSON.parse(window.fstore.dataset.store)
+//   })
+//   document.querySelector("[phx-hook='elm']").appendChild(window.elm.node)
+// }
 
 const init_liveview = () => {
   let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")

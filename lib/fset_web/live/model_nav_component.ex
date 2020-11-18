@@ -35,25 +35,27 @@ defmodule FsetWeb.ModelNavComponent do
       <details>
         <summary>
           <span class="p-2 block w-full text-left text-lg font-thin text-pink-100 bg-pink-700 bg-opacity-75 border-b-4 border-pink-600 cursor-pointer"
-            role="menuitem"
+            role="menu"
             data-menu-button
           >
             <%= @current_file_name %>
           </span>
         </summary>
         <details-menu role="menu">
-          <%= for file <- @files do %>
-            <%= if file.id != @current_file_id do %>
-              <%= live_patch to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id),
-                class: "block",
-                role: "menuitem",
-                "data-menu-button-text": "" do %>
-                <span class="p-2 block text-lg font-thin bg-gray-800 bg-opacity-75 border-b border-gray-800 hover:bg-pink-900">
-                  <%= file.name %>
-                </span>
+          <div class="divide-y divide-gray-800 border border-b-4 border-gray-800 bg-gray-800 bg-opacity-25">
+            <%= for file <- @files do %>
+              <%= if file.id != @current_file_id do %>
+                <%= live_patch to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id),
+                  class: "p-2 block text-lg font-thin bg-opacity-75 hover:bg-pink-900 focus:bg-pink-900",
+                  role: "menuitem",
+                  "data-menu-button-text": "" do %>
+                  <span class="">
+                    <%= file.name %>
+                  </span>
+                <% end %>
               <% end %>
             <% end %>
-          <% end %>
+          </div>
         </details-menu>
       </details>
       <%= render_models_anchors(%{file: Enum.find(@files, & &1.id == @current_file_id)}) %>
