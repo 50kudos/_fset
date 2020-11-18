@@ -109,28 +109,28 @@ defmodule FsetWeb.ModelView do
       Sch.object?(assigns.sch) ->
         ~E"""
         <span class="text-blue-500 mr-2" style="padding-left: <%= @ui.level * 1.25 %>rem">record</span>
-        <span class="break-words text-gray-600"><%= @key %></span>
+        <span class="break-words text-gray-400"><%= @key %></span>
         <span class="mx-2">=</span>
         """
 
       Sch.array?(assigns.sch, :hetero) ->
         ~E"""
         <span class="text-blue-500 mr-2" style="padding-left: <%= @ui.level * 1.25 %>rem">tuple</span>
-        <span class="break-words text-gray-600"><%= @key %></span>
+        <span class="break-words text-gray-400"><%= @key %></span>
         <span class="mx-2">=</span>
         """
 
       Sch.array?(assigns.sch, :homo) ->
         ~E"""
         <span class="text-blue-500 mr-2" style="padding-left: <%= @ui.level * 1.25 %>rem">list</span>
-        <span class="break-words text-gray-600"><%= @key %></span>
+        <span class="break-words text-gray-400"><%= @key %></span>
         <span class="mx-2">=</span>
         """
 
       Sch.any_of?(assigns.sch) ->
         ~E"""
         <span class="text-blue-500 mr-2" style="padding-left: <%= @ui.level * 1.25 %>rem">union</span>
-        <span class="break-words text-gray-600"><%= @key %></span>
+        <span class="break-words text-gray-400"><%= @key %></span>
         <span class="mx-2">=</span>
         """
 
@@ -147,19 +147,19 @@ defmodule FsetWeb.ModelView do
     cond do
       Sch.leaf?(Map.get(assigns, :parent)) ->
         ~E"""
-        <span class="break-words text-gray-600" style="padding-left: <%= @ui.level * 1.25 %>rem"><%= @key %></span>
+        <span class="break-words text-gray-400" style="padding-left: <%= @ui.level * 1.25 %>rem"><%= @key %></span>
         <span class="mx-2">:</span>
         """
 
       Sch.any_of?(Map.get(assigns, :parent)) ->
         ~E"""
-        <span class="break-words text-gray-600" style="padding-left: <%= @ui.level * 1.25 %>rem"><%= @key %></span>
+        <span class="break-words text-gray-400" style="padding-left: <%= @ui.level * 1.25 %>rem"><%= @key %></span>
         <span class="mx-2 text-base text-gray-600">|</span>
         """
 
       true ->
         ~E"""
-        <span class="break-words text-gray-600" style="padding-left: <%= @ui.level * 1.25 %>rem"><%= @key %></span>
+        <span class="break-words text-gray-400" style="padding-left: <%= @ui.level * 1.25 %>rem"><%= @key %></span>
         <span class="mx-2">:</span>
         """
     end

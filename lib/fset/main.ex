@@ -23,6 +23,7 @@ defmodule Fset.Main do
       |> Map.put(:current_user, user)
       |> Map.put(:current_path, [file_id])
       |> Map.put(:files, files)
+      |> Map.put(:pinned_file_ids, Enum.map(files, & &1.id))
       |> Map.put(:ui, %{errors: [], topic: @file_topic <> file_id, user_id: user.id})
     end
   end
