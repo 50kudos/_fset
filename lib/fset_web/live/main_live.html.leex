@@ -16,9 +16,9 @@
       <span class="w-full text-red-600"><%= error.payload.msg %></span>
     <% end %>
     <section class="flex flex-grow overflow-hidden h-full">
-      <aside class="hidden lg:w-1/5 lg:block text-gray-400 bg-gray-900">
-        <%= live_patch to: Routes.main_path(@socket, :index, @current_user.email, @project_name), class: "block ml-2 my-6 text-lg" do %>
-          <%= @project_name %>
+      <aside class="hidden lg:w-1/5 lg:block text-gray-400">
+        <%= live_patch to: Routes.main_path(@socket, :index, @current_user.email, @project_name), class: "block ml-2 my-6 text-2xl" do %>
+          <mark><%= @project_name %></mark>
         <% end %>
         <%= live_component @socket, ModelNavComponent,
           id: :model_nav,

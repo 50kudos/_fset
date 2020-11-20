@@ -46,7 +46,7 @@ defmodule FsetWeb.ModelNavComponent do
             <%= for file <- @files do %>
               <%= if file.id != @current_file_id do %>
                 <%= live_patch to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id),
-                  class: "p-2 block text-lg font-thin bg-opacity-75 hover:bg-pink-900 focus:bg-pink-900",
+                  class: "p-2 block text-lg font-thin hover:bg-pink-900 focus:bg-pink-900 hover:text-gray-300 focus:text-gray-100",
                   role: "menuitem",
                   "data-menu-button-text": "" do %>
                   <span class="">
@@ -65,7 +65,7 @@ defmodule FsetWeb.ModelNavComponent do
 
   defp render_models_anchors(assigns) do
     ~L"""
-    <ul class="text-sm divide-y divide-gray-800">
+    <ul class="text-sm divide-y divide-gray-800 font-light tracking-wide">
       <%= if @file.type == :model do %>
         <%= for {{model_name, _}, i} <- Enum.with_index(@file.models_anchors) do %>
           <li class="sort-handle flex p-2 pl-4 hover:bg-indigo-700 hover:bg-opacity-75 hover:text-gray-300" id="<%= input_id(%{id: i}, @file.name) %>">

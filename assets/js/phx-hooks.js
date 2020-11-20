@@ -133,12 +133,22 @@ Hooks.updateSch = {
 Hooks.moveable = {
   mounted() {
     let phxSortable = new PhxSortable(this)
+    // this.bindToggle()
   },
   updated() {
     // let phxSortable = new PhxSortable(this)
   },
   destroyed() {
     PhxSortable.destroy(this)
+  },
+  bindToggle() {
+    const maker = `<p class="absolute m-1 leading-4 text-gray-900 font-mono text-xs">
+      <span class="close-marker cursor-pointer select-none">+</span>
+      <span class="open-marker cursor-pointer select-none">-</span>
+    </p>`
+
+    const details = this.el.querySelector("details")
+    if (details) { details.addEventListener("click", e => e.preventDefault()) }
   }
 }
 

@@ -12,8 +12,8 @@ defmodule FsetWeb.ModuleComponent do
       |> assign(assigns)
       |> update(:ui, fn ui ->
         ui
-        |> Map.put_new(:tab, 1)
-        |> Map.put_new(:level, 1)
+        |> Map.put_new(:tab, 1.5)
+        |> Map.put_new(:level, 0)
         |> Map.put_new(:model_number, false)
         |> Map.put_new(:file_id, assigns.id)
         |> Map.put(:model_names, assigns.model_names)

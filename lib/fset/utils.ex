@@ -17,15 +17,23 @@ defmodule Fset.Utils do
     end
   end
 
+  # Break words by delimiter ".", "::", "_" or camelCase/PascalCase.
+  # But do not break too early, we keep at least 30% of split chucks. And also
+  # don't break if there's only 1 <wbr>. If text is still overflow, try new delimiter
+  # to split.
   def word_break_html(string) when is_binary(string) do
-    ~r/(?<=::)|(?<=\.)|(?<=_)/
-    |> Regex.split(string)
-    |> Enum.flat_map(fn a ->
-      Macro.underscore(a)
-      |> String.split("_")
-      |> Enum.map(&String.capitalize/1)
-    end)
-    |> Enum.intersperse({:safe, "<wbr>"})
+    chucks = Regex.split(~r/(?<=::)|(?<=\.)|(?<=_)|(?=[A-Z][a-z]*)/, string)
+
+    chucks_count = Enum.count(chucks)
+    keep_count = ceil(0.3 * chucks_count)
+    keep = Enum.slice(chucks, 0..keep_count)
+    break = Enum.slice(chucks, (keep_count + 1)..-1)
+
+    if Enum.count(break) < 3 do
+      keep ++ break
+    else
+      keep ++ Enum.intersperse(break, {:safe, "<wbr>"})
+    end
   end
 
   def unwrap(term_or_list, default \\ nil) do

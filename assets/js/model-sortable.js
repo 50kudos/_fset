@@ -36,10 +36,8 @@ export default class PhxSortable {
   }
   highlightBoxHeader(box) {
     let boxHeader = box.closest(this.itemClass)
-    if (boxHeader) {
-      boxHeader = boxHeader.querySelector(this.highlightClass)
-      boxHeader.classList.add(...this.heighlightStyle)
-    }
+    boxHeader = boxHeader && boxHeader.querySelector(this.highlightClass)
+    boxHeader && boxHeader.classList.add(...this.heighlightStyle)
   }
   setItemIndent(item, box) {
     let indentEl = item.querySelector(this.indentClass)
@@ -103,7 +101,7 @@ export default class PhxSortable {
       // swapThreshold: 0.1,
       // invertedSwapThreshold: 0.2,
       // invertSwap: true,
-      animation: 150,
+      animation: 0,
       multiDrag: true,
       multiDragKey: "Meta",
       dragoverBubble: false,

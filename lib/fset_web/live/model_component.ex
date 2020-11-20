@@ -492,7 +492,7 @@ defmodule FsetWeb.ModelComponent do
     if is_map(const) || is_list(const) do
       "value"
     else
-      {:safe, "<span class='text-green-700'>#{Jason.encode_to_iodata!(Sch.const(sch))}</span>"}
+      {:safe, "<span class='text-green-500'>#{Jason.encode_to_iodata!(Sch.const(sch))}</span>"}
     end
   end
 

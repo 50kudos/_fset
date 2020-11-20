@@ -4,7 +4,7 @@ defmodule FsetWeb.ModelView do
 
   def render("model.html", %{sch: sch, ui: ui} = assigns) do
     cond do
-      Sch.object?(sch) && match?(%{level: _}, ui) -> render_folder(assigns)
+      Sch.object?(sch) -> render_folder(assigns)
       Sch.array?(sch) -> render_folder(assigns)
       Sch.leaf?(sch) -> render_file(assigns)
       Sch.any_of?(sch) -> render_folder(assigns)
@@ -17,17 +17,15 @@ defmodule FsetWeb.ModelView do
 
   defp render_folder(assigns) do
     ~E"""
-    <li class="<%= if @ui.level == @ui.tab, do: 'bg-dark-gray py-4 shadow w-full' %>">
+    <li id="<%= @path %>" class="<%= if @ui.level == 0, do: 'bg-dark-gray py-4 shadow w-full' %>" >
       <details <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>>
         <summary>
-          <%# render_doc(assigns) %>
-          <div class="flex">
+          <div class="flex w-full">
             <%= render_key(%{assigns | key: Utils.word_break_html("#{@key}")}) %>
             <%= render_type(assigns) %>
           </div>
-          <%=# render_doc(assigns) %>
         </summary>
-        <ul>
+        <ul data-group="<%= keyed_or_indexed(@sch) %>" data-lv="<%= @ui.level %>">
           <%= render_itself(assigns) %>
         </ul>
       </details>
@@ -37,11 +35,9 @@ defmodule FsetWeb.ModelView do
 
   defp render_file(assigns) do
     ~E"""
-    <li class="flex <%= if @ui.level == @ui.tab, do: 'bg-dark-gray py-4 shadow' %>">
-      <%# render_doc(assigns) %>
+    <li id="<%= @path %>" class="flex <%= if @ui.level == 0, do: 'bg-dark-gray py-4 shadow' %>">
       <%= render_key(%{assigns | key: Utils.word_break_html("#{@key}")}) %>
       <%= render_type(assigns) %>
-      <%=# render_doc(assigns) %>
     </li>
     """
   end
@@ -103,182 +99,73 @@ defmodule FsetWeb.ModelView do
     """
   end
 
-  # Top/root level model. Level does not start at 0 but specified tab.
-  defp render_key(%{ui: %{level: l, tab: t}} = assigns) when l == t do
-    cond do
-      Sch.object?(assigns.sch) ->
-        ~E"""
-        <span class="text-blue-500 mr-2" style="padding-left: <%= @ui.level * 1.25 %>rem">record</span>
-        <span class="break-words text-gray-400"><%= @key %></span>
-        <span class="mx-2">=</span>
-        """
-
-      Sch.array?(assigns.sch, :hetero) ->
-        ~E"""
-        <span class="text-blue-500 mr-2" style="padding-left: <%= @ui.level * 1.25 %>rem">tuple</span>
-        <span class="break-words text-gray-400"><%= @key %></span>
-        <span class="mx-2">=</span>
-        """
-
-      Sch.array?(assigns.sch, :homo) ->
-        ~E"""
-        <span class="text-blue-500 mr-2" style="padding-left: <%= @ui.level * 1.25 %>rem">list</span>
-        <span class="break-words text-gray-400"><%= @key %></span>
-        <span class="mx-2">=</span>
-        """
-
-      Sch.any_of?(assigns.sch) ->
-        ~E"""
-        <span class="text-blue-500 mr-2" style="padding-left: <%= @ui.level * 1.25 %>rem">union</span>
-        <span class="break-words text-gray-400"><%= @key %></span>
-        <span class="mx-2">=</span>
-        """
-
-      true ->
-        ~E"""
-        <span class="text-blue-500 mr-2" style="padding-left: <%= @ui.level * 1.25 %>rem">field</span>
-        <span class="break-words text-gray-600"><%= @key %></span>
-        <span class="mx-2">:</span>
-        """
-    end
+  defp render_key(%{ui: %{level: 0}} = assigns) do
+    ~E"""
+    <span class="text-blue-500 mr-2" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem">
+      <%= model_type_text(@sch, @ui) %>
+    </span>
+    <span class="flex flex-wrap"><%= @key %></span>
+    <span class="mx-2">=</span>
+    """
   end
 
   defp render_key(assigns) do
     cond do
-      Sch.leaf?(Map.get(assigns, :parent)) ->
-        ~E"""
-        <span class="break-words text-gray-400" style="padding-left: <%= @ui.level * 1.25 %>rem"><%= @key %></span>
-        <span class="mx-2">:</span>
-        """
-
       Sch.any_of?(Map.get(assigns, :parent)) ->
         ~E"""
-        <span class="break-words text-gray-400" style="padding-left: <%= @ui.level * 1.25 %>rem"><%= @key %></span>
+        <span class="flex flex-wrap" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"><%= @key %></span>
         <span class="mx-2 text-base text-gray-600">|</span>
         """
 
+      Sch.array?(Map.get(assigns, :parent), :homo) ->
+        ~E"""
+        <span class="flex flex-wrap" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"></span>
+        <span class="mx-2 text-base text-gray-600">└</span>
+        """
+
       true ->
         ~E"""
-        <span class="break-words text-gray-400" style="padding-left: <%= @ui.level * 1.25 %>rem"><%= @key %></span>
+        <span class="flex flex-wrap" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"><%= @key %></span>
         <span class="mx-2">:</span>
         """
     end
   end
 
-  # Top/root level model. Level does not start at 0 but specified tab.
-  defp render_type(%{ui: %{level: l, tab: t}} = assigns) when l == t do
-    cond do
-      Sch.object?(assigns.sch, :empty) ->
-        ~E"""
-        <span class="text-blue-500" style="min-width: 5ch">{any}</span>
-        """
-
-      Sch.object?(assigns.sch) ->
-        ~E"""
-        <span class="text-blue-500" style="min-width: 5ch">{ }</span>
-        """
-
-      Sch.array?(assigns.sch, :empty) ->
-        ~E"""
-        <span class="text-blue-500" style="min-width: 5ch">[any]</span>
-        """
-
-      Sch.array?(assigns.sch, :homo) ->
-        ~E"""
-        <span class="text-blue-500" style="min-width: 5ch">[<%= read_type(Sch.items(@sch), @ui) %>]</span>
-        """
-
-      Sch.array?(assigns.sch, :hetero) ->
-        ~E"""
-        <span class="text-blue-500" style="min-width: 5ch">( )</span>
-        """
-
-      Sch.leaf?(assigns.sch) ->
-        ~E"""
-        <span class="text-blue-500" style="min-width: 5ch"><%= read_type(@sch, @ui) %></span>
-        """
-
-      Sch.any_of?(assigns.sch) ->
-        ~E"""
-        <span class="text-blue-500" style="min-width: 5ch">||</span>
-        """
-
-      true ->
-        ~E"""
-        <span class=""><%= read_type(@sch, @ui) %></span>
-        """
-    end
+  defp render_type(%{ui: %{level: 0}} = assigns) do
+    ~E"""
+    <span class="text-pink-500" style="min-width: 5ch"><%= type_text(@sch, @ui) %></span>
+    """
   end
 
   defp render_type(assigns) do
-    cond do
-      Sch.object?(assigns.sch, :empty) ->
-        ~E"""
-        <span class="self-center">{any}</span>
-        """
-
-      Sch.object?(assigns.sch) ->
-        ~E"""
-        <span class="self-center">{  }</span>
-        """
-
-      Sch.array?(assigns.sch, :empty) ->
-        ~E"""
-        <span class="self-center">[any]</span>
-        """
-
-      Sch.array?(assigns.sch, :homo) ->
-        ~E"""
-        <span class="self-center">[<%= read_type(Sch.items(@sch), @ui) %>]</span>
-        """
-
-      Sch.array?(assigns.sch, :hetero) ->
-        ~E"""
-        <span class="self-center">(  )</span>
-        """
-
-      Sch.leaf?(assigns.sch) ->
-        ~E"""
-        <span class="self-center"><%= read_type(@sch, @ui) %></span>
-        """
-
-      Sch.any_of?(assigns.sch) ->
-        ~E"""
-        <span class="self-center">||</span>
-        """
-
-      Sch.any?(assigns.sch) ->
-        ~E"""
-        <span class="self-center">any</span>
-        """
-
-      true ->
-        ~E"""
-        <span class="self-center"><%= read_type(@sch, @ui) %></span>
-        """
-    end
+    ~E"""
+    <span class="text-pink-500 self-center" style="min-width: 5ch"><%= type_text(@sch, @ui) %></span>
+    """
   end
 
-  # defp render_doc(assigns) do
-  #   ~E"""
-  #   <div class="mb-2 w-full text-xs text-pink-400 opacity-75 leading-6" style="padding-left: <%= @ui.level * 1.25 %>rem" onclick="event.preventDefault()">
-  #     <p><%= Sch.title(@sch) %></p>
-  #     <p><%= Sch.description(@sch) %></p>
-  #   </div>
-  #   """
-  # end
-
-  def read_type(sch, ui) when is_map(sch) do
+  def model_type_text(sch, ui) when is_map(sch) do
     cond do
       Sch.object?(sch) -> "record"
       Sch.array?(sch, :homo) -> "list"
       Sch.array?(sch, :hetero) -> "tuple"
+      Sch.any_of?(sch) -> "union"
+      true -> "field"
+    end
+  end
+
+  def type_text(sch, ui) when is_map(sch) do
+    cond do
+      Sch.object?(sch, :empty) -> "{ any }"
+      Sch.object?(sch) -> "{ }"
+      Sch.array?(sch, :empty) -> "[ any ]"
+      Sch.array?(sch, :homo) -> ["[ ", type_text(Sch.items(sch), ui), " ]"]
+      Sch.array?(sch, :hetero) -> "( )"
       Sch.string?(sch) -> "str"
       Sch.number?(sch) -> "num"
       Sch.integer?(sch) -> "int"
       Sch.boolean?(sch) -> "bool"
       Sch.null?(sch) -> "null"
-      Sch.any_of?(sch) -> "union"
+      Sch.any_of?(sch) -> "||"
       Sch.any?(sch) -> "any"
       Sch.ref?(sch) -> ref_type(sch, ui)
       Sch.const?(sch) -> const_type(sch)
@@ -292,7 +179,7 @@ defmodule FsetWeb.ModelView do
     if is_map(const) || is_list(const) do
       "value"
     else
-      {:safe, "<span class='text-green-700'>#{Jason.encode_to_iodata!(Sch.const(sch))}</span>"}
+      {:safe, "<span class='text-green-500'>#{Jason.encode_to_iodata!(Sch.const(sch))}</span>"}
     end
   end
 
@@ -302,5 +189,14 @@ defmodule FsetWeb.ModelView do
         ~E"<span class='text-indigo-400'><%= Utils.word_break_html(k) %></span>"
       end
     end) || "#invalid_type"
+  end
+
+  defp keyed_or_indexed(sch) do
+    cond do
+      Sch.object?(sch) -> "keyed"
+      Sch.array?(sch) -> "indexed"
+      Sch.any_of?(sch) -> "indexed"
+      true -> raise "Not a container type"
+    end
   end
 end
