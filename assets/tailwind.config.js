@@ -13,6 +13,7 @@ module.exports = {
     content: [
       '../lib/fset_web/live/*.{leex,ex}',
       '../lib/fset_web/templates/**/*.{leex,eex}',
+      '../lib/fset_web/views/*.ex',
       './js/phx-hooks.js'
     ],
     options: {

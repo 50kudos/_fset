@@ -10,6 +10,7 @@
     "@github/details-menu-element": "^1.0.9",
     "@github/filter-input-element": "^0.1.1",
     "@github/tab-container-element": "^3.1.0",
+    "caniuse-lite": "^1.0.30001159",
     "highlight.js": "^10.1.2",
     "phoenix": "file:../deps/phoenix",
     "phoenix_html": "file:../deps/phoenix_html",

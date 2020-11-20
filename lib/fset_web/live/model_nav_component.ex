@@ -1,6 +1,5 @@
 defmodule FsetWeb.ModelNavComponent do
   use FsetWeb, :live_component
-  alias FsetWeb.ModelIndexView
   alias Fset.{Utils}
 
   @impl true

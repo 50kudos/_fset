@@ -2,7 +2,7 @@ defmodule FsetWeb.ModelView do
   use FsetWeb, :view
   alias Fset.{Sch, Utils}
 
-  def render("model.html", %{sch: sch, ui: ui} = assigns) do
+  def render("model.html", %{sch: sch} = assigns) do
     cond do
       Sch.object?(sch) -> render_folder(assigns)
       Sch.array?(sch) -> render_folder(assigns)
@@ -143,7 +143,7 @@ defmodule FsetWeb.ModelView do
     """
   end
 
-  def model_type_text(sch, ui) when is_map(sch) do
+  def model_type_text(sch, _ui) when is_map(sch) do
     cond do
       Sch.object?(sch) -> "record"
       Sch.array?(sch, :homo) -> "list"
