@@ -17,10 +17,10 @@ defmodule FsetWeb.ModelView do
 
   defp render_folder(assigns) do
     ~E"""
-    <li id="<%= @path %>" class="<%= if @ui.level == 0, do: 'bg-dark-gray py-4 shadow w-full' %>" >
+    <li id="<%= @path %>" class="sort-handle <%= if @ui.level == 0, do: 'bg-dark-gray py-4 shadow w-full' %>" >
       <details <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>>
         <summary>
-          <div class="flex w-full">
+          <div class="h">
             <%= render_key(%{assigns | key: Utils.word_break_html("#{@key}")}) %>
             <%= render_type(assigns) %>
           </div>
@@ -35,7 +35,7 @@ defmodule FsetWeb.ModelView do
 
   defp render_file(assigns) do
     ~E"""
-    <li id="<%= @path %>" class="flex <%= if @ui.level == 0, do: 'bg-dark-gray py-4 shadow' %>">
+    <li id="<%= @path %>" class="sort-handle flex <%= if @ui.level == 0, do: 'bg-dark-gray py-4 shadow' %>">
       <%= render_key(%{assigns | key: Utils.word_break_html("#{@key}")}) %>
       <%= render_type(assigns) %>
     </li>
@@ -104,7 +104,7 @@ defmodule FsetWeb.ModelView do
     <span class="text-blue-500 mr-2" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem">
       <%= model_type_text(@sch, @ui) %>
     </span>
-    <span class="flex flex-wrap"><%= @key %></span>
+    <span class="k"><%= @key %></span>
     <span class="mx-2">=</span>
     """
   end
@@ -113,19 +113,19 @@ defmodule FsetWeb.ModelView do
     cond do
       Sch.any_of?(Map.get(assigns, :parent)) ->
         ~E"""
-        <span class="flex flex-wrap" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"><%= @key %></span>
+        <span class="k" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"><%= @key %></span>
         <span class="mx-2 text-base text-gray-600">|</span>
         """
 
       Sch.array?(Map.get(assigns, :parent), :homo) ->
         ~E"""
-        <span class="flex flex-wrap" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"></span>
+        <span class="k" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"></span>
         <span class="mx-2 text-base text-gray-600">└</span>
         """
 
       true ->
         ~E"""
-        <span class="flex flex-wrap" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"><%= @key %></span>
+        <span class="k" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"><%= @key %></span>
         <span class="mx-2">:</span>
         """
     end
@@ -160,9 +160,9 @@ defmodule FsetWeb.ModelView do
       Sch.array?(sch, :empty) -> "[ any ]"
       Sch.array?(sch, :homo) -> ["[ ", type_text(Sch.items(sch), ui), " ]"]
       Sch.array?(sch, :hetero) -> "( )"
-      Sch.string?(sch) -> "str"
-      Sch.number?(sch) -> "num"
-      Sch.integer?(sch) -> "int"
+      Sch.string?(sch) -> "string"
+      Sch.number?(sch) -> "number"
+      Sch.integer?(sch) -> "integer"
       Sch.boolean?(sch) -> "bool"
       Sch.null?(sch) -> "null"
       Sch.any_of?(sch) -> "||"

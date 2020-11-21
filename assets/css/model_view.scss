@@ -1,0 +1,56 @@
+/* highlight */
+
+.sortable-selected {
+  /* leaf node */
+  @apply bg-gray-800 bg-opacity-50;
+
+  /* folder node */
+  > details > summary > div {
+    @apply bg-gray-700 bg-opacity-50
+  }
+
+  /* folder's body */
+  > details > ul {
+    @apply bg-gray-900 bg-opacity-50
+  }
+}
+
+
+/* semantics */
+.sort-handle {
+  .h { @apply flex w-full }
+  .k { @apply flex flex-wrap }
+}
+
+
+/* drag and drop */
+
+/* version 1 */
+.sortable-ghost {
+  /* > * { @apply hidden } */
+  @apply h-full py-0 border border-green-600 border-dashed -my-px -ml-px
+}
+/* version 2 */
+/*.sortable-ghost {
+  @apply py-0 border border-gray-700 border-dashed
+}*/
+.sortable-drag { @apply flex list-none }
+.sort-handle [phx-click="add_field"] { @apply hidden }
+.sort-handle.sortable-selected.multi {
+  > details > summary [phx-click="add_field"] { @apply hidden }
+}
+.sort-handle.sortable-selected {
+  > details > summary [phx-click="add_field"] { @apply inline }
+}
+
+.model_number {
+  > .sort-handle { @apply flex relative }
+  > .sort-handle > * { @apply w-full }
+
+  counter-reset: model;
+  > nav::before {
+    counter-increment: model;
+    content: "#" counter(model);
+    @apply absolute text-xs leading-6 mx-4 text-gray-600
+  }
+}

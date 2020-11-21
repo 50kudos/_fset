@@ -2,83 +2,71 @@ import Sortable, { MultiDrag } from "sortablejs"
 Sortable.mount(new MultiDrag())
 
 export default class PhxSortable {
-  constructor(phx, opts = {}) {
+  constructor(selector, phx, config = {}) {
+    this.scope = config.scope || document
+    this.rootID = this.scope.querySelector(selector).id
     this.phx = phx
-    this.el = phx.el
-    this.rootId = opts.rootId
+    this.selector = selector
+    this.meta = {}
 
     // User defined functions and properties
     this.itemClass = ".sort-handle"
-    this.highlightClass = ".dragover-hl"
+    this.highlightClass = ".h"
     this.heighlightStyle = ["bg-indigo-700", "bg-opacity-25"]
-    this.indentClass = ".indent"
-    this.cursorLoadingStyle = "phx-click-loading"
-    this.rootSelector = "[data-group='root']"
+    this.indentClass = ".k"
 
-    this.findOrCreate()
-  }
+    this.sorters =
+      Array.from(this.scope.querySelectorAll(this.selector))
+        .map(el => Sortable.get(el) || this.setupSortable(el))
 
-  findOrCreate() {
-    let sortableEl = Sortable.get(this.el)
-    if (!sortableEl) {
-      this.setupSortable()
-      this.phx.handleEvent("current_path", ({ paths }) => {
-        this.selectCurrentItems(paths)
-      })
-    }
+    this.phx.handleEvent("current_path", ({ paths }) => {
+      this.selectCurrentItems(paths)
+    })
   }
-  static destroy(phx) {
-    this.el = phx.el
-    let sortableEl = Sortable.get(this.el)
-    sortableEl && sortableEl.destroy()
+  destroyAll() {
+    this.sorters.forEach(sorter => sorter.destroy())
   }
   resetHighLight() {
     document.querySelectorAll(this.highlightClass).forEach(a => a.classList.remove(...this.heighlightStyle))
   }
   highlightBoxHeader(box) {
-    let boxHeader = box.closest(this.itemClass)
-    boxHeader = boxHeader && boxHeader.querySelector(this.highlightClass)
+    let boxParent = box.closest(this.itemClass)
+    let boxHeader = boxParent && boxParent.querySelector(this.highlightClass)
     boxHeader && boxHeader.classList.add(...this.heighlightStyle)
   }
   setItemIndent(item, box) {
     let indentEl = item.querySelector(this.indentClass)
-    if (indentEl) { indentEl.style.paddingLeft = box.dataset.indent || "0rem" }
-  }
-  sortableRoot() {
-    return Sortable.utils.closest(this.el, this.rootSelector)
-  }
-  rootID() {
-    return this.rootId || this.sortableRoot().id
+    let indentBox = box.querySelector(this.indentClass)
+    if (indentEl && indentBox) { indentEl.style.paddingLeft = indentBox.style.paddingLeft || "0rem" }
   }
   itemPath(el) {
     let item = Sortable.utils.closest(el, this.itemClass)
-    let rootEl = this.sortableRoot()
 
     if (item.id.startsWith("main")) { item.id = item.id.replace("main", "") }
-    if (item.id == rootEl.id) { return item.id }
-    else { return (this.rootId || rootEl.id) + item.id }
+    if (item.id == this.rootID) { return item.id }
+    else { return this.rootID + item.id }
   }
   selectCurrentItems(paths) {
-    const currentPaths = paths
-    const itemBox = this.el
-    const sortableEl = Sortable.get(itemBox)
+    // deselect all
+    this.sorters.forEach(ins => {
+      ins.el.querySelectorAll(this.itemClass).forEach(item => Sortable.utils.deselect(item))
 
-    sortableEl && sortableEl.multiDrag._deselectMultiDrag()
-    currentPaths.forEach(currentPath => {
-      if (currentPath == this.rootID()) {
-        currentPath = "main"
-      } else {
-        currentPath = currentPath.replace(this.rootID(), "")
-      }
-      let item = itemBox.querySelector(`[id='${currentPath}']`)
-      if (!item) { return }
+      paths.forEach(currentPath => {
+        if (currentPath == this.rootID) {
+          currentPath = "main"
+        } else {
+          currentPath = currentPath.replace(this.rootID, "")
+        }
+        let item = ins.el.querySelector(`[id='${currentPath}']`)
+        if (!item) { return }
 
-      item.from = itemBox
-      item.multiDragKeyDown = false
-      Sortable.utils.select(item)
+        item.from = ins.el
+        item.multiDragKeyDown = false
+        Sortable.utils.select(item)
 
-      if (currentPaths.length > 1) { item.classList.add("multi") }
-      // item.scrollIntoView({ behavior: "smooth", block: "center" })
+        if (paths.length > 1) { item.classList.add("multi") }
+        // item.scrollIntoView({ behavior: "smooth", block: "center" })
+      })
     })
   }
   movedItems(drop) {
@@ -93,12 +81,11 @@ export default class PhxSortable {
       newIndices: drop.newIndicies.length == 0 ? newIndexItem : newIndexItems
     }
   }
-  setupSortable() {
-    let sortableEl = this.el
+  setupSortable(el) {
     let sortableOpts = {
-      group: this.el.dataset.group || "nested",
+      group: el.dataset.group || "nested",
       // group: "nested",
-      // disabled: !!this.el.dataset.group,
+      // disabled: !!el.dataset.group,
       // swapThreshold: 0.1,
       // invertedSwapThreshold: 0.2,
       // invertSwap: true,
@@ -149,7 +136,7 @@ export default class PhxSortable {
 
         // Do not multi-select same-list when multiDragKey is not pressed.
         // This is implemented separately from above. It may be better this way.
-        if (!evt.item.multiDragKeyDown && !this.el.shiftSelect) {
+        if (!evt.item.multiDragKeyDown && !this.meta.shiftSelect) {
           let exceptItselfItems = evt.items.filter(item => {
             return item != evt.item
           })
@@ -165,7 +152,7 @@ export default class PhxSortable {
         }
 
         // PushEvent only when necessary
-        const ShiftSelect = evt.items.length == this.el.shiftSelect
+        const ShiftSelect = evt.items.length == this.meta.shiftSelect
         const isMetaSelect = evt.item.multiDragKeyDown
 
         if (ShiftSelect || isMetaSelect || evt.items.length == 1) {
@@ -173,21 +160,21 @@ export default class PhxSortable {
         }
 
       },
-      onChoose: function (evt) {
+      onChoose: (evt) => {
         evt.item.multiDragKeyDown = evt.originalEvent.metaKey
 
         // Prepare for onSelect to pick up shiftSelect to prevent select_sch from firing EVERY time.
         // This makes pushEvent only firing when all items are shift-selected.
         if (evt.originalEvent.shiftKey) {
-          let minIndex = Math.min(this.el.lastChoosed, evt.oldIndex)
-          let maxIndex = Math.max(this.el.lastChoosed, evt.oldIndex)
-          this.el.shiftSelect = maxIndex - minIndex + 1
+          let minIndex = Math.min(this.meta.lastChoosed, evt.oldIndex)
+          let maxIndex = Math.max(this.meta.lastChoosed, evt.oldIndex)
+          this.meta.shiftSelect = maxIndex - minIndex + 1
         } else {
-          this.el.lastChoosed = evt.oldIndex
+          this.meta.lastChoosed = evt.oldIndex
         }
       },
     }
 
-    new Sortable(sortableEl, sortableOpts)
+    return new Sortable(el, sortableOpts)
   }
 }

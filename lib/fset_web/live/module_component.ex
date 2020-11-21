@@ -46,9 +46,9 @@ defmodule FsetWeb.ModuleComponent do
 
   defp render_readonly_model(assigns) do
     ~L"""
-    <div id="file_<%= @path %>" class="h-screen">
+    <div id="file_<%= @path %>" class="h-screen" phx-hook="ModelMove">
       <main class="overflow-y-scroll overscroll-y-none h-full relative">
-        <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit gap-2 pb-6 w-full text-sm <%= if @ui.model_number, do: 'model_number' %>"
+        <ul id="<%= @path %>" class="grid grid-cols-fit gap-2 pb-6 w-full text-sm <%= if @ui.model_number, do: 'model_number' %>"
           phx-capture-click="select_sch"
           phx-value-paths="<%= @path %>"
           data-group="root"
