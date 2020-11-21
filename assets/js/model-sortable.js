@@ -1,4 +1,5 @@
 import Sortable, { MultiDrag } from "sortablejs"
+Sortable.mount(new MultiDrag())
 
 export default class PhxSortable {
   constructor(phx, opts = {}) {
