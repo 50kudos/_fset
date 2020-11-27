@@ -46,8 +46,8 @@ defmodule FsetWeb.ModuleComponent do
 
   defp render_readonly_model(assigns) do
     ~L"""
-    <div id="file_<%= @path %>" class="h-screen" phx-hook="ModelMove">
-      <main class="overflow-y-scroll overscroll-y-none h-full relative">
+    <div id="file_<%= @path %>" class="h-screen" phx-hook="ModelEditable">
+      <main class="overflow-y-scroll overscroll-y-none h-full">
         <ul id="<%= @path %>" class="grid grid-cols-fit gap-2 pb-6 w-full text-sm <%= if @ui.model_number, do: 'model_number' %>"
           phx-capture-click="select_sch"
           phx-value-paths="<%= @path %>"
@@ -73,7 +73,7 @@ defmodule FsetWeb.ModuleComponent do
   defp render_model(assigns) do
     ~L"""
     <div id="file_<%= @path %>" class="h-screen">
-      <main class="overflow-y-scroll overscroll-y-none h-full relative">
+      <main class="overflow-y-scroll overscroll-y-none h-full">
         <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit gap-2 pb-6 w-full text-sm <%= if @ui.model_number, do: 'model_number' %>"
           phx-capture-click="select_sch"
           phx-value-paths="<%= @path %>"
@@ -99,12 +99,11 @@ defmodule FsetWeb.ModuleComponent do
 
   defp render_main(%{models: [{main, main_sch}]} = assigns) do
     ~L"""
-    <div id="file_<%= @path %>" class="h-screen">
-      <main class="overflow-y-scroll overscroll-y-none h-full relative">
+    <div id="file_<%= @path %>" class="h-screen" phx-hook="ModelEditable">
+      <main class="overflow-y-scroll overscroll-y-none h-full">
         <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit gap-2 pb-6 w-full text-sm"
           phx-capture-click="select_sch"
           phx-value-paths="<%= @path %>"
-          phx-hook="moveable"
           data-group="root"
           data-indent="1.25rem"
         >

@@ -18,8 +18,12 @@
 
 /* semantics */
 .sort-handle {
-  .h { @apply flex w-full }
-  .k { @apply flex flex-wrap }
+  .h/*eader*/ { @apply flex w-full }
+  .k/*ey*/ { @apply flex flex-wrap }
+  .t/*ype*/ {
+    min-width: 5ch;
+    @apply inline
+  }
 }
 
 

@@ -1,15 +1,4 @@
-<span id="fstore"
-  data-store="<%=# Jason.encode!(@socket.private.changed.push_events |> Enum.at(0) |> Enum.at(1)) %>">
-</span>
 <div class="w-full">
-  <datalist id="changeable_types">
-    <%= for type_text <- text_val_types(@files) do %>
-      <option class="px-2 py-1 hover:bg-gray-800 hover:text-gray-300 bg-opacity-75 cursor-pointer border-b border-gray-500 last:border-0"
-        value="<%= type_text %>">
-        <%= type_text %>
-      </option>
-    <% end %>
-  </datalist>
   <section class="flex flex-col h-screen">
     <%=# render FsetWeb.LayoutView, "_header.html", assigns %>
     <%= for error <- @ui.errors do %>
@@ -65,3 +54,21 @@
     </footer>
   </section>
 </div>
+
+<span id="fstore"
+  data-store="<%=# Jason.encode!(@socket.private.changed.push_events |> Enum.at(0) |> Enum.at(1)) %>">
+</span>
+
+<template id="types_combobox_template"><div class="p-2 bg-gray-100 rounded border border-gray-700 shadow-xl text-gray-900">
+  <filter-input aria-owns="fmodel">
+    <label>
+      <span>Change type to:</span>
+      <input id="type-input" class="my-2 px-2 w-full rounded border border-gray-700" type="text" autofocus autocomplete="off">
+    </label>
+  </filter-input>
+  <div id="fmodel">
+    <ul data-filter-list hidden role="listbox" id="list-id"  class="max-h-screen overflow-scroll">
+    </ul>
+    <p data-filter-empty-state hidden>Type not found</p>
+  </div>
+</div></template>

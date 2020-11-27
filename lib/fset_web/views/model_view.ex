@@ -133,13 +133,13 @@ defmodule FsetWeb.ModelView do
 
   defp render_type(%{ui: %{level: 0}} = assigns) do
     ~E"""
-    <span class="text-pink-500" style="min-width: 5ch"><%= type_text(@sch, @ui) %></span>
+    <p class="t text-pink-500"><%= type_text(@sch, @ui) %></p>
     """
   end
 
   defp render_type(assigns) do
     ~E"""
-    <span class="text-pink-500 self-center" style="min-width: 5ch"><%= type_text(@sch, @ui) %></span>
+    <p class="t text-pink-500 self-center"><%= type_text(@sch, @ui) %></p>
     """
   end
 

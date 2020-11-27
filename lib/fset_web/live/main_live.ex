@@ -24,29 +24,8 @@ defmodule FsetWeb.MainLive do
   def handle_params(params, _uri, socket) do
     assigns = change_file_data(socket.assigns, params)
 
-    # current_file =
-    #   assigns.current_file
-    #   |> Map.from_struct()
-    #   |> Map.take([:id, :schema])
-
-    # anchors_models =
-    #   Enum.map(socket.assigns.models_anchors, fn {model_name, anchor} ->
-    #     [anchor, model_name]
-    #   end)
-
-    # fmodels =
-    #   Enum.map(assigns.current_models_bodies, fn {model_name, model} ->
-    #     [model_name, model]
-    #   end)
-
-    # push_file_change = %{
-    #   "currentFile" => %{id: current_file.id, fmodels: fmodels},
-    #   "anchorsModels" => anchors_models
-    # }
-
-    socket = assign(socket, assigns)
-    # socket = push_event(socket, "file_change", push_file_change)
-    {:noreply, socket}
+    send(self(), {:push_types})
+    {:noreply, assign(socket, assigns)}
   end
 
   @impl true
@@ -163,6 +142,15 @@ defmodule FsetWeb.MainLive do
 
   def handle_info({:re_render_current_path, paths}, socket) do
     {:noreply, push_event(socket, "current_path", %{paths: paths})}
+  end
+
+  def handle_info({:push_types}, socket) do
+    socket =
+      push_event(socket, "changeable_types", %{
+        "typeOptions" => text_val_types(socket.assigns.files)
+      })
+
+    {:noreply, socket}
   end
 
   def handle_info(%{event: "presence_diff", payload: _payload}, socket) do
