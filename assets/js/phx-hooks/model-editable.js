@@ -5,16 +5,21 @@ import "@github/filter-input-element"
 
 export default {
   mounted() {
-    let phx = this
     this.rootID = this.el.querySelector("[data-group='root']").id
-    // this.phxSortable = new PhxSortable("[data-group]", phx, { scope: this.el })
+    this.phxSortable = new PhxSortable("[data-group]", this, { scope: this.el })
     this.bindToggle()
     this.bindChangeType()
   },
   updated() {
+    this.phxSortable.destroyAll()
+    this.phxSortable = new PhxSortable("[data-group]", this, { scope: this.el })
+
+    this.tippies.forEach(a => a.destroy())
+    this.bindChangeType()
   },
   destroyed() {
-    // this.phxSortable.destroyAll()
+    this.phxSortable.destroyAll()
+    this.tippies.forEach(a => a.destroy())
   },
   bindToggle() {
     const maker = `
@@ -28,7 +33,7 @@ export default {
     })
   },
   bindChangeType() {
-    tippy(".t", {
+    this.tippies = tippy(".t", {
       trigger: "click",
       placement: 'bottom-start',
       onShow: (tippy) => {

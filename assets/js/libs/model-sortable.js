@@ -47,8 +47,8 @@ export default class PhxSortable {
     else { return this.rootID + item.id }
   }
   selectCurrentItems(paths) {
-    // deselect all
     this.sorters.forEach(ins => {
+      if (!ins.el) { return }
       ins.el.querySelectorAll(this.itemClass).forEach(item => Sortable.utils.deselect(item))
 
       paths.forEach(currentPath => {
