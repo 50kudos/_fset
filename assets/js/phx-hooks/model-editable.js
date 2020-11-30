@@ -1,6 +1,6 @@
 import PhxSortable from "../libs/model-sortable.js"
-import TypeCombobox from '../libs/type-combobox.js'
-import tippy from 'tippy.js';
+import TypeCombobox from "../libs/type-combobox.js"
+import tippy from "tippy.js";
 import "@github/filter-input-element"
 
 export default {
@@ -35,11 +35,11 @@ export default {
   bindChangeType() {
     this.tippies = tippy(".t", {
       trigger: "click",
-      placement: 'bottom-start',
+      placement: "bottom-start",
       onShow: (tippy) => {
-        const template = document.querySelector('#types_combobox_template').content.cloneNode(true)
-        const input = template.querySelector('#type-input')
-        const list = template.querySelector('#list-id')
+        const template = document.querySelector("#types_combobox_template").content.cloneNode(true)
+        const input = template.querySelector("#type-input")
+        const list = template.querySelector("#list-id")
         const typeCombobox = new TypeCombobox(input, list, {
           committed: (e) => this.pushEvent("change_type", {
             path: this.rootID + e.target.closest(".sort-handle").id,
@@ -48,12 +48,13 @@ export default {
         })
         typeCombobox.setOptions(window.liveStore.typeOptions)
         tippy.setContent(template)
-        setTimeout(() => { input.focus() }, 50)
+        setTimeout(() => { input.focus() }, 24)
       },
       onHide: (tippy) => tippy.setContent(""),
       allowHTML: true,
       interactive: true,
       hideOnClick: true,
+      touch: ["hold", 500],
       maxWidth: "100%"
     });
   }

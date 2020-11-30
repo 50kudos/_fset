@@ -17,7 +17,7 @@ defmodule FsetWeb.ModelView do
 
   defp render_folder(assigns) do
     ~E"""
-    <li id="<%= @path %>" class="sort-handle <%= if @ui.level == 0, do: 'bg-dark-gray py-4 shadow w-full' %>" >
+    <li id="<%= @path %>" class="sort-handle <%= if @ui.level == 0, do: 'bg-dark-gray py-4 shadow w-full scroll-mt-4' %>">
       <details <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>>
         <summary>
           <div class="h">

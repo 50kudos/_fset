@@ -67,9 +67,9 @@ defmodule FsetWeb.ModelNavComponent do
     <ul class="text-sm divide-y divide-gray-800 font-light tracking-wide">
       <%= if @file.type == :model do %>
         <%= for {{model_name, _}, i} <- Enum.with_index(@file.models_anchors) do %>
-          <li class="sort-handle flex p-2 pl-4 hover:bg-indigo-700 hover:bg-opacity-75 hover:text-gray-300" id="<%= input_id(%{id: i}, @file.name) %>">
+          <li class="flex hover:bg-indigo-700 hover:bg-opacity-75 hover:text-gray-300">
             <!-- <span class="text-gray-600 font-mono mr-1"><%= "#{i + 1}" %>.</span> -->
-            <a href="#[<%= model_name %>]"><%= Utils.word_break_html(to_string model_name) %></a>
+            <a href="#[<%= model_name %>]" class="w-full p-2 pl-4"><%= Utils.word_break_html(to_string model_name) %></a>
           </li>
         <% end %>
       <% else %>

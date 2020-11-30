@@ -32,90 +32,52 @@ defmodule FsetWeb.ModuleComponent do
     case {connected?(assigns.socket), assigns} do
       {true, %{models: [{:main, _}]}} -> render_main(assigns)
       {false, %{models: [{:main, _}]}} -> render_main(assigns)
-      {true, %{models: models}} when is_list(models) -> render_readonly_model(assigns)
-      {false, %{models: models}} when is_list(models) -> render_readonly_model(assigns)
+      {true, %{models: models}} when is_list(models) -> render_model(assigns)
+      {false, %{models: models}} when is_list(models) -> render_model(assigns)
     end
-  end
-
-  defp render_elm_model(assigns) do
-    ~L"""
-    <div id="file_<%= @path %>" class="h-screen" _phx-hook="elm" phx-update="ignore">
-    </div>
-    """
-  end
-
-  defp render_readonly_model(assigns) do
-    ~L"""
-    <div id="file_<%= @path %>" class="h-screen" phx-hook="ModelEditable">
-      <main class="overflow-y-scroll overscroll-y-none h-full">
-        <ul id="<%= @path %>" class="grid grid-cols-fit gap-2 pb-6 w-full text-sm <%= if @ui.model_number, do: 'model_number' %>"
-          phx-capture-click="select_sch"
-          phx-value-paths="<%= @path %>"
-          data-group="root"
-          data-indent="1.25rem"
-        >
-          <%= for {key, sch} <- @models do %>
-            <%= ModelView.render("model.html", %{
-              id: input_name("", key),
-              key: key,
-              sch: sch,
-              parent: Fset.Sch.New.object(),
-              ui: @ui,
-              path: input_name("", key)
-            }) %>
-          <% end %>
-        </ul>
-      </main>
-    </div>
-    """
   end
 
   defp render_model(assigns) do
     ~L"""
-    <div id="file_<%= @path %>" class="h-screen">
-      <main class="overflow-y-scroll overscroll-y-none h-full">
-        <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit gap-2 pb-6 w-full text-sm <%= if @ui.model_number, do: 'model_number' %>"
-          phx-capture-click="select_sch"
-          phx-value-paths="<%= @path %>"
-          phx-hook="moveable"
-          data-group="root"
-          data-indent="1.25rem"
-        >
-          <%= for {key, sch} <- @models do %>
-            <%= live_component(@socket, ModelComponent,
-              id: input_name("", key),
-              key: key,
-              sch: sch,
-              parent: Fset.Sch.New.object(),
-              ui: @ui,
-              path: input_name("", key)
-            ) %>
-          <% end %>
-        </ul>
-      </main>
+    <div id="file_<%= @path %>" class="" phx-hook="ModelEditable">
+      <ul id="<%= @path %>" class="grid grid-cols-fit gap-2 pb-6 w-full text-sm <%= if @ui.model_number, do: 'model_number' %>"
+        phx-capture-click="select_sch"
+        phx-value-paths="<%= @path %>"
+        data-group="root"
+        data-indent="1.25rem"
+      >
+        <%= for {key, sch} <- @models do %>
+          <%= ModelView.render("model.html", %{
+            id: input_name("", key),
+            key: key,
+            sch: sch,
+            parent: Fset.Sch.New.object(),
+            ui: @ui,
+            path: input_name("", key)
+          }) %>
+        <% end %>
+      </ul>
     </div>
     """
   end
 
   defp render_main(%{models: [{main, main_sch}]} = assigns) do
     ~L"""
-    <div id="file_<%= @path %>" class="h-screen" phx-hook="ModelEditable">
-      <main class="overflow-y-scroll overscroll-y-none h-full">
-        <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit gap-2 pb-6 w-full text-sm"
-          phx-capture-click="select_sch"
-          phx-value-paths="<%= @path %>"
-          data-group="root"
-          data-indent="1.25rem"
-        >
-          <%= ModelView.render("model.html", %{
-            id: @path,
-            key: "#{main}",
-            sch: main_sch,
-            ui: @ui,
-            path: "#{main}"
-          }) %>
-        </ul>
-      </main>
+    <div id="file_<%= @path %>" class="" phx-hook="ModelEditable">
+      <ul id="<%= @path %>" class="sort-handle grid grid-cols-fit gap-2 pb-6 w-full text-sm"
+        phx-capture-click="select_sch"
+        phx-value-paths="<%= @path %>"
+        data-group="root"
+        data-indent="1.25rem"
+      >
+        <%= ModelView.render("model.html", %{
+          id: @path,
+          key: "#{main}",
+          sch: main_sch,
+          ui: @ui,
+          path: "#{main}"
+        }) %>
+      </ul>
     <div>
     """
   end
