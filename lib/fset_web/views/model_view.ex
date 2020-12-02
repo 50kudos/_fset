@@ -17,7 +17,7 @@ defmodule FsetWeb.ModelView do
 
   defp render_folder(assigns) do
     ~E"""
-    <li id="<%= @path %>" class="sort-handle <%= if @ui.level == 0, do: 'bg-dark-gray py-4 shadow w-full scroll-mt-4' %>">
+    <li id="<%= @path %>" class="sort-handle">
       <details <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>>
         <summary>
           <div class="h">
@@ -25,7 +25,7 @@ defmodule FsetWeb.ModelView do
             <%= render_type(assigns) %>
           </div>
         </summary>
-        <ul data-group="<%= keyed_or_indexed(@sch) %>" data-lv="<%= @ui.level %>">
+        <ul data-group="<%= keyed_or_indexed(@sch) %>">
           <%= render_itself(assigns) %>
         </ul>
       </details>
@@ -35,7 +35,7 @@ defmodule FsetWeb.ModelView do
 
   defp render_file(assigns) do
     ~E"""
-    <li id="<%= @path %>" class="sort-handle flex <%= if @ui.level == 0, do: 'bg-dark-gray py-4 shadow' %>">
+    <li id="<%= @path %>" class="sort-handle flex">
       <%= render_key(%{assigns | key: Utils.word_break_html("#{@key}")}) %>
       <%= render_type(assigns) %>
     </li>

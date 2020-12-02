@@ -1,5 +1,6 @@
 import PhxSortable from "../libs/model-sortable.js"
 import TypeCombobox from "../libs/type-combobox.js"
+import FieldRenamable from "../libs/field-renamable.js"
 import tippy from "tippy.js";
 import "@github/filter-input-element"
 
@@ -9,6 +10,7 @@ export default {
     this.phxSortable = new PhxSortable("[data-group]", this, { scope: this.el })
     this.bindToggle()
     this.bindChangeType()
+    this.bindRenameKey()
   },
   updated() {
     this.phxSortable.destroyAll()
@@ -16,6 +18,8 @@ export default {
 
     this.tippies.forEach(a => a.destroy())
     this.bindChangeType()
+
+    this.bindRenameKey()
   },
   destroyed() {
     this.phxSortable.destroyAll()
@@ -34,7 +38,7 @@ export default {
   },
   bindChangeType() {
     this.tippies = tippy(".t", {
-      trigger: "click",
+      trigger: "dblclick",
       placement: "bottom-start",
       onShow: (tippy) => {
         const template = document.querySelector("#types_combobox_template").content.cloneNode(true)
@@ -54,8 +58,22 @@ export default {
       allowHTML: true,
       interactive: true,
       hideOnClick: true,
-      touch: ["hold", 500],
+      // touch: ["hold", 500],
       maxWidth: "100%"
     });
+  },
+  bindRenameKey() {
+    this.fields = [...this.el.querySelectorAll("[data-group='root'] [data-group='keyed'] .k")]
+    this.fields
+      .map(k => new FieldRenamable(k, {
+        committed: e => {
+          this.pushEvent("rename_key", {
+            parent_path: this.rootID + e.target.dataset.parentPath,
+            value: e.target.value,
+            old_key: e.target.dataset.oldKey
+          })
+        }
+      }))
+
   }
 }

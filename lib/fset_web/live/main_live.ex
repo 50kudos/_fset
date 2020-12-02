@@ -108,12 +108,15 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def handle_info({:update_sch, path, sch, opts}, socket) do
-    re_render_model(
-      path,
-      opts
-      |> Keyword.put(:sch, sch)
-      |> Keyword.put(:file_id, socket.assigns.current_file.id)
-    )
+    # re_render_model(
+    #   path,
+    #   opts
+    #   |> Keyword.put(:sch, sch)
+    #   |> Keyword.put(:file_id, socket.assigns.current_file.id)
+    # )
+    {models_bodies, _} = models_bodies(socket.assigns.current_file)
+
+    send_update(FsetWeb.ModuleComponent, id: socket.assigns.current_file.id, models: models_bodies)
 
     send(self(), {:async_get_and_update, path, sch})
 

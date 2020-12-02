@@ -39,14 +39,17 @@
   @apply py-0 border border-gray-700 border-dashed
 }*/
 .sortable-drag { @apply flex list-none }
-.sort-handle [phx-click="add_field"] { @apply hidden }
-.sort-handle.sortable-selected.multi {
-  > details > summary [phx-click="add_field"] { @apply hidden }
-}
-.sort-handle.sortable-selected {
-  > details > summary [phx-click="add_field"] { @apply inline }
-}
 
+[data-group='root'] {
+  > .sort-handle { @apply bg-dark-gray py-4 shadow w-full scroll-mt-4 }
+  .sort-handle [phx-click="add_field"] { @apply hidden }
+  .sort-handle.sortable-selected.multi {
+    > details > summary [phx-click="add_field"] { @apply hidden }
+  }
+  .sort-handle.sortable-selected {
+    > details > summary [phx-click="add_field"] { @apply inline }
+  }
+}
 .model_number {
   > .sort-handle { @apply flex relative }
   > .sort-handle > * { @apply w-full }
