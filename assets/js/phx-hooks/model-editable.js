@@ -9,21 +9,24 @@ export default {
     this.rootID = this.el.querySelector("[data-group='root']").id
     this.phxSortable = new PhxSortable("[data-group]", this, { scope: this.el })
     this.bindToggle()
+
+    this.unbindChangeType()
     this.bindChangeType()
+
     this.bindRenameKey()
   },
   updated() {
     this.phxSortable.destroyAll()
     this.phxSortable = new PhxSortable("[data-group]", this, { scope: this.el })
 
-    this.tippies.forEach(a => a.destroy())
+    this.unbindChangeType()
     this.bindChangeType()
 
     this.bindRenameKey()
   },
   destroyed() {
     this.phxSortable.destroyAll()
-    this.tippies.forEach(a => a.destroy())
+    this.unbindChangeType()
   },
   bindToggle() {
     const maker = `
@@ -36,25 +39,36 @@ export default {
       details.addEventListener("click", e => e.preventDefault())
     })
   },
+  unbindChangeType() {
+    if (this.tippies) {
+      this.tippies.forEach(a => a.destroy())
+      this.tippies.length = 0
+    }
+  },
   bindChangeType() {
+    const showCombobox = (tippy) => {
+      const template = document.querySelector("#types_combobox_template").content.cloneNode(true)
+      const input = template.querySelector("#type-input")
+      const list = template.querySelector("#list-id")
+
+      const typeCombobox = new TypeCombobox(input, list, {
+        committed: (e) => this.pushEvent("change_type", {
+          path: e.target.closest("[data-group='root']").id + e.target.closest(".sort-handle").id,
+          value: e.target.id
+        })
+      })
+      typeCombobox.setOptions(window.liveStore.typeOptions)
+      tippy.setContent(template)
+      setTimeout(() => { input.focus() }, 24)
+    }
+
     this.tippies = tippy(".t", {
       trigger: "dblclick",
       placement: "bottom-start",
-      onShow: (tippy) => {
-        const template = document.querySelector("#types_combobox_template").content.cloneNode(true)
-        const input = template.querySelector("#type-input")
-        const list = template.querySelector("#list-id")
-        const typeCombobox = new TypeCombobox(input, list, {
-          committed: (e) => this.pushEvent("change_type", {
-            path: this.rootID + e.target.closest(".sort-handle").id,
-            value: e.target.id
-          })
-        })
-        typeCombobox.setOptions(window.liveStore.typeOptions)
-        tippy.setContent(template)
-        setTimeout(() => { input.focus() }, 24)
+      onShow: showCombobox,
+      onHide: (tippy) => {
+        tippy.setContent("")
       },
-      onHide: (tippy) => tippy.setContent(""),
       allowHTML: true,
       interactive: true,
       hideOnClick: true,
