@@ -1,30 +1,80 @@
 import Sortable, { MultiDrag } from "sortablejs"
+import Observer from "./observer.js"
 Sortable.mount(new MultiDrag())
 
-export default class PhxSortable {
-  constructor(selector, phx, config = {}) {
-    this.scope = config.scope || document
-    this.rootID = this.scope.querySelector(selector).id
+export default class ModelSortable {
+  constructor(phx, listSelector) {
     this.phx = phx
-    this.selector = selector
-    this.meta = {}
-
-    // User defined functions and properties
-    this.itemClass = ".sort-handle"
-    this.highlightClass = ".h"
-    this.heighlightStyle = ["bg-indigo-700", "bg-opacity-25"]
-    this.indentClass = ".k"
-
-    this.sorters =
-      Array.from(this.scope.querySelectorAll(this.selector))
-        .map(el => Sortable.get(el) || this.setupSortable(el))
+    this.el = phx.el
+    this.listSelector = listSelector
+  }
+  start() {
+    this._sortableLists().forEach(list => this._newSorter(list))
+    this._startObserve()
 
     this.phx.handleEvent("current_path", ({ paths }) => {
-      this.selectCurrentItems(paths)
+      let sorters = this._sortableLists().map(a => a._sorter)
+      SortableList.selectCurrentItems(sorters, paths)
     })
   }
-  destroyAll() {
-    this.sorters.forEach(sorter => sorter.destroy())
+  _startObserve() {
+    this._observer = new Observer(this.el, {
+      nodeAdded: (addedNode) => {
+        if (this._isList(addedNode)) { this._newSorter(addedNode) }
+      },
+      nodeRemoved: (removedNode) => {
+        if (this._isList(removedNode)) { removedNode._sorter?.destroy() }
+      }
+    })
+    this._observer.start()
+  }
+  stop() {
+    this._sortableLists().forEach(list => { list._sorter?.destroy() })
+    this._observer.stop()
+  }
+  _sortableLists() {
+    return Array.from(this.el.querySelectorAll(this.listSelector))
+  }
+  _isList(node) {
+    node.nodeType == Node.ELEMENT_NODE && node.querySelector(this.listSelector)
+  }
+  _newSorter(list) {
+    list._sorter = new SortableList(list, {
+      list: {
+        rootID: this.phx.rootID,
+        itemClass: ".sort-handle",
+        highlightClass: ".h",
+        heighlightStyle: ["bg-indigo-700", "bg-opacity-25"],
+        indentClass: ".k"
+      },
+      sorter: {
+        moved: (movedItems) => this.phx.pushEvent("move", movedItems),
+        selected: (selectedItemPaths) => this.phx.pushEvent("select_sch", { paths: selectedItemPaths })
+      }
+    })
+
+    return list
+  }
+}
+
+class SortableList {
+  constructor(el, config = {}) {
+    this.el = el
+    this.config = config
+    this.meta = {}
+
+    // List semantic
+    const listConfig = this.config.list
+    this.rootID = listConfig.rootID
+    this.itemClass = listConfig.itemClass
+    this.highlightClass = listConfig.highlightClass
+    this.heighlightStyle = listConfig.heighlightStyle
+    this.indentClass = listConfig.indentClass
+
+    this.sorter = Sortable.get(this.el) || this.setupSortable(this.el)
+  }
+  destroy() {
+    this.sorter.destroy()
   }
   resetHighLight() {
     document.querySelectorAll(this.highlightClass).forEach(a => a.classList.remove(...this.heighlightStyle))
@@ -46,9 +96,9 @@ export default class PhxSortable {
     if (item.id == this.rootID) { return item.id }
     else { return this.rootID + item.id }
   }
-  selectCurrentItems(paths) {
-    this.sorters.forEach(ins => {
-      if (!ins.el) { return }
+  static selectCurrentItems(sorters, paths) {
+    sorters.forEach(ins => {
+      if (!ins?.el) { return }
       ins.el.querySelectorAll(this.itemClass).forEach(item => Sortable.utils.deselect(item))
 
       paths.forEach(currentPath => {
@@ -104,7 +154,7 @@ export default class PhxSortable {
       fallbackTolerance: 8,
 
       onEnd: (evt) => {
-        this.phx.pushEvent("move", this.movedItems(evt))
+        this.config.sorter.moved(this.movedItems(evt))
         evt.items.forEach(item => this.setItemIndent(item, evt.to))
         this.resetHighLight()
       },
@@ -156,7 +206,7 @@ export default class PhxSortable {
         const isMetaSelect = evt.item.multiDragKeyDown
 
         if (ShiftSelect || isMetaSelect || evt.items.length == 1) {
-          this.phx.pushEvent("select_sch", { paths: evt.items.map(a => this.itemPath(a)) })
+          this.config.sorter.selected(evt.items.map(a => this.itemPath(a)))
         }
 
       },
