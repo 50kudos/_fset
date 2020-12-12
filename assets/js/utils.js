@@ -1,6 +1,4 @@
-let Utils = {}
-
-Utils.throttle = (func, limit) => {
+const throttle = (func, limit) => {
   let inThrottle
   return function () {
     const args = arguments
@@ -12,4 +10,8 @@ Utils.throttle = (func, limit) => {
     }
   }
 }
-export const Utils
+
+const fragment = (htmlString) => {
+  return document.createRange().createContextualFragment(htmlString)
+}
+export { fragment }

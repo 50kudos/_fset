@@ -37,6 +37,11 @@ export default {
 
     this.bindRenameKey()
   },
+  updated() {
+    if (this.featureFlags.sortable) {
+      this.typeChangeable.start()
+    }
+  },
   beforeDestroy() {
     if (this.featureFlags.sortable) { this.modelSortable.stop() }
     if (this.featureFlags.typeChangeable) { this.typeChangeable.stop() }

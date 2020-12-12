@@ -15,10 +15,10 @@ export default class Observer {
       switch (mutation.type) {
         case "childList":
           for (let addedNode of mutation.addedNodes) {
-            this.config.nodeAdded(addedNode)
+            this.config.nodeAdded && this.config.nodeAdded(addedNode)
           }
           for (let removedNode of mutation.removedNodes) {
-            this.config.nodeRemoved(removedNode)
+            this.config.nodeRemoved && this.config.nodeRemoved(removedNode)
           }
           break;
         case "attributes":

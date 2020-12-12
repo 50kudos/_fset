@@ -27,10 +27,6 @@ details[open] > summary {
   .open-marker { display: flex; }
 }
 
-[aria-selected="true"] {
-  @apply border-pink-500
-}
-
 /* General style */
 
 /* input { @apply outline-none; } */
@@ -42,17 +38,6 @@ input[type=number]::-webkit-inner-spin-button {
 input[type=number] {
   -moz-appearance:textfield;
 }
-
-/*
-[contenteditable=true] {
-  margin-bottom: -2px;
-  @apply border-b-2 border-green-500
-}
-[contenteditable=true]:focus {
-  @apply outline-none
-}
-*/
-
 
 /* Utilities */
 .stripe-gray {

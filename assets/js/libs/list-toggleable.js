@@ -1,3 +1,5 @@
+import { fragment } from "../utils.js"
+
 export default class ListToggleable {
   constructor(phx) {
     this.phx = phx
@@ -19,13 +21,13 @@ export default class ListToggleable {
     })
   }
   start() {
-    const marker = document.createRange().createContextualFragment(`
+    const marker = fragment(`
     <p class="toggler absolute m-1 leading-4 text-gray-500 font-mono text-xs">
       <span class="close-marker cursor-pointer select-none">+</span>
       <span class="open-marker cursor-pointer select-none">-</span>
     </p>`)
 
-    const spring = document.createRange().createContextualFragment(`
+    const spring = fragment(`
       <span class="spring flex-1"></span>
     `)
 
