@@ -47,7 +47,7 @@ defmodule FsetWeb.ModelComponent do
   defp render_folder(assigns) do
     ~L"""
     <li id="<%= @path %>" class="sort-handle
-      <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow w-full' %>"
+      <%= if @ui.level == @ui.tab, do: 'bg-black bg-opacity-20 rounded py-4 shadow w-full' %>"
     >
       <details <%= if false && Sch.array?(@sch, :homo), do: "", else: "open" %>>
         <summary class="flex flex-col" >
@@ -68,7 +68,7 @@ defmodule FsetWeb.ModelComponent do
   defp render_file(assigns) do
     ~L"""
     <li id="<%= @path %>" class="sort-handle
-      <%= if @ui.level == @ui.tab, do: 'bg-dark-gray rounded py-4 shadow' %>"
+      <%= if @ui.level == @ui.tab, do: 'bg-black bg-opacity-20 rounded py-4 shadow' %>"
     >
       <%= render_key_type_pair(assigns) %>
     </li>

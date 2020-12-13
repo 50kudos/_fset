@@ -167,7 +167,7 @@ defmodule FsetWeb.MainLive do
 
   def render_storage(assigns) do
     ~L"""
-    <div class="px-4 py-2 border-t-2 border-gray-800 bg-gray-900">
+    <div class="px-4 py-2 border-t-2 border-gray-700 bg-gray-900">
       <h5>Storage</h4>
       <div class="my-1">
         <label for="disk" class="block my-1">
@@ -180,7 +180,7 @@ defmodule FsetWeb.MainLive do
           </p>
         </label>
       </div>
-      <hr class="border-gray-800 border-opacity-50">
+      <hr class="border-gray-700 border-opacity-50">
       <div class="mt-2 text-xs">
         <p>External:</p>
         <a href="/auth/github" class="inline-block my-2 px-2 py-1 border border-gray-700 rounded self-end text-gray-500 hover:text-gray-400">Connect Github</a>

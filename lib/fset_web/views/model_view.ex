@@ -17,15 +17,15 @@ defmodule FsetWeb.ModelView do
 
   defp render_folder(assigns) do
     ~E"""
-    <li id="<%= @path %>" class="sort-handle">
+    <li id="<%= @path %>" class="sort-handle" role="treeitem">
       <details <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>>
         <summary>
-          <div class="h">
+          <dfn class="h">
             <%= render_key(%{assigns | key: Utils.word_break_html("#{@key}")}) %>
             <%= render_type(assigns) %>
-          </div>
+          </dfn>
         </summary>
-        <ul data-group="<%= keyed_or_indexed(@sch) %>">
+        <ul data-group="<%= keyed_or_indexed(@sch) %>" role="group">
           <%= render_itself(assigns) %>
         </ul>
       </details>
@@ -35,7 +35,7 @@ defmodule FsetWeb.ModelView do
 
   defp render_file(assigns) do
     ~E"""
-    <li id="<%= @path %>" class="sort-handle flex">
+    <li id="<%= @path %>" class="sort-handle flex" role="treeitem">
       <%= render_key(%{assigns | key: Utils.word_break_html("#{@key}")}) %>
       <%= render_type(assigns) %>
     </li>
@@ -114,13 +114,13 @@ defmodule FsetWeb.ModelView do
       Sch.any_of?(Map.get(assigns, :parent)) ->
         ~E"""
         <span class="k" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"><%= @key %></span>
-        <span class="mx-2 text-base text-gray-600">|</span>
+        <span class="mx-2 text-gray-500">|</span>
         """
 
       Sch.array?(Map.get(assigns, :parent), :homo) ->
         ~E"""
         <span class="k" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"></span>
-        <span class="mx-2 text-base text-gray-600">└</span>
+        <span class="mx-2 text-gray-500">└</span>
         """
 
       true ->
@@ -133,13 +133,13 @@ defmodule FsetWeb.ModelView do
 
   defp render_type(%{ui: %{level: 0}} = assigns) do
     ~E"""
-    <p class="t text-pink-500"><%= type_text(@sch, @ui) %></p>
+    <span class="t text-pink-500" role="complementary"><%= type_text(@sch, @ui) %></span>
     """
   end
 
   defp render_type(assigns) do
     ~E"""
-    <p class="t text-pink-500 self-center"><%= type_text(@sch, @ui) %></p>
+    <span class="t text-pink-500 self-center" role="complementary"><%= type_text(@sch, @ui) %></span>
     """
   end
 

@@ -45,6 +45,7 @@ defmodule FsetWeb.ModuleComponent do
         phx-value-paths="<%= @path %>"
         data-group="root"
         data-indent="1.25rem"
+        role="tree"
       >
         <%= for {key, sch} <- @models do %>
           <%= ModelView.render("model.html", %{

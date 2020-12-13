@@ -14,6 +14,7 @@
   pointer-events: none;
 }
 
+dfn { @apply not-italic }
 textarea { resize: none; }
 details > summary::-webkit-details-marker { display: none; }
 details > summary {
@@ -26,6 +27,7 @@ details[open] > summary {
   .close-marker { display: none; }
   .open-marker { display: flex; }
 }
+[aria-selected="true"] { @apply border-pink-500  }
 
 /* General style */
 
@@ -50,23 +52,6 @@ input[type=number] {
     to bottom,
     var(--gray-700),
     var(--gray-700) 50%,
-    var(--gray-800) 50%,
-    var(--gray-800)
-  ),
-  linear-gradient(to left, var(--gray-700) 0%, var(--gray-700) 100%);
-  background-blend-mode: multiply;
-  background-size: 100% 3rem;
-}
-.bg-dark-gray {
-  --bg-opacity: .9;
-  --gray-700: rgba(74, 85, 104, var(--bg-opacity));
-  --gray-800: rgba(45, 55, 72, var(--bg-opacity));
-  --gray-900: rgba(26, 32, 44, var(--bg-opacity));
-
-  background: linear-gradient(
-    to bottom,
-    var(--gray-800),
-    var(--gray-800) 50%,
     var(--gray-800) 50%,
     var(--gray-800)
   ),

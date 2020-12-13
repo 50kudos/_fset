@@ -53,7 +53,7 @@ export default class TypeChangeable {
 
     tippy.setContent(fragment(`
       <span>Change type to:</span>
-      <input id="${inputId}" class="my-2 px-2 w-full rounded border border-gray-700" type="text" autofocus>
+      <input id="${inputId}" class="my-2 px-2 py-1 w-full rounded border border-gray-700" type="text" autofocus>
     `))
 
     const autoCompleteJS = new autoComplete({

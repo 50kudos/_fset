@@ -52,17 +52,17 @@ defmodule FsetWeb.ProfileLive do
                   Schema from json
                 </button>
               </div>
-              <div role="tabpanel" class="px-6 pt-10 pb-2 border-4 border-gray-800 border-double rounded-b-lg">
+              <div role="tabpanel" class="px-6 pt-10 pb-2 border-4 border-gray-700 border-double rounded-b-lg">
                 <h3 class="text-lg">Start fresh</h3>
                 <p class="text-gray-500 text-sm">Create a blank schema</p>
                 <div class="my-6"><%= render_new_project(:bare_schema, assigns) %></div>
               </div>
-              <div role="tabpanel" class="px-6 pt-10 pb-2 border-4 border-gray-800 border-double rounded-b-lg" hidden>
+              <div role="tabpanel" class="px-6 pt-10 pb-2 border-4 border-gray-700 border-double rounded-b-lg" hidden>
                 <h3 class="text-lg">Import existing schema</h3>
                 <p class="text-gray-500 text-sm">Converting your schema into our system regarding fset specification</p>
                 <div class="my-6"><%= render_new_project(:import_schema, assigns) %></div>
               </div>
-              <div role="tabpanel" class="px-6 pt-10 pb-2 border-4 border-gray-800 border-double rounded-b-lg" hidden>
+              <div role="tabpanel" class="px-6 pt-10 pb-2 border-4 border-gray-700 border-double rounded-b-lg" hidden>
                 <h3 class="text-lg">Start with json data, convert into schema</h3>
                 <p class="text-gray-500 text-sm">Get started quick by automatically infer schema from json data</p>
                 <div class="my-6"><%= render_new_project(:schema_from_data, assigns) %></div>

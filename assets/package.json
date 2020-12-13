@@ -9,20 +9,21 @@
   "dependencies": {
     "@github/details-menu-element": "^1.0.9",
     "@github/tab-container-element": "^3.1.0",
+    "autoprefixer": "^9.8.6",
     "caniuse-lite": "^1.0.30001159",
     "highlight.js": "^10.4.1",
     "phoenix": "file:../deps/phoenix",
     "phoenix_html": "file:../deps/phoenix_html",
     "phoenix_live_view": "file:../deps/phoenix_live_view",
+    "postcss": "^7.0.35",
     "sortablejs": "^1.10.2",
-    "tailwindcss": "^1.9.6",
+    "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.0.2",
     "tippy.js": "^6.2.7",
     "topbar": "^0.1.4"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
     "@babel/preset-env": "^7.0.0",
-    "@fullhuman/postcss-purgecss": "^3.0.0",
     "@tarekraafat/autocomplete.js": "^8.0.4",
     "babel-loader": "^8.2.1",
     "copy-webpack-plugin": "^5.1.1",

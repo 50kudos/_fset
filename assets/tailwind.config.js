@@ -1,23 +1,23 @@
+const colors = require("tailwindcss/colors")
+
 module.exports = {
+
   variants: {
-    borderWidth: ['responsive', 'hover', 'focus', 'odd', 'last'],
-    borderColor: ['responsive', 'hover', 'focus', 'odd', 'last'],
-    textColor: ['responsive', 'hover', 'focus', 'focus-within']
-  },
-  future: {
-    purgeLayersByDefault: true,
-    removeDeprecatedGapUtilities: true,
+    extend: {
+      borderColor: ["odd", "last"],
+      borderWidth: ["hover", "focus", "odd", "last"],
+    }
   },
   purge: {
     // enabled: true,
     content: [
-      '../lib/fset_web/live/*.{leex,ex}',
-      '../lib/fset_web/templates/**/*.{leex,eex}',
-      '../lib/fset_web/views/*.ex',
-      './js/**/*.js'
+      "../lib/fset_web/live/*.{leex,ex}",
+      "../lib/fset_web/templates/**/*.{leex,eex}",
+      "../lib/fset_web/views/*.ex",
+      "./js/**/*.js"
     ],
     options: {
-      safelist: ['multi', '/phx-*/']
+      safelist: ["multi", "/phx-*/"]
     }
   }
 }

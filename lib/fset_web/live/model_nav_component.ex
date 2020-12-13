@@ -7,7 +7,7 @@ defmodule FsetWeb.ModelNavComponent do
     ~L"""
     <ul class="overflow-scroll h-full text-sm leading-6" style="transform: translate3d(0,0,0)">
       <%= for file <- @files do %>
-        <li class="border border-gray-800 bg-gray-800 bg-opacity-25">
+        <li class="border border-gray-700 bg-gray-800 bg-opacity-25">
           <%= if file.id in @active_ids do %>
             <%= if file.id == @current_file_id do %>
               <span class="p-2 block _sticky top-0 text-lg font-thin text-pink-100 bg-pink-700 bg-opacity-75 border-b-4 border-pink-600">
@@ -15,7 +15,7 @@ defmodule FsetWeb.ModelNavComponent do
               </span>
             <% else %>
               <%= live_patch to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id), class: "block" do %>
-                <span class="p-2 block _sticky top-0 text-lg font-thin bg-gray-800 bg-opacity-75 border-t border-b-4 border-gray-800 hover:text-pink-500">
+                <span class="p-2 block _sticky top-0 text-lg font-thin bg-gray-800 bg-opacity-75 border-t border-b-4 border-gray-700 hover:text-pink-500">
                   <%= file.name %>
                 </span>
               <% end %>
@@ -33,7 +33,7 @@ defmodule FsetWeb.ModelNavComponent do
     <ul class="overflow-scroll h-full text-sm leading-6" style="transform: translate3d(0,0,0)">
       <details>
         <summary>
-          <span class="p-2 block w-full text-left text-lg font-thin text-yellow-100 bg-yellow-700 border-b-4 border-yellow-500 cursor-pointer"
+          <span class="p-2 block w-full text-left text-lg font-thin text-yellow-100 bg-yellow-600 border-b-4 border-yellow-400 cursor-pointer"
             role="menu"
             data-menu-button
           >
@@ -41,11 +41,11 @@ defmodule FsetWeb.ModelNavComponent do
           </span>
         </summary>
         <details-menu role="menu">
-          <div class="divide-y divide-gray-800 border border-b-4 border-gray-800 bg-gray-800 bg-opacity-25">
+          <div class="divide-y divide-gray-800 border border-b-4 border-gray-700 bg-gray-800 bg-opacity-25">
             <%= for file <- @files do %>
               <%= if file.id != @current_file_id do %>
                 <%= live_patch to: Routes.main_path(@socket, :show, @current_user.email, @project_name, file.id),
-                  class: "p-2 block text-lg font-thin hover:bg-yellow-800 focus:bg-yellow-800 hover:text-gray-300 focus:text-gray-100",
+                  class: "p-2 block text-lg font-thin hover:bg-yellow-700 focus:bg-yellow-700 hover:text-gray-300 focus:text-gray-100",
                   role: "menuitem",
                   "data-menu-button-text": "" do %>
                   <span class="">
