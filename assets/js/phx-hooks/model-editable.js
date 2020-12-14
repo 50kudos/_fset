@@ -1,8 +1,7 @@
-import ModelSortable, { SortableList } from "../libs/model-sortable.js"
-import TypeChangeable from "../libs/type-changeable.js"
-import FieldRenamable from "../libs/field-renamable.js"
+import ModelSortable from "../libs/model-sortable.js"
+import "../libs/type-changeable.js"
+import "../libs/field-renamable.js"
 import ListToggleable from "../libs/list-toggleable.js"
-import { fragment, swapTag } from "../utils.js"
 
 export default {
   mounted() {
@@ -27,27 +26,10 @@ export default {
     } else {
       this.listToggleable.stop()
     }
-    if (this.featureFlags.fieldRenameable) {
-      this.bindRenameKey()
-    }
   },
   updated() {
   },
   beforeDestroy() {
     if (this.featureFlags.sortable) { this.modelSortable.stop() }
-  },
-  bindRenameKey() {
-    this.fields = [...this.el.querySelectorAll("[data-group='root'] [data-group='keyed'] .k")]
-    this.fields
-      .map(k => new FieldRenamable(k, {
-        committed: e => {
-          this.pushEvent("rename_key", {
-            parent_path: e.target.closest("[data-group='root']").id + e.target.dataset.parentPath,
-            value: e.target.value,
-            old_key: e.target.dataset.oldKey
-          })
-        }
-      }))
-
   }
 }

@@ -15,6 +15,12 @@ const fragment = (htmlString) => {
   return document.createRange().createContextualFragment(htmlString)
 }
 
+const element = (htmlString) => {
+  let template = document.createElement("template")
+  template.innerHTML = htmlString
+  return template.content.firstElementChild
+}
+
 const swapTag = (src, dst) => {
   let srcAttributes = [...src.attributes]
   let srcChildNodes = [...src.childNodes]
@@ -25,4 +31,4 @@ const swapTag = (src, dst) => {
   src.remove()
 }
 
-export { fragment, swapTag }
+export { fragment, swapTag, element }

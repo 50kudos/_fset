@@ -1,10 +1,9 @@
 /* semantics */
 .sort-handle {
   .h/*eader*/ { @apply flex w-full }
-  .k/*ey*/ { @apply flex flex-wrap }
+  .k/*ey*/ { @apply break-all }
   .t/*ype*/ {
-    min-width: 5ch;
-    @apply inline
+    @apply inline break-words pr-4
   }
 }
 .model_number {

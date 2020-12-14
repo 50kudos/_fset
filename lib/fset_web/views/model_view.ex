@@ -104,7 +104,7 @@ defmodule FsetWeb.ModelView do
     <span class="text-blue-500 mr-2" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem">
       <%= model_type_text(@sch, @ui) %>
     </span>
-    <span class="k"><%= @key %></span>
+    <sch-key class="k"><%= @key %></sch-key>
     <span class="mx-2">=</span>
     """
   end
@@ -113,19 +113,19 @@ defmodule FsetWeb.ModelView do
     cond do
       Sch.any_of?(Map.get(assigns, :parent)) ->
         ~E"""
-        <span class="k" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"><%= @key %></span>
+        <sch-key class="k" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"><%= @key %></sch-key>
         <span class="mx-2 text-gray-500">|</span>
         """
 
       Sch.array?(Map.get(assigns, :parent), :homo) ->
         ~E"""
-        <span class="k" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"></span>
+        <sch-key class="k" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"></sch-key>
         <span class="mx-2 text-gray-500">└</span>
         """
 
       true ->
         ~E"""
-        <span class="k" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"><%= @key %></span>
+        <sch-key class="k" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"><%= @key %></sch-key>
         <span class="mx-2">:</span>
         """
     end
@@ -133,13 +133,13 @@ defmodule FsetWeb.ModelView do
 
   defp render_type(%{ui: %{level: 0}} = assigns) do
     ~E"""
-    <sch-type class="t text-pink-500" role="complementary"><%= type_text(@sch, @ui) %></sch-type>
+    <sch-type class="t text-pink-400" role="complementary"><%= type_text(@sch, @ui) %></sch-type>
     """
   end
 
   defp render_type(assigns) do
     ~E"""
-    <sch-type class="t text-pink-500 self-center" role="complementary"><%= type_text(@sch, @ui) %></sch-type>
+    <sch-type class="t text-pink-400" role="complementary"><%= type_text(@sch, @ui) %></sch-type>
     """
   end
 
@@ -156,10 +156,10 @@ defmodule FsetWeb.ModelView do
   def type_text(sch, ui) when is_map(sch) do
     cond do
       Sch.object?(sch, :empty) -> "{ any }"
-      Sch.object?(sch) -> "{ }"
+      Sch.object?(sch) -> {:safe, ["{", "&nbsp", "}"]}
       Sch.array?(sch, :empty) -> "[ any ]"
       Sch.array?(sch, :homo) -> ["[ ", type_text(Sch.items(sch), ui), " ]"]
-      Sch.array?(sch, :hetero) -> "( )"
+      Sch.array?(sch, :hetero) -> {:safe, ["(", "&nbsp", ")"]}
       Sch.string?(sch) -> "string"
       Sch.number?(sch) -> "number"
       Sch.integer?(sch) -> "integer"
