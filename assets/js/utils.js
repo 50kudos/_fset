@@ -14,4 +14,15 @@ const throttle = (func, limit) => {
 const fragment = (htmlString) => {
   return document.createRange().createContextualFragment(htmlString)
 }
-export { fragment }
+
+const swapTag = (src, dst) => {
+  let srcAttributes = [...src.attributes]
+  let srcChildNodes = [...src.childNodes]
+
+  let dst_ = src.parentNode.insertBefore(dst, src)
+  srcChildNodes.forEach(c => dst_.appendChild(c));
+  srcAttributes.forEach(attr => dst_.setAttribute(attr.nodeName, attr.nodeValue))
+  src.remove()
+}
+
+export { fragment, swapTag }

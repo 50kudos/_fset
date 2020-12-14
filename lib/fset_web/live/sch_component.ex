@@ -125,7 +125,7 @@ defmodule FsetWeb.SchComponent do
         <ul>
           <%= for prop <- Sch.order(@sch) do %>
             <li class="mb-8">
-              <h1 class="mb-3 text-base">
+              <h1 class="mb-3 text-base font-light">
                 <span class="break-words"><%= prop %></span>
                 <span class="px-2 rounded text-blue-500 text-sm">
                   <%= FsetWeb.ModelComponent.read_type(Sch.get(@sch, prop), @ui) %>

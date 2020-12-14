@@ -2,6 +2,7 @@ import ModelSortable, { SortableList } from "../libs/model-sortable.js"
 import TypeChangeable from "../libs/type-changeable.js"
 import FieldRenamable from "../libs/field-renamable.js"
 import ListToggleable from "../libs/list-toggleable.js"
+import { fragment, swapTag } from "../utils.js"
 
 export default {
   mounted() {
@@ -16,35 +17,24 @@ export default {
     phx.rootID = this.el.querySelector("[data-group='root']").id
 
     this.modelSortable = new ModelSortable(phx, "[data-group]")
-    this.typeChangeable = new TypeChangeable(phx, ".t")
     this.listToggleable = new ListToggleable(phx)
 
     if (this.featureFlags.sortable) {
       this.modelSortable.start()
-    } else {
-      this.modelSortable.stop()
-    }
-    if (this.featureFlags.typeChangeable) {
-      this.typeChangeable.start()
-    } else {
-      this.typeChangeable.stop()
     }
     if (this.featureFlags.listToggleable) {
       this.listToggleable.start()
     } else {
       this.listToggleable.stop()
     }
-
-    this.bindRenameKey()
+    if (this.featureFlags.fieldRenameable) {
+      this.bindRenameKey()
+    }
   },
   updated() {
-    if (this.featureFlags.sortable) {
-      this.typeChangeable.start()
-    }
   },
   beforeDestroy() {
     if (this.featureFlags.sortable) { this.modelSortable.stop() }
-    if (this.featureFlags.typeChangeable) { this.typeChangeable.stop() }
   },
   bindRenameKey() {
     this.fields = [...this.el.querySelectorAll("[data-group='root'] [data-group='keyed'] .k")]

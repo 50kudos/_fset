@@ -133,13 +133,13 @@ defmodule FsetWeb.ModelView do
 
   defp render_type(%{ui: %{level: 0}} = assigns) do
     ~E"""
-    <span class="t text-pink-500" role="complementary"><%= type_text(@sch, @ui) %></span>
+    <sch-type class="t text-pink-500" role="complementary"><%= type_text(@sch, @ui) %></sch-type>
     """
   end
 
   defp render_type(assigns) do
     ~E"""
-    <span class="t text-pink-500 self-center" role="complementary"><%= type_text(@sch, @ui) %></span>
+    <sch-type class="t text-pink-500 self-center" role="complementary"><%= type_text(@sch, @ui) %></sch-type>
     """
   end
 
