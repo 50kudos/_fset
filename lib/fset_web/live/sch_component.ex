@@ -52,7 +52,7 @@ defmodule FsetWeb.SchComponent do
     <label class="block my-1 bg-gray-700 bg-opacity-20 text-gray-400 focus-within:text-blue-500">
       <p class="px-2 py-1 text-xs">Title</p>
       <textarea type="text"
-        class="block px-2 py-1 text-gray-300 bg-transparent tracking-wide w-full h-full outline-none border-b border-gray-700 focus:border-blue-500"
+        class="block p-2 text-gray-300 bg-transparent tracking-wide w-full outline-none border-b border-gray-700 focus:border-blue-500"
         id="<%= @path <> ~s(_title) %>"
         phx-blur="update_sch"
         phx-hook="FieldAutoResize"
@@ -70,7 +70,7 @@ defmodule FsetWeb.SchComponent do
     <label class="block my-1 bg-gray-700 bg-opacity-20 text-gray-400 focus-within:text-blue-500">
       <p class="px-2 py-1 text-xs">Description</p>
       <textarea type="text"
-        class="block px-2 py-1 text-gray-300 bg-transparent tracking-wide w-full h-full outline-none border-b border-gray-700 focus:border-blue-500"
+        class="block p-2 text-gray-300 bg-transparent tracking-wide w-full outline-none border-b border-gray-700 focus:border-blue-500"
         id="<%= @path <> ~s(_description) %>"
         phx-blur="update_sch"
         phx-hook="FieldAutoResize"
