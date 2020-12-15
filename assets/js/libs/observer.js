@@ -20,6 +20,9 @@ export default class Observer {
           for (let removedNode of mutation.removedNodes) {
             this.config.nodeRemoved && this.config.nodeRemoved(removedNode)
           }
+          if (mutation.target) {
+            this.config.targetChanged && this.config.targetChanged(mutation.target)
+          }
           break;
         case "attributes":
           break;

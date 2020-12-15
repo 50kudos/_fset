@@ -18,12 +18,20 @@ export default class ModelSortable {
     })
   }
   _startObserve() {
+    if (this._observer) { return }
+
     this._observer = new Observer(this.el, {
       nodeAdded: (addedNode) => {
-        if (this._isList(addedNode)) { this._newSorter(addedNode) }
+        this._listEl(addedNode) && this._newSorter(addedNode)
       },
       nodeRemoved: (removedNode) => {
-        if (this._isList(removedNode)) { removedNode._sorter?.destroy() }
+        this._listEl(removedNode) && removedNode._sorter?.destroy()
+      },
+      targetChanged: (targetNode) => {
+        this._listEl(targetNode) &&
+          [...targetNode.querySelectorAll(this.listSelector)]
+            .filter(n => !n._sorter)
+            .forEach(n => this._newSorter(n))
       }
     })
     this._observer.start()
@@ -35,11 +43,11 @@ export default class ModelSortable {
   _sortableLists() {
     return [...this.el.querySelectorAll(this.listSelector)]
   }
-  _isList(node) {
-    node.nodeType == Node.ELEMENT_NODE && node.querySelector(this.listSelector)
+  _listEl(node) {
+    return node.nodeType == Node.ELEMENT_NODE && node.matches(this.listSelector) && node
   }
   _newSorter(list) {
-    list._sorter = new SortableList(list, {
+    list._sorter = list._sorter || new SortableList(list, {
       list: {
         rootID: this.phx.rootID,
         itemClass: ".sort-handle",

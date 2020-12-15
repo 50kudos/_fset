@@ -113,7 +113,7 @@ defmodule FsetWeb.ModelView do
     cond do
       Sch.any_of?(Map.get(assigns, :parent)) ->
         ~E"""
-        <sch-key class="k" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"><%= @key %></sch-key>
+        <span class="" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"></span>
         <span class="mx-2 text-gray-500">|</span>
         """
 

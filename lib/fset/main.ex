@@ -132,6 +132,8 @@ defmodule Fset.Main do
     user = assigns.current_user
     file = assigns.current_file
     {_pre, postsch, new_schema} = Sch.rename_key(file.schema, parent_path, old_key, new_key)
+    file = %{file | schema: new_schema}
+    {models_bodies, _} = models_bodies(file)
 
     new_key = if new_key == "", do: old_key, else: new_key
     new_path = parent_path <> "[" <> new_key <> "]"
@@ -139,7 +141,8 @@ defmodule Fset.Main do
     track_user_update(user, file, current_path: new_path)
 
     %{}
-    |> Map.put(:current_file, %{file | schema: new_schema})
+    |> Map.put(:current_file, file)
+    |> Map.put(:current_models_bodies, models_bodies)
     |> Map.put(:current_path, List.wrap(new_path))
   end
 
