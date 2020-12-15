@@ -49,10 +49,10 @@ defmodule FsetWeb.SchComponent do
 
   defp render_title(assigns) do
     ~L"""
-    <label class="block my-1 bg-gray-700 bg-opacity-20 text-gray-400 focus-within:text-blue-500">
+    <label class="block my-1 bg-gray-700 bg-opacity-20 text-gray-400 focus-within:text-blue-500 focus-within:border-blue-500 border border-gray-800">
       <p class="px-2 py-1 text-xs">Title</p>
       <textarea type="text"
-        class="block p-2 text-gray-300 bg-transparent tracking-wide w-full outline-none border-b border-gray-700 focus:border-blue-500"
+        class="block p-2 text-gray-300 bg-transparent tracking-wide w-full outline-none focus:border-blue-500"
         id="<%= @path <> ~s(_title) %>"
         phx-blur="update_sch"
         phx-hook="FieldAutoResize"
@@ -67,10 +67,10 @@ defmodule FsetWeb.SchComponent do
 
   defp render_description(assigns) do
     ~L"""
-    <label class="block my-1 bg-gray-700 bg-opacity-20 text-gray-400 focus-within:text-blue-500">
+    <label class="block my-1 bg-gray-700 bg-opacity-20 text-gray-400 focus-within:text-blue-500 focus-within:border-blue-500 border border-gray-800">
       <p class="px-2 py-1 text-xs">Description</p>
       <textarea type="text"
-        class="block p-2 text-gray-300 bg-transparent tracking-wide w-full outline-none border-b border-gray-700 focus:border-blue-500"
+        class="block p-2 text-gray-300 bg-transparent tracking-wide w-full outline-none focus:border-blue-500"
         id="<%= @path <> ~s(_description) %>"
         phx-blur="update_sch"
         phx-hook="FieldAutoResize"
@@ -100,24 +100,24 @@ defmodule FsetWeb.SchComponent do
     ~L"""
       <section class="">
         <div class="grid grid-cols-2 gap-1">
-          <label class="border border-gray-700">
-            <p class="px-2 py-1 text-xs text-gray-400">Max Properties</p>
+          <label class="focus-within:text-blue-500 focus-within:border-blue-500 border border-gray-800">
+            <p class="px-2 py-1 text-xs">Max Properties</p>
             <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
               phx-hook="SchUpdate"
               phx-value-key="maxProperties"
               phx-value-path="<%= @path %>"
               value="<%= Sch.max_properties(@sch) %>"
-              class="px-2 py-1 bg-gray-900 shadow w-full"
+              class="px-2 py-1 bg-gray-900 shadow w-full outline-none"
               id="SchUpdate__maxProperties_<%= @path %>">
           </label>
-          <label class="border border-gray-700">
-            <p class="px-2 py-1 text-xs text-gray-400">Min Properties</p>
+          <label class="focus-within:text-blue-500 focus-within:border-blue-500 border border-gray-800">
+            <p class="px-2 py-1 text-xs">Min Properties</p>
             <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
               phx-hook="SchUpdate"
               phx-value-key="minProperties"
               phx-value-path="<%= @path %>"
               value="<%= Sch.min_properties(@sch) %>"
-              class="px-2 py-1 bg-gray-900 shadow w-full"
+              class="px-2 py-1 bg-gray-900 shadow w-full outline-none"
               id="SchUpdate__minProperties_<%= @path %>">
           </label>
         </div>
@@ -143,7 +143,7 @@ defmodule FsetWeb.SchComponent do
   def render_array(assigns) do
     ~L"""
     <div class="border border-gray-700">
-      <p class="px-2 py-1 text-xs text-gray-400 border-b border-gray-700">Number of items ( N )</p>
+      <p class="px-2 py-1 text-xs border-b border-gray-700">Number of items ( N )</p>
       <div class="flex items-center">
         <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
             phx-hook="SchUpdate"
@@ -170,28 +170,28 @@ defmodule FsetWeb.SchComponent do
   defp render_string(assigns) do
     ~L"""
       <div class="grid grid-cols-2 gap-1">
-        <label class="border border-gray-700">
-          <p class="px-2 py-1 text-xs text-gray-400">Min Length</p>
+        <label class="focus-within:text-blue-500 focus-within:border-blue-500 border border-gray-800">
+          <p class="px-2 py-1 text-xs">Min Length</p>
           <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
             phx-hook="SchUpdate"
             phx-value-key="minLength"
             phx-value-path="<%= @path %>"
             value="<%= Sch.min_length(@sch) %>"
-            class="px-2 py-1 bg-gray-900 shadow w-full"
+            class="px-2 py-1 bg-gray-900 shadow w-full outline-none"
             id="SchUpdate__minLength_<%= @path %>">
         </label>
-        <label class="border border-gray-700">
-          <p class="px-2 py-1 text-xs text-gray-400">Max Length</p>
+        <label class="focus-within:text-blue-500 focus-within:border-blue-500 border border-gray-800">
+          <p class="px-2 py-1 text-xs">Max Length</p>
           <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
             phx-hook="SchUpdate"
             phx-value-key="maxLength"
             phx-value-path="<%= @path %>"
             value="<%= Sch.max_length(@sch) %>"
-            class="px-2 py-1 bg-gray-900 shadow w-full"
+            class="px-2 py-1 bg-gray-900 shadow w-full outline-none"
             id="SchUpdate__maxLength_<%= @path %>">
         </label>
-        <label class="col-span-2 border border-gray-700">
-          <div class="px-2 py-1 text-xs text-gray-400">
+        <label class="border-gray-700 focus-within:text-blue-500 focus-within:border-blue-500 border border-gray-800">
+          <div class="px-2 py-1 text-xs">
             <p>Pattern</p>
             <p>Regex is based on PCRE (Perl Compatible Regular Expressions)</p>
           </div>
@@ -200,7 +200,7 @@ defmodule FsetWeb.SchComponent do
             phx-value-key="pattern"
             phx-value-path="<%= @path %>"
             value="<%= Sch.pattern(@sch) %>"
-            class="px-2 py-1 bg-gray-900 shadow w-full"
+            class="px-2 py-1 bg-gray-900 shadow w-full outline-none"
             id="SchUpdate__pattern_<%= @path %>">
         </label>
       </div>
@@ -210,33 +210,33 @@ defmodule FsetWeb.SchComponent do
   defp render_number(assigns) do
     ~L"""
     <div class="grid grid-cols-3 gap-1">
-      <label class="border border-gray-700">
-        <p class="px-2 py-1 text-xs text-gray-400">Maximum</p>
+      <label class="focus-within:text-blue-500 focus-within:border-blue-500 border border-gray-800">
+        <p class="px-2 py-1 text-xs">Maximum</p>
         <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
           phx-hook="SchUpdate"
           phx-value-key="maximum"
           phx-value-path="<%= @path %>"
           value="<%= Sch.maximum(@sch) %>"
-          class="px-2 py-1 bg-gray-900 shadow w-full"
+          class="px-2 py-1 bg-gray-900 shadow w-full outline-none"
           id="SchUpdate__maximum_<%= @path %>">
       </label>
-      <label class="border border-gray-700">
-        <p class="px-2 py-1 text-xs text-gray-400">Minimum</p>
+      <label class="focus-within:text-blue-500 focus-within:border-blue-500 border border-gray-800">
+        <p class="px-2 py-1 text-xs">Minimum</p>
         <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
           phx-hook="SchUpdate"
           phx-value-key="minimum"
           phx-value-path="<%= @path %>"
           value="<%= Sch.minimum(@sch) %>"
-          class="px-2 py-1 bg-gray-900 shadow w-full"
+          class="px-2 py-1 bg-gray-900 shadow w-full outline-none"
           id="SchUpdate__minimum_<%= @path %>">
       </label>
-      <label class="border border-gray-700">
-        <p class="px-2 py-1 text-xs text-gray-400">Multiple Of</p>
+      <label class="focus-within:text-blue-500 focus-within:border-blue-500 border border-gray-800">
+        <p class="px-2 py-1 text-xs">Multiple Of</p>
         <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
           phx-hook="SchUpdate"
           phx-value-key="multipleOf"
           value="<%= Sch.multiple_of(@sch) %>"
-          class="px-2 py-1 bg-gray-900 shadow w-full"
+          class="px-2 py-1 bg-gray-900 shadow w-full outline-none"
           id="SchUpdate__multipleOf_<%= @path %>">
       </label>
     </div>
@@ -245,8 +245,8 @@ defmodule FsetWeb.SchComponent do
 
   defp render_const(assigns) do
     ~L"""
-    <label class="block border border-gray-700">
-      <p class="px-2 py-1 text-xs text-gray-400">Json Value</p>
+    <label class="700 focus-within:text-blue-500 focus-within:border-blue-500 border border-gray-800">
+      <p class="px-2 py-1 text-xs">Json Value</p>
       <textarea type="text" class="px-2 py-1 block bg-gray-900 shadow w-full" rows="2"
         phx-blur="update_sch"
         phx-value-key="const"
