@@ -49,7 +49,7 @@ defmodule FsetWeb.SchComponent do
 
   defp render_title(assigns) do
     ~L"""
-    <label class="block my-2 bg-gray-700 bg-opacity-20 text-gray-400 focus-within:text-blue-500">
+    <label class="block my-1 bg-gray-700 bg-opacity-20 text-gray-400 focus-within:text-blue-500">
       <p class="px-2 py-1 text-xs">Title</p>
       <textarea type="text"
         class="block px-2 py-1 text-gray-300 bg-transparent tracking-wide w-full h-full outline-none border-b border-gray-700 focus:border-blue-500"
@@ -67,7 +67,7 @@ defmodule FsetWeb.SchComponent do
 
   defp render_description(assigns) do
     ~L"""
-    <label class="block my-2 bg-gray-700 bg-opacity-20 text-gray-400 focus-within:text-blue-500">
+    <label class="block my-1 bg-gray-700 bg-opacity-20 text-gray-400 focus-within:text-blue-500">
       <p class="px-2 py-1 text-xs">Description</p>
       <textarea type="text"
         class="block px-2 py-1 text-gray-300 bg-transparent tracking-wide w-full h-full outline-none border-b border-gray-700 focus:border-blue-500"
@@ -99,7 +99,7 @@ defmodule FsetWeb.SchComponent do
   defp render_object(assigns) do
     ~L"""
       <section class="">
-        <div class="grid grid-cols-2">
+        <div class="grid grid-cols-2 gap-1">
           <label class="border border-gray-700">
             <p class="px-2 py-1 text-xs text-gray-400">Max Properties</p>
             <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
@@ -169,7 +169,7 @@ defmodule FsetWeb.SchComponent do
 
   defp render_string(assigns) do
     ~L"""
-      <div class="grid grid-cols-2">
+      <div class="grid grid-cols-2 gap-1">
         <label class="border border-gray-700">
           <p class="px-2 py-1 text-xs text-gray-400">Min Length</p>
           <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
@@ -209,7 +209,7 @@ defmodule FsetWeb.SchComponent do
 
   defp render_number(assigns) do
     ~L"""
-    <div class="grid grid-cols-3">
+    <div class="grid grid-cols-3 gap-1">
       <label class="border border-gray-700">
         <p class="px-2 py-1 text-xs text-gray-400">Maximum</p>
         <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"

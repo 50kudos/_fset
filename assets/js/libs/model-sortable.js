@@ -33,7 +33,7 @@ export default class ModelSortable {
     this._observer.stop()
   }
   _sortableLists() {
-    return Array.from(this.el.querySelectorAll(this.listSelector))
+    return [...this.el.querySelectorAll(this.listSelector)]
   }
   _isList(node) {
     node.nodeType == Node.ELEMENT_NODE && node.querySelector(this.listSelector)
@@ -97,9 +97,9 @@ class SortableList {
     else { return this.rootID + item.id }
   }
   static selectCurrentItems(sorters, paths) {
-    sorters.forEach(ins => {
-      if (!ins?.el) { return }
-      ins.el.querySelectorAll(this.itemClass).forEach(item => Sortable.utils.deselect(item))
+    sorters.forEach(sorter => {
+      if (!sorter?.el) { return }
+      sorter.el.querySelectorAll(this.itemClass).forEach(item => Sortable.utils.deselect(item))
 
       paths.forEach(currentPath => {
         if (currentPath == this.rootID) {
@@ -107,10 +107,10 @@ class SortableList {
         } else {
           currentPath = currentPath.replace(this.rootID, "")
         }
-        let item = ins.el.querySelector(`[id='${currentPath}']`)
+        let item = sorter.el.querySelector(`[id='${currentPath}']`)
         if (!item) { return }
 
-        item.from = ins.el
+        item.from = sorter.el
         item.multiDragKeyDown = false
         Sortable.utils.select(item)
 

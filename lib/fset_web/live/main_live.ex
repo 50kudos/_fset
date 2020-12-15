@@ -48,7 +48,7 @@ defmodule FsetWeb.MainLive do
     file = socket.assigns.current_file
 
     sch_path = List.wrap(sch_path)
-    # assigns = Map.put(%{}, :current_path, sch_path)
+    assigns = Map.put(%{}, :current_path, sch_path)
     track_user_update(user, file, current_path: sch_path, pid: socket.root_pid)
 
     if length(sch_path) == 1 do
@@ -56,7 +56,7 @@ defmodule FsetWeb.MainLive do
       send_update(SchComponent, id: :sch_meta, sch: sch, path: hd(sch_path))
     end
 
-    {:noreply, socket}
+    {:noreply, assign(socket, assigns)}
   end
 
   def handle_event("update_sch", params, socket) do
@@ -108,12 +108,6 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def handle_info({:update_sch, path, sch, opts}, socket) do
-    # re_render_model(
-    #   path,
-    #   opts
-    #   |> Keyword.put(:sch, sch)
-    #   |> Keyword.put(:file_id, socket.assigns.current_file.id)
-    # )
     {models_bodies, _} = models_bodies(socket.assigns.current_file)
 
     send_update(FsetWeb.ModuleComponent, id: socket.assigns.current_file.id, models: models_bodies)

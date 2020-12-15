@@ -1,11 +1,10 @@
 import { fragment, element } from "../utils"
 
 window.customElements.define("sch-key", class extends HTMLElement {
-  constructor() {
-    super()
-    this.addEventListener("dblclick", this.startEdit.bind(this))
-  }
+
   connectedCallback() {
+    this.editable || this.addEventListener("dblclick", this.startEdit.bind(this))
+    this.editable = true
   }
   disconnectedCallback() {
     this.removeEventListener("dblclick", this.startEdit)
@@ -19,7 +18,7 @@ window.customElements.define("sch-key", class extends HTMLElement {
 
     return element(`
       <textarea
-        class="filtered block px-2 box-border mr-2 min-w-0 h-full self-start text-xs leading-6 bg-gray-800 z-10 shadow-inner text-white"
+        class="filtered block px-2 box-border mr-2 min-w-0 h-full self-start bg-gray-800 z-10 shadow-inner text-white"
         data-parent-path="${parent.id}"
         data-old-key="${el.textContent}"
         rows="1"

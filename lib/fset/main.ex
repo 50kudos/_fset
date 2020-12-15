@@ -138,7 +138,9 @@ defmodule Fset.Main do
     broadcast_update_sch(file, parent_path, postsch)
     track_user_update(user, file, current_path: new_path)
 
-    Map.put(%{}, :current_file, %{file | schema: new_schema})
+    %{}
+    |> Map.put(:current_file, %{file | schema: new_schema})
+    |> Map.put(:current_path, List.wrap(new_path))
   end
 
   def move(assigns, %{"oldIndices" => src_indices, "newIndices" => dst_indices}) do
