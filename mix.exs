@@ -43,12 +43,12 @@ defmodule Fset.MixProject do
   defp deps do
     [
       {:bcrypt_elixir, "~> 2.0"},
-      {:phoenix, "~> 1.5.3"},
+      {:phoenix, "~> 1.5.7"},
       {:phoenix_ecto, "~> 4.2"},
       {:ecto, "~> 3.5.0-rc.0", override: true},
       {:ecto_sql, "~> 3.5.0-rc.0"},
       {:postgrex, ">= 0.0.0"},
-      {:phoenix_live_view, "~> 0.15.0-dev",
+      {:phoenix_live_view, "~> 0.15.1",
        github: "phoenixframework/phoenix_live_view", override: true},
       {:floki, ">= 0.0.0", only: :test},
       {:phoenix_html, "~> 2.11", github: "phoenixframework/phoenix_html", override: true},
