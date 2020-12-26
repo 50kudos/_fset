@@ -17,7 +17,7 @@ defmodule FsetWeb.ModelView do
 
   defp render_folder(assigns) do
     ~E"""
-    <li id="<%= @path %>" class="sort-handle" role="treeitem">
+    <li id="<%= @path %>" class="sort-handle" role="treeitem" aria-level="<%= @ui.level %>">
       <details <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>>
         <summary>
           <dfn class="h">
@@ -35,7 +35,7 @@ defmodule FsetWeb.ModelView do
 
   defp render_file(assigns) do
     ~E"""
-    <li id="<%= @path %>" class="sort-handle flex" role="treeitem">
+    <li id="<%= @path %>" class="sort-handle flex" role="treeitem" aria-level="<%= @ui.level %>">
       <%= render_key(%{assigns | key: Utils.word_break_html("#{@key}")}) %>
       <%= render_type(assigns) %>
     </li>
@@ -99,9 +99,9 @@ defmodule FsetWeb.ModelView do
     """
   end
 
-  defp render_key(%{ui: %{level: 0}} = assigns) do
+  defp render_key(%{ui: %{level: 1}} = assigns) do
     ~E"""
-    <span class="text-blue-500 mr-2" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem">
+    <span class="text-blue-500 mr-2" style="padding-left: <%= ((@ui.level - 1) * 1.25) + @ui.tab %>rem">
       <%= model_type_text(@sch, @ui) %>
     </span>
     <sch-key class="k"><%= @key %></sch-key>
@@ -113,25 +113,25 @@ defmodule FsetWeb.ModelView do
     cond do
       Sch.any_of?(Map.get(assigns, :parent)) ->
         ~E"""
-        <span class="" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"></span>
+        <span class="" style="padding-left: <%= ((@ui.level - 1) * 1.25) + @ui.tab %>rem"></span>
         <span class="mx-2 text-gray-500">|</span>
         """
 
       Sch.array?(Map.get(assigns, :parent), :homo) ->
         ~E"""
-        <sch-key class="k" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"></sch-key>
+        <sch-key class="k" style="padding-left: <%= ((@ui.level - 1) * 1.25) + @ui.tab %>rem"></sch-key>
         <span class="mx-2 text-gray-500">└</span>
         """
 
       true ->
         ~E"""
-        <sch-key class="k" style="padding-left: <%= (@ui.level * 1.25) + @ui.tab %>rem"><%= @key %></sch-key>
+        <sch-key class="k" style="padding-left: <%= ((@ui.level - 1) * 1.25) + @ui.tab %>rem"><%= @key %></sch-key>
         <span class="mx-2">:</span>
         """
     end
   end
 
-  defp render_type(%{ui: %{level: 0}} = assigns) do
+  defp render_type(%{ui: %{level: 1}} = assigns) do
     ~E"""
     <sch-type class="t text-pink-400" role="complementary"><%= type_text(@sch, @ui) %></sch-type>
     """

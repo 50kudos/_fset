@@ -25,6 +25,9 @@ export default class Observer {
           }
           break;
         case "attributes":
+          if (mutation.target) {
+            this.config.attrChanged && this.config.attrChanged(mutation.target)
+          }
           break;
       }
     }

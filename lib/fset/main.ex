@@ -43,18 +43,20 @@ defmodule Fset.Main do
   @doc """
   Add a sch to a container sch such as object, array or union.
   """
-  def add_field(assigns, %{"field" => field, "path" => add_path}) do
-    schema = Sch.new("temp_parent", assigns.sch)
-    {_pre, postsch, _new_schema} = Module.add_field(schema, "temp_parent", field)
+  def add_field(assigns, %{"field" => field, "path" => add_path, "level" => lv}) do
+    file = assigns.current_file
+    {_pre, postsch, new_schema} = Module.add_field(file.schema, add_path, field)
 
     # Note: if we decide to move renderer to frontend, change the handle_info
     # from calling send_update to push_event with same parameters for client to patch
     # the DOM.
     @file_topic <> file_id = assigns.ui.topic
     push_current_path(add_path)
-    broadcast_update_sch(%{id: file_id}, add_path, postsch)
+    broadcast_update_sch(%{id: file_id}, add_path, postsch, level: lv)
 
-    Map.put(%{}, :sch, postsch)
+    %{}
+    |> Map.put(:current_file, %{file | schema: new_schema})
+    |> Map.put(:push, %{path: add_path, sch: postsch, level: String.to_integer(lv)})
   end
 
   def add_model(assigns, %{"model" => model}) do

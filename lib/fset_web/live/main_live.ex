@@ -35,6 +35,47 @@ defmodule FsetWeb.MainLive do
     {:noreply, assign(socket, assigns)}
   end
 
+  def handle_event("add_field", params, socket) do
+    assigns = Fset.Main.add_field(socket.assigns, params)
+    push = assigns.push
+    path = push.path
+
+    %{path: parent_path, child_key: key} = Sch.find_parent(path)
+
+    patch_path =
+      if path == socket.assigns.current_file.id,
+        do: path,
+        else: String.replace_prefix(path, socket.assigns.current_file.id, "")
+
+    parent = Sch.get(assigns.current_file.schema, parent_path)
+    key = if Sch.any_of?(parent), do: "", else: key
+
+    sch_html =
+      FsetWeb.ModelView.render("model.html", %{
+        id: patch_path,
+        key: key,
+        sch: push.sch,
+        parent: Fset.Sch.New.object(),
+        ui: %{
+          tab: 1.5,
+          level: push.level,
+          parent_path: "",
+          model_names: models_anchors(socket.assigns.files)
+        },
+        path: patch_path
+      })
+      |> Phoenix.HTML.safe_to_string()
+
+    socket =
+      push_event(socket, :update, %{
+        cmds: [
+          %{target: "[id='#{patch_path}']", action: :replace, props: %{innerHTML: sch_html}}
+        ]
+      })
+
+    {:noreply, socket}
+  end
+
   def handle_event("change_type", params, socket) do
     assigns = change_type(socket.assigns, params)
 
@@ -110,7 +151,7 @@ defmodule FsetWeb.MainLive do
   def handle_info({:update_sch, path, sch, opts}, socket) do
     {models_bodies, _} = models_bodies(socket.assigns.current_file)
 
-    send_update(FsetWeb.ModuleComponent, id: socket.assigns.current_file.id, models: models_bodies)
+    # send_update(FsetWeb.ModuleComponent, id: socket.assigns.current_file.id, models: models_bodies)
 
     send(self(), {:async_get_and_update, path, sch})
 

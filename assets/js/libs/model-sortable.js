@@ -6,7 +6,14 @@ export default class ModelSortable {
   constructor(phx, listSelector) {
     this.phx = phx
     this.el = phx.el
-    this.listSelector = listSelector
+    this._listConfig = {
+      rootID: this.phx.rootID,
+      itemClass: ".sort-handle",
+      highlightClass: ".h",
+      heighlightStyle: ["bg-indigo-700", "bg-opacity-25"],
+      indentClass: ".k",
+      selector: listSelector
+    }
   }
   start() {
     this._sortableLists().forEach(list => this._newSorter(list))
@@ -14,7 +21,8 @@ export default class ModelSortable {
 
     this.phx.handleEvent("current_path", ({ paths }) => {
       let sorters = this._sortableLists().map(a => a._sorter)
-      SortableList.selectCurrentItems(sorters, paths)
+      console.log(paths)
+      SortableList.selectCurrentItems(sorters, paths, this._listConfig)
     })
   }
   _startObserve() {
@@ -29,7 +37,7 @@ export default class ModelSortable {
       },
       targetChanged: (targetNode) => {
         this._listEl(targetNode) &&
-          [...targetNode.querySelectorAll(this.listSelector)]
+          [...targetNode.querySelectorAll(this._listConfig.selector)]
             .filter(n => !n._sorter)
             .forEach(n => this._newSorter(n))
       }
@@ -41,20 +49,14 @@ export default class ModelSortable {
     this._observer.stop()
   }
   _sortableLists() {
-    return [...this.el.querySelectorAll(this.listSelector)]
+    return [...this.el.querySelectorAll(this._listConfig.selector)]
   }
   _listEl(node) {
-    return node.nodeType == Node.ELEMENT_NODE && node.matches(this.listSelector) && node
+    return node.nodeType == Node.ELEMENT_NODE && node.matches(this._listConfig.selector) && node
   }
   _newSorter(list) {
     list._sorter = list._sorter || new SortableList(list, {
-      list: {
-        rootID: this.phx.rootID,
-        itemClass: ".sort-handle",
-        highlightClass: ".h",
-        heighlightStyle: ["bg-indigo-700", "bg-opacity-25"],
-        indentClass: ".k"
-      },
+      list: this._listConfig,
       sorter: {
         moved: (movedItems) => this.phx.pushEvent("move", movedItems),
         selected: (selectedItemPaths) => this.phx.pushEvent("select_sch", { paths: selectedItemPaths })
@@ -104,27 +106,26 @@ class SortableList {
     if (item.id == this.rootID) { return item.id }
     else { return this.rootID + item.id }
   }
-  static selectCurrentItems(sorters, paths) {
+  static selectCurrentItems(sorters, paths, listConfig) {
     sorters.forEach(sorter => {
       if (!sorter?.el) { return }
-      sorter.el.querySelectorAll(this.itemClass).forEach(item => Sortable.utils.deselect(item))
+      sorter.el.querySelectorAll(listConfig.itemClass).forEach(item => Sortable.utils.deselect(item))
+    })
+    paths.forEach(currentPath => {
+      if (currentPath == listConfig.rootID) {
+        currentPath = "main"
+      } else {
+        currentPath = currentPath.replace(listConfig.rootID, "")
+      }
+      let item = document.querySelector(`[id='${currentPath}']`)
+      if (!item) { return }
 
-      paths.forEach(currentPath => {
-        if (currentPath == this.rootID) {
-          currentPath = "main"
-        } else {
-          currentPath = currentPath.replace(this.rootID, "")
-        }
-        let item = sorter.el.querySelector(`[id='${currentPath}']`)
-        if (!item) { return }
+      item.from = item.closest(listConfig.selector)
+      item.multiDragKeyDown = false
+      Sortable.utils.select(item)
 
-        item.from = sorter.el
-        item.multiDragKeyDown = false
-        Sortable.utils.select(item)
-
-        if (paths.length > 1) { item.classList.add("multi") }
-        // item.scrollIntoView({ behavior: "smooth", block: "center" })
-      })
+      if (paths.length > 1) { item.classList.add("multi") }
+      // item.scrollIntoView({ behavior: "smooth", block: "center" })
     })
   }
   movedItems(drop) {

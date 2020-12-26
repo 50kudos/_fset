@@ -45,12 +45,12 @@
 
 /* Function - Add */
 [data-group='root'] {
-  .sort-handle [phx-click="add_field"] { @apply hidden }
+  .sort-handle .add-field { @apply hidden }
   .sort-handle.sortable-selected.multi {
-    > details > summary [phx-click="add_field"] { @apply hidden }
+    > details > summary .add-field { @apply hidden }
   }
   .sort-handle.sortable-selected {
-    > details > summary [phx-click="add_field"] { @apply inline }
+    > details > summary .add-field { @apply inline }
   }
 }
 /* Function - Change type */
