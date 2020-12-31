@@ -1,16 +1,15 @@
 import autoComplete from "@tarekraafat/autocomplete.js"
-import tippy from "tippy.js";
+import tippy, { delegate } from "tippy.js";
 import { fragment } from "../utils.js"
 
-window.customElements.define("sch-type", class extends HTMLElement {
-  connectedCallback() {
-    this._newTippy(this)
+export class TypeChangeable {
+  constructor(el) {
+    this.el = el
   }
-  disconnectedCallback() {
-    this._tippy.destroy()
-  }
-  _newTippy(el) {
-    return el._tippy || tippy(el, {
+  stop() { this.el._tippy.destroy() }
+  start() {
+    delegate(this.el, {
+      target: ".t",
       duration: 0,
       trigger: "click",
       placement: "auto",
@@ -71,4 +70,4 @@ window.customElements.define("sch-type", class extends HTMLElement {
 
     setTimeout(() => document.querySelector(`#${inputId}`).focus(), 50)
   }
-})
+}

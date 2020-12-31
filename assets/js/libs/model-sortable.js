@@ -21,7 +21,7 @@ export default class ModelSortable {
 
     this.phx.handleEvent("current_path", ({ paths }) => {
       let sorters = this._sortableLists().map(a => a._sorter)
-      console.log(paths)
+
       SortableList.selectCurrentItems(sorters, paths, this._listConfig)
     })
   }
