@@ -18,17 +18,13 @@ defmodule FsetWeb.ModelView do
   defp render_folder(assigns) do
     ~E"""
     <li id="<%= @path %>" class="sort-handle" role="treeitem" aria-level="<%= @ui.level %>">
-      <details <%= if Sch.array?(@sch, :homo), do: "", else: "open" %>>
-        <summary>
-          <dfn class="h">
-            <%= render_key(%{assigns | key: Utils.word_break_html("#{@key}")}) %>
-            <%= render_type(assigns) %>
-          </dfn>
-        </summary>
-        <ul data-group="<%= keyed_or_indexed(@sch) %>" role="group">
-          <%= render_itself(assigns) %>
-        </ul>
-      </details>
+      <dfn class="h">
+        <%= render_key(%{assigns | key: Utils.word_break_html("#{@key}")}) %>
+        <%= render_type(assigns) %>
+      </dfn>
+      <ul data-group="<%= keyed_or_indexed(@sch) %>" role="group">
+        <%= render_itself(assigns) %>
+      </ul>
     </li>
     """
   end

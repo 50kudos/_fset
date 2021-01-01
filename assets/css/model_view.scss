@@ -24,16 +24,16 @@
   > .sort-handle:not(.sortable-selected) { @apply bg-black bg-opacity-20 }
   > .sort-handle.sortable-selected {
     @apply bg-gray-800 bg-opacity-40;
-    > details > ul { @apply bg-transparent }
+    > ul { @apply bg-transparent }
   }
 }
 .sortable-selected {
   /* leaf node */
   @apply bg-gray-700 bg-opacity-40;
   /* folder node */
-  > details > summary > .h { @apply bg-gray-700 }
+  > .h { @apply bg-gray-700 }
   /* folder's body */
-  > details > ul { @apply bg-gray-800 }
+  > ul { @apply bg-gray-800 }
 }
 /* highlight DnD */
 .sortable-ghost { @apply h-full py-0 border border-green-600 border-dashed -my-px -ml-px }
@@ -47,10 +47,10 @@
 [data-group='root'] {
   .sort-handle .add-field { @apply hidden }
   .sort-handle.sortable-selected.multi {
-    > details > summary .add-field { @apply hidden }
+    > .h > .add-field { @apply hidden }
   }
   .sort-handle.sortable-selected {
-    > details > summary .add-field { @apply inline }
+    > .h > .add-field { @apply inline }
   }
 }
 /* Function - Change type */
