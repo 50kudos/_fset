@@ -1,19 +1,19 @@
 defmodule FsetWeb.MainLive do
   use FsetWeb, :live_view
   alias FsetWeb.{SchComponent, ModuleComponent, ModelBarComponent, Presence, ModelNavComponent}
-  alias Fset.{Sch, Persistence, Module, Project}
+  alias Fset.{Sch, Persistence, Module, Project, Accounts}
   import Fset.Main
 
   @impl true
-  def mount(params, _session, socket) do
-    assigns = init_data(params)
-    socket = assign(socket, assigns)
-    file_id = params["file_id"] || assigns.project.main_sch.id
+  def mount(_params, session, socket) do
+    send(self(), {:push_types, session})
+
+    file_id = session["file_id"]
 
     if connected?(socket) do
-      subscribe_file_update(file_id)
-      push_current_path(file_id)
-      track_user(assigns.current_user.id, file_id)
+      # subscribe_file_update(file_id)
+      # push_current_path(file_id)
+      # track_user(socket.private[:state].current_user.id, file_id)
     end
 
     temporary_assigns = [project: nil]
@@ -21,34 +21,37 @@ defmodule FsetWeb.MainLive do
   end
 
   @impl true
-  def handle_params(params, _uri, socket) do
-    assigns = change_file_data(socket.assigns, params)
+  def render(assigns), do: ~L""
 
-    send(self(), {:push_types})
-    {:noreply, assign(socket, assigns)}
-  end
+  # @impl true
+  # def handle_params(params, _uri, socket) do
+  #   assigns = change_file_data(socket.private[:state], params)
+
+  #   send(self(), {:push_types})
+  #   {:noreply, assign(socket, assigns)}
+  # end
 
   @impl true
   def handle_event("add_model", params, socket) do
-    assigns = add_model(socket.assigns, params)
+    assigns = add_model(socket.private[:state], params)
 
     {:noreply, assign(socket, assigns)}
   end
 
   def handle_event("add_field", params, socket) do
-    assigns = Fset.Main.add_field(socket.assigns, params)
+    assigns = Fset.Main.add_field(socket.private[:state], params)
     push = assigns.push
     path = push.path
 
     %{path: parent_path, child_key: key} = Sch.find_parent(path)
 
     patch_path =
-      if path == socket.assigns.current_file.id,
-        do: path,
-        else: String.replace_prefix(path, socket.assigns.current_file.id, "")
+      if path == socket.private[:state].current_file.id,
+        do: "main",
+        else: String.replace_prefix(path, socket.private[:state].current_file.id, "")
 
     parent = Sch.get(assigns.current_file.schema, parent_path)
-    key = if Sch.any_of?(parent), do: "", else: key
+    key = if Sch.any_of?(parent), do: "", else: key || "main"
 
     sch_html =
       FsetWeb.ModelView.render("model.html", %{
@@ -60,7 +63,7 @@ defmodule FsetWeb.MainLive do
           tab: 1.5,
           level: push.level,
           parent_path: "",
-          model_names: models_anchors(socket.assigns.files)
+          model_names: models_anchors(socket.private[:state].files)
         },
         path: patch_path
       })
@@ -77,7 +80,7 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_event("change_type", params, socket) do
-    assigns = change_type(socket.assigns, params)
+    assigns = change_type(socket.private[:state], params)
 
     {:noreply, assign(socket, assigns)}
   end
@@ -85,35 +88,35 @@ defmodule FsetWeb.MainLive do
   def handle_event("select_sch", %{"paths" => sch_path}, socket) do
     inspect_memory(socket)
 
-    user = socket.assigns.current_user
-    file = socket.assigns.current_file
+    # user = socket.private[:state].current_user
+    # file = socket.private[:state].current_file
 
-    sch_path = List.wrap(sch_path)
-    assigns = Map.put(%{}, :current_path, sch_path)
-    track_user_update(user, file, current_path: sch_path, pid: socket.root_pid)
+    # sch_path = List.wrap(sch_path)
+    # assigns = Map.put(%{}, :current_path, sch_path)
+    # track_user_update(user, file, current_path: sch_path, pid: socket.root_pid)
 
-    if length(sch_path) == 1 do
-      sch = Sch.get(file.schema, hd(sch_path))
-      send_update(SchComponent, id: :sch_meta, sch: sch, path: hd(sch_path))
-    end
+    # if length(sch_path) == 1 do
+    #   sch = Sch.get(file.schema, hd(sch_path))
+    #   send_update(SchComponent, id: :sch_meta, sch: sch, path: hd(sch_path))
+    # end
 
-    {:noreply, assign(socket, assigns)}
+    {:noreply, socket}
   end
 
   def handle_event("update_sch", params, socket) do
-    assigns = update_sch(socket.assigns, params)
+    assigns = update_sch(socket.private[:state], params)
 
     {:noreply, assign(socket, assigns)}
   end
 
   def handle_event("rename_key", params, socket) do
-    assigns = rename_key(socket.assigns, params)
+    assigns = rename_key(socket.private[:state], params)
 
     {:noreply, assign(socket, assigns)}
   end
 
   def handle_event("move", params, socket) do
-    assigns = move(socket.assigns, params)
+    assigns = move(socket.private[:state], params)
 
     {:noreply, assign(socket, assigns)}
   end
@@ -128,16 +131,16 @@ defmodule FsetWeb.MainLive do
 
   def handle_event("module_keyup", params, socket) do
     # Prevent operations on file level
-    if current_path(socket.assigns.ui) in Enum.map(socket.assigns.files, & &1.id) do
+    if current_path(socket.private[:state].ui) in Enum.map(socket.private[:state].files, & &1.id) do
       {:noreply, socket}
     else
       assigns =
         case params do
           %{"key" => "Escape"} ->
-            escape(socket.assigns, params)
+            escape(socket.private[:state], params)
 
           %{"key" => "Delete"} ->
-            delete(socket.assigns, params)
+            delete(socket.private[:state], params)
 
           _ ->
             %{}
@@ -149,15 +152,15 @@ defmodule FsetWeb.MainLive do
 
   @impl true
   def handle_info({:update_sch, path, sch, opts}, socket) do
-    {models_bodies, _} = models_bodies(socket.assigns.current_file)
+    # {models_bodies, _} = models_bodies(socket.private[:state].current_file)
 
-    # send_update(FsetWeb.ModuleComponent, id: socket.assigns.current_file.id, models: models_bodies)
+    # send_update(FsetWeb.ModuleComponent, id: socket.private[:state].current_file.id, models: models_bodies)
 
-    send(self(), {:async_get_and_update, path, sch})
+    # send(self(), {:async_get_and_update, path, sch})
 
     # socket =
     #   push_event(socket, "model_change", %{
-    #     id: socket.assigns.current_file.id,
+    #     id: socket.private[:state].current_file.id,
     #     path: path,
     #     sch: sch
     #   })
@@ -166,7 +169,7 @@ defmodule FsetWeb.MainLive do
   end
 
   def handle_info({:async_get_and_update, path, sch}, socket) do
-    current_file = socket.assigns.current_file
+    current_file = socket.private[:state].current_file
     existing_file = Project.get_file!(current_file.id)
 
     current_schema = Sch.replace(current_file.schema, path, sch)
@@ -182,10 +185,13 @@ defmodule FsetWeb.MainLive do
     {:noreply, push_event(socket, "current_path", %{paths: paths})}
   end
 
-  def handle_info({:push_types}, socket) do
+  def handle_info({:push_types, params}, socket) do
+    project = get_project(params["project_name"])
+    [main | _] = files = get_project_meta(project)
+
     socket =
       push_event(socket, "changeable_types", %{
-        "typeOptions" => text_val_types(socket.assigns.files)
+        "typeOptions" => text_val_types(files)
       })
 
     {:noreply, socket}
@@ -269,8 +275,8 @@ defmodule FsetWeb.MainLive do
     {:memory, mem} = Process.info(socket.root_pid, :memory)
     IO.inspect("#{mem / (1024 * 1024)} MB", label: "MEMORY")
 
-    for ak <- Map.keys(socket.assigns) do
-      kb = Persistence.term_size(Map.get(socket.assigns, ak)) / 1024
+    for ak <- Map.keys(socket.private[:state]) do
+      kb = Persistence.term_size(Map.get(socket.private[:state], ak)) / 1024
       IO.inspect("#{floor(kb)}" <> " KB", label: ak)
     end
   end

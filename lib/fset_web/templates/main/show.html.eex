@@ -1,0 +1,51 @@
+<%= live_render @conn, FsetWeb.MainLive, session: %{"project_name" => @project_name, "username" => @current_user.email, "file_id" => @current_file.id} %>
+
+<div class="flex flex-col w-full h-screen">
+  <%=# render FsetWeb.LayoutView, "_header.html", assigns %>
+  <%= for error <- @ui.errors do %>
+    <span class="w-full text-red-600"><%= error.payload.msg %></span>
+  <% end %>
+  <section class="flex flex-grow overflow-auto">
+    <aside class="hidden lg:w-1/5 lg:flex lg:flex-col">
+      <%= live_patch to: Routes.main_path(@conn, :index, @current_user.email, @project_name), class: "block ml-2 my-6 text-2xl" do %>
+        <mark><%= @project_name %></mark>
+      <% end %>
+
+      <!--<div class="text-sm p-2 border-t border-gray-900">
+        <p class="mb-1 text-gray-600">New model: </p>
+        <div class="grid grid-cols-2 gap-px text-gray-400 text-xs">
+          <%= for higher_type <- [:Record, :Field, :List, :Tuple, :Union] do %>
+            <button class="text-left px-2 py-1 hover:bg-indigo-800 hover:text-gray-100 border border-gray-700"
+              phx-click="add_model" phx-value-model="<%= higher_type %>"> + <%= higher_type %></button>
+          <% end %>
+        </div>
+      </div>
+      <span class="flex-1"></span>
+      <%=# render_storage(assigns) %> -->
+    </aside>
+    <nav class="flex flex-col md:w-1/2 xl:w-2/5">
+      <div class="text-xs px-2 h-8 bg-gray-900 sticky top-0 z-10">
+
+      </div>
+      <div id="module_container" class="overflow-y-scroll overscroll-y-none scroll-smooth h-full" phx-window-keyup="module_keyup">
+        <%= render FsetWeb.ModuleView, "show.html", %{
+          id: @current_file.id,
+          name: @current_file.name,
+          models: @current_models_bodies,
+          model_names: models_anchors(@files), ui: @ui, path: @current_file.id} %>
+      </div>
+    </nav>
+    <aside class="hidden md:w-1/2 xl:w-2/5 md:block overflow-y-scroll overflow-x-hidden text-sm pl-3 pr-5">
+      <%= if length(@current_path) == 1 do %>
+
+      <% end %>
+    </aside>
+  </section>
+  <footer class="text-center max-h-full py-1 text-sm bg-gray-900 border-t border-gray-800">
+    <p class="text-xs text-gray-500 max-w-full break-words"><%= if length(@current_path) == 1, do: @current_path, else: "multi-paths" %></p>
+  </footer>
+</div>
+
+<span id="fstore"
+  data-store="<%=# Jason.encode!(@conn.private.changed.push_events |> Enum.at(0) |> Enum.at(1)) %>">
+</span>

@@ -1,39 +1,11 @@
-defmodule FsetWeb.ModuleComponent do
-  use FsetWeb, :live_component
-  alias FsetWeb.{ModelComponent, ModelView}
+defmodule FsetWeb.ModuleView do
+  use FsetWeb, :view
+  alias FsetWeb.ModelView
 
-  @impl true
-  def update(assigns, socket) do
-    assigns = Map.merge(socket.assigns, assigns)
-    assigns = Map.take(assigns, [:id, :name, :models, :model_names, :ui, :path])
-
-    socket =
-      socket
-      |> assign(assigns)
-      |> update(:ui, fn ui ->
-        ui
-        |> Map.put_new(:tab, 1.5)
-        |> Map.put_new(:level, 1)
-        |> Map.put_new(:model_number, false)
-        |> Map.put_new(:file_id, assigns.id)
-        |> Map.put(:model_names, assigns.model_names)
-        |> Map.put(:parent_path, assigns.path)
-        |> case do
-          %{model_number: true} = ui -> %{ui | tab: 3}
-          ui -> ui
-        end
-      end)
-
-    {:ok, socket}
-  end
-
-  @impl true
-  def render(assigns) do
-    case {connected?(assigns.socket), assigns} do
-      {true, %{models: [{:main, _}]}} -> render_main(assigns)
-      {false, %{models: [{:main, _}]}} -> render_main(assigns)
-      {true, %{models: models}} when is_list(models) -> render_model(assigns)
-      {false, %{models: models}} when is_list(models) -> render_model(assigns)
+  def render("show.html", assigns) do
+    case assigns do
+      %{models: [{:main, _}]} -> render_main(assigns)
+      %{models: models} when is_list(models) -> render_model(assigns)
     end
   end
 

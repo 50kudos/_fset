@@ -44,6 +44,8 @@ defmodule Fset.Main do
   Add a sch to a container sch such as object, array or union.
   """
   def add_field(assigns, %{"field" => field, "path" => add_path, "level" => lv}) do
+    get_project()
+    get_current_file()
     file = assigns.current_file
     {_pre, postsch, new_schema} = Module.add_field(file.schema, add_path, field)
 
@@ -283,14 +285,14 @@ defmodule Fset.Main do
     height
   end
 
-  defp get_project(project_name) do
+  def get_project(project_name) do
     p = Project.get_by!(name: project_name)
 
     {[main_file], model_files} = Enum.split_with(p.schs, &(&1.type == :main))
     %{p | main_sch: main_file, model_schs: model_files, schs: []}
   end
 
-  defp get_project_meta(project) do
+  def get_project_meta(project) do
     main_file = %{project.main_sch | models_anchors: [], schema: nil}
 
     model_files =

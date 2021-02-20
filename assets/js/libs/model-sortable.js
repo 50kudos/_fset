@@ -3,9 +3,9 @@ import Observer from "./observer.js"
 Sortable.mount(new MultiDrag())
 
 export default class ModelSortable {
-  constructor(phx, listSelector) {
+  constructor(phx, scope, listSelector) {
     this.phx = phx
-    this.el = phx.el
+    this.el = scope
     this._listConfig = {
       rootID: this.phx.rootID,
       itemClass: ".sort-handle",
@@ -59,7 +59,14 @@ export default class ModelSortable {
       list: this._listConfig,
       sorter: {
         moved: (movedItems) => this.phx.pushEvent("move", movedItems),
-        selected: (selectedItemPaths) => this.phx.pushEvent("select_sch", { paths: selectedItemPaths })
+        selected: (selectedItemPaths) => {
+          const selectSchEvent = new CustomEvent("SelectSch", {
+            bubbles: true,
+            detail: { paths: selectedItemPaths }
+          })
+
+          this.phx.pushEvent("select_sch", { paths: selectedItemPaths })
+        }
       }
     })
 

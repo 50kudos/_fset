@@ -77,8 +77,10 @@ defmodule FsetWeb.Router do
     live "/:username", ProfileLive, :index
 
     scope "/:username" do
-      live "/:project_name", MainLive, :index
-      live "/:project_name/:file_id", MainLive, :show
+      # live "/:project_name", MainLive, :index
+      # live "/:project_name/:file_id", MainLive, :show
+      get "/:project_name", MainController, :index
+      get "/:project_name/:file_id", MainController, :show
     end
   end
 end
